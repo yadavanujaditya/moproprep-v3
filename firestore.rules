@@ -1,0 +1,27 @@
+rules_version='2'
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Users collection
+    match /users/{userId} {
+      // Allow users to read/write their own document
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+      
+      // Sessions subcollection - users can manage their own sessions
+      match /sessions/{sessionId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+
+      // Progress subcollection - users can save/resume their quiz progress
+      match /progress/{progressId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+    }
+    
+    // Stats collection (for admin analytics)
+    match /stats/{document=**} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}

@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HaryanaMo - Live Analytics</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+    <script src="firebase-config.js"></script>
+    <link rel="stylesheet" href="style.css">
+
+    <style>
+        .stats-container {
+            padding-bottom: 50px;
+        }
+
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            text-align: center;
+            padding: 2rem 1.5rem;
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--primary);
+            margin: 0.5rem 0;
+        }
+
+        .stat-label {
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 0.1em;
+        }
+
+        .table-container {
+            margin-top: 2rem;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        th {
+            text-align: left;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.9rem;
+        }
+
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge-pro {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--secondary);
+        }
+
+        .badge-free {
+            background: rgba(148, 163, 184, 0.1);
+            color: var(--text-muted);
+        }
+
+        #login-section {
+            height: 60vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+
+        .recent-list {
+            list-style: none;
+        }
+
+        .recent-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .timestamp {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+    </style>
+</head>
+
+<body data-theme="dark">
+    <div class="app-container stats-container">
+        <header class="glass-header">
+            <a href="/" class="logo"
+                style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 0.5rem;">
+                <span class="logo-icon">📊</span>
+                <h1>HaryanaMo Stats</h1>
+            </a>
+
+            <button id="btn-logout" class="icon-btn" style="display: none;">Logout</button>
+        </header>
+
+        <!-- Login Section -->
+        <section id="login-section" class="glass-card">
+            <h2>Admin Access</h2>
+            <p style="margin-bottom: 1.5rem; color: var(--text-muted);">Please sign in to view analytics.</p>
+            <button id="btn-admin-login" class="primary-btn">Sign in with Google</button>
+        </section>
+
+        <!-- Stats Content (Hidden initially) -->
+        <main id="stats-content" style="display: none;">
+            <div class="stat-grid">
+                <div class="glass-card stat-card">
+                    <div class="stat-label">Total Users</div>
+                    <div id="val-total-users" class="stat-value">...</div>
+                </div>
+                <div class="glass-card stat-card">
+                    <div class="stat-label">Pro Members</div>
+                    <div id="val-pro-users" class="stat-value">...</div>
+                </div>
+                <div class="glass-card stat-card">
+                    <div class="stat-label">Est. Revenue</div>
+                    <div id="val-revenue" class="stat-value">...</div>
+                </div>
+                <div class="glass-card stat-card">
+                    <div class="stat-label">Avg Session Time</div>
+                    <div id="val-avg-time" class="stat-value">...</div>
+                </div>
+                <div class="glass-card stat-card">
+                    <div class="stat-label">24h Visits</div>
+                    <div id="val-visits" class="stat-value">...</div>
+                </div>
+
+            </div>
+
+            <div
+                style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-top: 2rem;">
+                <div class="glass-card">
+                    <h2>Recent Traffic (Live)</h2>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Time</th>
+                                    <th>IP Address</th>
+                                    <th>Path</th>
+                                    <th>Device</th>
+                                </tr>
+                            </thead>
+                            <tbody id="traffic-table-body">
+                                <tr>
+                                    <td colspan="4" style="text-align: center;">Loading traffic data...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="glass-card">
+                    <h2>Page Engagement</h2>
+                    <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1rem;">Total time spent by all
+                        users on specific views.</p>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>View / Page</th>
+                                    <th>Total Duration</th>
+                                </tr>
+                            </thead>
+                            <tbody id="page-stats-body">
+                                <tr>
+                                    <td colspan="2" style="text-align: center;">No data yet.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass-card" style="margin-top: 2rem;">
+                <h2>Top Users</h2>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>User</th>
+                                <th>Email</th>
+                                <th>Tier</th>
+                            </tr>
+                        </thead>
+                        <tbody id="user-table-body">
+                            <!-- Users injected here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </main>
+
+        <footer style="margin-top: 2rem; text-align: center; opacity: 0.5; font-size: 0.8rem;">
+            &copy; 2026 HaryanaMo Analytics Dashboard. For Administrative use only.
+        </footer>
+    </div>
+
+    <script src="stats.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - HaryanaMo</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="firebase-config.js"></script>
+</head>
+
+<body class="admin-body">
+    <div class="app-container">
+        <header class="glass-header">
+            <a href="/" class="logo"
+                style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 0.5rem;">
+                <span class="logo-icon">🩺</span>
+                <h1>HaryanaMo Admin</h1>
+            </a>
+            <div style="display: flex; gap: 0.5rem;">
+                <button id="btn-view-stats" class="secondary-btn" style="padding: 0.5rem 1rem;">Analytics 📊</button>
+                <button id="btn-logout" class="icon-btn">Logout</button>
+            </div>
+
+        </header>
+
+        <main id="admin-content" style="display: none;">
+            <div class="stats-grid">
+                <div class="glass-card stat-card">
+                    <h3>Total Users</h3>
+                    <p id="total-users">0</p>
+                </div>
+                <div class="glass-card stat-card">
+                    <h3>Pro Members</h3>
+                    <p id="pro-users">0</p>
+                </div>
+            </div>
+
+            <div class="glass-card" style="margin-top: 2rem;">
+                <h2>Pricing Control</h2>
+                <div style="display: flex; gap: 1rem; align-items: center; margin-top: 1rem;">
+                    <label for="pro-price">Pro Membership Price (INR):</label>
+                    <input type="number" id="pro-price" min="1" value="299"
+                        style="padding: 0.5rem; border-radius: 8px; border: 1px solid #555; background: #222; color: #fff; width: 100px;">
+                    <button id="btn-save-price" class="primary-btn" style="padding: 0.5rem 1rem;">Save Price</button>
+                </div>
+                <p id="price-status" style="margin-top: 0.5rem; font-size: 0.9rem; color: #888;"></p>
+            </div>
+
+            <div class="glass-card" style="margin-top: 2rem;">
+                <h2>User List</h2>
+                <table id="user-table" style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="text-align: left; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </main>
+
+        <div id="login-overlay"
+            style="display: flex; height: 80vh; align-items: center; justify-content: center; flex-direction: column;">
+            <h2>Admin Login Required</h2>
+            <p>Only the specific admin email can access this.</p>
+            <button id="btn-admin-login" class="primary-btn">Login with Google</button>
+        </div>
+    </div>
+
+    <script>
+        const ADMIN_EMAIL = "adityasonofashok@gmail.com";
+
+        auth.onAuthStateChanged(async (user) => {
+            if (user && user.email === ADMIN_EMAIL) {
+                document.getElementById('login-overlay').style.display = 'none';
+                document.getElementById('admin-content').style.display = 'block';
+                loadStats();
+                loadPrice(); // Load current price
+            } else if (user) {
+                alert("Unauthorized. Access denied.");
+                auth.signOut();
+            }
+        });
+
+        document.getElementById('btn-admin-login').onclick = () => auth.signInWithPopup(provider);
+        document.getElementById('btn-logout').onclick = () => auth.signOut().then(() => location.reload());
+        document.getElementById('btn-view-stats').onclick = () => window.location.href = 'stats.html';
+
+
+        // --- Price Control Logic ---
+        async function loadPrice() {
+            try {
+                const doc = await db.collection('settings').doc('pricing').get();
+                if (doc.exists) {
+                    document.getElementById('pro-price').value = doc.data().amount || 299;
+                    document.getElementById('price-status').innerText = 'Loaded from Firestore.';
+                } else {
+                    // Create default pricing doc
+                    await db.collection('settings').doc('pricing').set({ amount: 299 });
+                    document.getElementById('price-status').innerText = 'Default price set (299).';
+                }
+            } catch (e) {
+                console.error("Failed to load price:", e);
+                document.getElementById('price-status').innerText = 'Error loading price.';
+            }
+        }
+
+        document.getElementById('btn-save-price').onclick = async () => {
+            const priceInput = document.getElementById('pro-price');
+            const newPrice = parseInt(priceInput.value);
+            if (isNaN(newPrice) || newPrice < 1) {
+                alert("Please enter a valid price (minimum 1).");
+                return;
+            }
+            document.getElementById('price-status').innerText = 'Saving...';
+            try {
+                console.log("Saving price:", newPrice, "to settings/pricing");
+                await db.collection('settings').doc('pricing').set({ amount: newPrice }, { merge: true });
+                document.getElementById('price-status').innerText = 'Price updated to ₹' + newPrice + ' at ' + new Date().toLocaleTimeString();
+                console.log("Price saved successfully!");
+            } catch (e) {
+                console.error("Failed to save price:", e.message, e.code, e);
+                document.getElementById('price-status').innerText = 'Error: ' + e.message;
+                alert("Failed to save price: " + e.message);
+            }
+        };
+
+        // --- User Stats ---
+        async function loadStats() {
+            const usersSnap = await db.collection('users').get();
+            const totalUsers = usersSnap.size;
+            let proUsers = 0;
+            const tableBody = document.querySelector('#user-table tbody');
+            tableBody.innerHTML = '';
+
+            usersSnap.forEach(doc => {
+                const u = doc.data();
+                if (u.isPro) proUsers++;
+
+                const row = `<tr>
+                    <td>${u.displayName || 'N/A'}</td>
+                    <td>${u.email}</td>
+                    <td>${u.isPro ? '💎 PRO' : 'Free'}</td>
+                </tr>`;
+                tableBody.insertAdjacentHTML('beforeend', row);
+            });
+
+            document.getElementById('total-users').innerText = totalUsers;
+            document.getElementById('pro-users').innerText = proUsers;
+        }
+    </script>
+</body>
+
+</html>

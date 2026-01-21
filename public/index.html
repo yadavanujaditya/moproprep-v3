@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HaryanaMo - Premium Medical Quiz | Practice for Haryana Medical Exams</title>
+
+    <!-- SEO Meta Tags -->
+    <meta name="description"
+        content="HaryanaMo is the best platform for Haryana medical exam preparation. Practice previous year questions, mock tests, and premium quiz sets for HPSC, NEET PG, and other medical exams.">
+    <meta name="keywords"
+        content="HaryanaMo, Haryana Medical Quiz, Medical Exam Preparation, HPSC Medical, Previous Year Questions, Mock Test, Medical MCQ, Haryana Health Services">
+    <meta name="author" content="HaryanaMo">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://moproprep.in/">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://moproprep.in/">
+    <meta property="og:title" content="HaryanaMo - Premium Medical Quiz">
+    <meta property="og:description"
+        content="Practice previous year questions, mock tests, and premium quiz sets for Haryana medical exams.">
+    <meta property="og:image" content="https://moproprep.in/og-image.png">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://moproprep.in/">
+    <meta name="twitter:title" content="HaryanaMo - Premium Medical Quiz">
+    <meta name="twitter:description"
+        content="Practice previous year questions, mock tests, and premium quiz sets for Haryana medical exams.">
+    <meta name="twitter:image" content="https://moproprep.in/og-image.png">
+
+    <!-- Theme Color -->
+    <meta name="theme-color" content="#6C63FF">
+
+    <!-- Structured Data (JSON-LD) -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "HaryanaMo",
+        "description": "Premium medical quiz platform for Haryana exam preparation",
+        "url": "https://moproprep.in/",
+        "applicationCategory": "EducationalApplication",
+        "operatingSystem": "Web",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "INR"
+        },
+        "aggregateRating": {
+            "@type": "AggregateRating",
+            "ratingValue": "4.8",
+            "ratingCount": "150"
+        }
+    }
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+    <!-- Razorpay SDK -->
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="firebase-config.js"></script>
+    <script src="auth-service.js"></script>
+    <script src="payment-service.js"></script>
+    <script src="analytics-tracker.js"></script>
+
+
+    <link rel="stylesheet" href="style.css">
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-MWF7RS5NKM"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+
+        gtag('config', 'G-MWF7RS5NKM');
+    </script>
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="glass-header">
+            <div class="logo" id="home-logo" style="cursor: pointer; flex-direction: column; align-items: flex-start;">
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <span class="logo-icon">🩺</span>
+                    <h1>HaryanaMo</h1>
+                </div>
+                <span id="pro-badge"
+                    style="display: none; background: linear-gradient(135deg, #FFD700, #FFA500); color: #000; font-size: 0.5rem; font-weight: 600; padding: 2px 6px; border-radius: 8px; margin-top: 2px;">✨
+                    PRO Member</span>
+            </div>
+            <div class="theme-switch-wrapper">
+                <label class="theme-switch" for="checkbox">
+                    <input type="checkbox" id="checkbox" />
+                    <div class="slider round">
+                        <span class="sun-icon">☀️</span>
+                        <span class="moon-icon">🌙</span>
+                    </div>
+                </label>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <main id="main-content">
+            <!-- VIEW: Home Menu -->
+            <section id="home-view" class="view active-view">
+                <div class="hero-section">
+                    <h2>Welcome to HaryanaMo</h2>
+                    <p>Select your learning path to get started.</p>
+                </div>
+                <div class="menu-grid">
+                    <div class="menu-card" id="btn-prev-year">
+                        <div class="menu-icon">📚</div>
+                        <div class="menu-content">
+                            <h3>Previous Year Paper</h3>
+                            <p>Practice with real exam questions from previous years.</p>
+                        </div>
+                    </div>
+                    <div class="menu-card" id="btn-pro-quiz">
+                        <div class="menu-icon">💎</div>
+                        <div class="menu-content">
+                            <h3>HaryanaMo Pro</h3>
+                            <p>Unlock premium questions and advanced clinical cases.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- VIEW: Year Selection -->
+            <section id="year-selection-view" class="view hidden-view">
+                <div class="quiz-header" style="margin-bottom: 2rem;">
+                    <button id="back-to-home" class="icon-btn">← Back to Menu</button>
+                </div>
+                <div class="hero-section">
+                    <h2 id="view-title">Select Year</h2>
+                    <p id="view-desc">Choose a year to test your knowledge.</p>
+                </div>
+                <div id="years-grid" class="cards-grid">
+                    <!-- Year cards injected here -->
+                    <div class="loader"></div>
+                </div>
+            </section>
+
+            <!-- VIEW: Quiz Interface -->
+            <section id="quiz-view" class="view hidden-view">
+                <div class="quiz-header">
+                    <button id="back-to-years" class="icon-btn">← Back</button>
+                    <div class="progress-container">
+                        <div class="progress-bar">
+                            <div id="progress-fill" class="progress-fill" style="width: 0%"></div>
+                        </div>
+                        <span id="question-tracker">1 / 10</span>
+                    </div>
+                    <div class="score-badge">
+                        Score: <span id="current-score">0</span>
+                    </div>
+                </div>
+
+                <div class="question-card glass-card">
+                    <div class="question-meta">
+                        <span class="year-tag" id="q-year">2020</span>
+                        <span class="category-tag" id="q-category">Anatomy</span>
+                    </div>
+                    <h3 id="question-text">Loading question...</h3>
+                    <div id="options-container" class="options-list">
+                        <!-- Options injected here -->
+                    </div>
+
+                    <div id="feedback-area" class="feedback" style="display: none;">
+                        <div class="feedback-content">
+                            <span id="feedback-icon"></span>
+                            <p id="feedback-text"></p>
+                        </div>
+                        <div class="explanation" id="explanation-text"></div>
+                        <button id="next-btn" class="primary-btn">Next Question →</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- VIEW: Results -->
+            <section id="results-view" class="view hidden-view">
+                <div class="results-card glass-card">
+                    <div class="results-icon">🏆</div>
+                    <h2>Quiz Completed!</h2>
+                    <div class="score-display">
+                        <span id="final-score">0</span>
+                        <span class="total-score">/ <span id="total-questions">0</span></span>
+                    </div>
+                    <p id="performance-msg">Great job!</p>
+                    <div class="action-buttons">
+                        <button id="retry-btn" class="secondary-btn">Try Again</button>
+                        <button id="home-btn" class="primary-btn">Back to Home</button>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>&copy; 2026 HaryanaMo. Designed for Excellence.</p>
+            <p style="margin-top: 0.5rem; font-size: 0.9rem;">
+                <a href="https://t.me/yadavanujaditya" target="_blank" rel="noopener noreferrer"
+                    style="color: var(--secondary); text-decoration: none; margin-right: 1rem;">
+                    📱 Contact Owner/Moderator
+                </a> |
+                <a href="https://t.me/HaryanaMo" target="_blank" rel="noopener noreferrer"
+                    style="color: var(--secondary); text-decoration: none; margin-left: 1rem;">
+                    📢 Follow on Telegram
+                </a>
+            </p>
+            <p style="margin-top: 0.5rem; font-size: 0.8rem; opacity: 0.5;">
+                <a href="admin.html" style="color: inherit; text-decoration: none;">Admin</a> |
+                <a href="#" id="logout-link" style="color: inherit; text-decoration: none; display: none;">Logout</a>
+            </p>
+        </footer>
+    </div>
+
+    <!-- LOGIN MODAL -->
+    <div id="login-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content glass-card" style="max-width: 400px; text-align: center; padding: 2rem;">
+            <h2 style="margin-bottom: 1rem;">Login to Continue</h2>
+            <p style="color: #aaa; margin-bottom: 1.5rem;">Sign in to access HaryanaMo features.</p>
+            <button id="btn-google-login" class="primary-btn"
+                style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; width: 100%; padding: 1rem;">
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google"
+                    style="width: 20px; height: 20px;">
+                Sign in with Google
+            </button>
+            <button id="btn-close-login" class="secondary-btn" style="margin-top: 1rem; width: 100%;">Cancel</button>
+        </div>
+    </div>
+
+    <style>
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+    </style>
+
+    <script src="app.js"></script>
+</body>
+
+</html>
