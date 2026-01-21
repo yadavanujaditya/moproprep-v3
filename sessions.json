@@ -9,5 +9,16 @@
       "Year Selection": 1200,
       "Quiz": 420
     }
+  },
+  "sess_f0z8wpzo4_1769037548611": {
+    "startTime": 1769037549281,
+    "lastSeen": 1769037578658,
+    "ip": "127.0.0.1",
+    "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
+    "views": {
+      "Home": 0,
+      "Year Selection": 30,
+      "Quiz": 60
+    }
   }
 }
