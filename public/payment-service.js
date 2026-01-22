@@ -118,7 +118,21 @@ const PaymentService = {
             // Handle failure
             rzp.on('payment.failed', function (response) {
                 console.error(response.error);
-                alert("Payment Failed: " + response.error.description);
+                const errorMsg = response.error.description || "Unknown error";
+                const paymentId = response.error.metadata?.payment_id || "N/A";
+
+                // Show detailed message for refund if money was deducted
+                alert(
+                    "⚠️ Payment Failed!\n\n" +
+                    "Reason: " + errorMsg + "\n\n" +
+                    "If your money has been deducted, please don't worry!\n\n" +
+                    "📱 Contact us on Telegram: t.me/yadavanujaditya\n\n" +
+                    "Please share the following details:\n" +
+                    "• Your registered email\n" +
+                    "• Payment ID: " + paymentId + "\n" +
+                    "• Screenshot of transaction (if available)\n\n" +
+                    "Your refund will be processed within 5-7 business days. 🙏"
+                );
             });
 
             rzp.open();
