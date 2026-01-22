@@ -4,11 +4,13 @@ auth.onAuthStateChanged(async (user) => {
     const loginSection = document.getElementById('login-section');
     const statsContent = document.getElementById('stats-content');
     const logoutBtn = document.getElementById('btn-logout');
+    const refreshBtn = document.getElementById('btn-refresh');
 
     if (user && user.email === ADMIN_EMAIL) {
         loginSection.style.display = 'none';
         statsContent.style.display = 'block';
         logoutBtn.style.display = 'block';
+        if (refreshBtn) refreshBtn.style.display = 'block';
         initStats();
     } else if (user) {
         alert("Access Denied: You are not an admin.");
@@ -17,6 +19,7 @@ auth.onAuthStateChanged(async (user) => {
         loginSection.style.display = 'flex';
         statsContent.style.display = 'none';
         logoutBtn.style.display = 'none';
+        if (refreshBtn) refreshBtn.style.display = 'none';
     }
 });
 
@@ -32,6 +35,11 @@ document.getElementById('btn-logout').onclick = () => {
 async function initStats() {
     loadUserStats();
     loadTrafficStats();
+
+    // Auto-refresh traffic stats every 30 seconds
+    setInterval(() => {
+        loadTrafficStats();
+    }, 30000);
 }
 
 async function loadUserStats() {
@@ -74,15 +82,28 @@ async function loadUserStats() {
 
 async function loadTrafficStats() {
     try {
+        // Show loading state
+        const trafficTableBody = document.getElementById('traffic-table-body');
+        if (trafficTableBody) {
+            trafficTableBody.innerHTML = '<tr><td colspan="4" style="text-align: center;">Loading traffic data...</td></tr>';
+        }
+
         const res = await fetch('/api/admin/stats', {
             headers: {
                 'Authorization': 'token-admin'
             }
         });
+
+        if (!res.ok) {
+            throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+        }
+
         const data = await res.json();
 
         if (data.error) {
             console.error("Traffic API error:", data.error);
+            document.getElementById('val-visits').innerText = 'Error';
+            document.getElementById('val-avg-time').innerText = 'Error';
             return;
         }
 
@@ -91,25 +112,26 @@ async function loadTrafficStats() {
         document.getElementById('val-avg-time').innerText = formatTime(data.avgDuration || 0);
 
         // --- Traffic Table ---
-        const trafficTableBody = document.getElementById('traffic-table-body');
-        trafficTableBody.innerHTML = '';
-        if (data.recentVisits && data.recentVisits.length > 0) {
-            data.recentVisits.forEach(v => {
-                const date = new Date(v.timestamp);
-                const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                const device = v.ua.includes('Mobile') ? '📱 Mobile' : '💻 Desktop';
-                const row = `
-                    <tr>
-                        <td>${timeStr}</td>
-                        <td>${v.ip}</td>
-                        <td style="color: var(--primary)">${v.url}</td>
-                        <td>${device}</td>
-                    </tr>
-                `;
-                trafficTableBody.insertAdjacentHTML('beforeend', row);
-            });
-        } else {
-            trafficTableBody.innerHTML = '<tr><td colspan="4" style="text-align: center;">No recent traffic data.</td></tr>';
+        if (trafficTableBody) {
+            trafficTableBody.innerHTML = '';
+            if (data.recentVisits && data.recentVisits.length > 0) {
+                data.recentVisits.forEach(v => {
+                    const date = new Date(v.timestamp);
+                    const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    const device = v.ua && v.ua.includes('Mobile') ? '📱 Mobile' : '💻 Desktop';
+                    const row = `
+                        <tr>
+                            <td>${timeStr}</td>
+                            <td>${v.ip || 'Unknown'}</td>
+                            <td style="color: var(--primary)">${v.url || '/'}</td>
+                            <td>${device}</td>
+                        </tr>
+                    `;
+                    trafficTableBody.insertAdjacentHTML('beforeend', row);
+                });
+            } else {
+                trafficTableBody.innerHTML = '<tr><td colspan="4" style="text-align: center;">No recent traffic data. Visit the main site to generate traffic.</td></tr>';
+            }
         }
 
         // --- Page Engagement Table ---
@@ -127,12 +149,21 @@ async function loadTrafficStats() {
                     pageStatsBody.insertAdjacentHTML('beforeend', row);
                 });
             } else {
-                pageStatsBody.innerHTML = '<tr><td colspan="2" style="text-align: center;">No engagement data yet.</td></tr>';
+                pageStatsBody.innerHTML = '<tr><td colspan="2" style="text-align: center;">No engagement data yet. Users need to browse the site to generate data.</td></tr>';
             }
         }
 
     } catch (err) {
         console.error("Error loading traffic stats:", err);
+
+        // Show error in UI
+        document.getElementById('val-visits').innerText = '⚠️';
+        document.getElementById('val-avg-time').innerText = '⚠️';
+
+        const trafficTableBody = document.getElementById('traffic-table-body');
+        if (trafficTableBody) {
+            trafficTableBody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: #f87171;">Failed to load: ${err.message}</td></tr>`;
+        }
     }
 }
 
