@@ -162,9 +162,23 @@
                         </div>
                         <span id="question-tracker">1 / 10</span>
                     </div>
-                    <div class="score-badge">
+                    <!-- Timer for Test Mode -->
+                    <div id="test-timer" class="test-timer" style="display: none;">
+                        ⏱️ <span id="timer-display">90:00</span>
+                    </div>
+                    <!-- Score for Practice Mode -->
+                    <div id="score-container" class="score-badge">
                         Score: <span id="current-score">0</span>
                     </div>
+                    <!-- Submit Button for Test Mode -->
+                    <button id="submit-test-btn" class="primary-btn" style="display: none; padding: 0.5rem 1rem;">
+                        Submit Test
+                    </button>
+                </div>
+
+                <!-- Question Navigator for Test Mode -->
+                <div id="question-navigator" class="question-navigator" style="display: none;">
+                    <!-- Question number buttons injected here -->
                 </div>
 
                 <div class="question-card glass-card">

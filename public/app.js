@@ -8,7 +8,14 @@ document.addEventListener('DOMContentLoaded', () => {
         currentYear: null,
         activeTag: null,
         mode: 'YEAR', // 'YEAR', 'SET', or 'SHUFFLE'
-        sessionKey: null // Unique key for localStorage
+        sessionKey: null, // Unique key for localStorage
+        // Test Mode (Exam Mode)
+        testMode: false,           // true for exam mode, false for practice
+        userAnswers: {},           // Store {questionIndex: selectedAnswer}
+        timerEndTime: null,        // Timestamp when timer should end
+        timerInterval: null,       // Interval ID for timer updates
+        testSubmitted: false,      // Track if test was submitted
+        reviewMode: false          // Track if we're in review mode
     };
 
     // --- Helpers ---
@@ -325,13 +332,102 @@ document.addEventListener('DOMContentLoaded', () => {
                 state.mode = 'SET';
                 state.sessionKey = key;
                 state.questions = paperQuestions;
-                startQuiz();
+                // Start in EXAM MODE for mock tests
+                startTestMode();
             };
             els.yearsGrid.appendChild(card);
         });
     }
 
+    // --- Test Mode Logic ---
+    function startTestMode() {
+        // Confirmation / Instructions
+        const msg = "Starting Mock Test Mode:\n\n- 90 Minutes Timer\n- No immediate answers\n- Submit at the end to see results\n\nReady to begin?";
+        if (!confirm(msg)) return;
+
+        state.testMode = true;
+        state.userAnswers = {};
+        state.testSubmitted = false;
+        state.reviewMode = false;
+
+        // 90 Minutes = 5400 seconds
+        state.timerEndTime = Date.now() + 90 * 60 * 1000;
+
+        if (state.timerInterval) clearInterval(state.timerInterval);
+        state.timerInterval = setInterval(updateTimer, 1000);
+
+        // Show Test UI elements
+        document.getElementById('test-timer').style.display = 'flex';
+        document.getElementById('submit-test-btn').style.display = 'block';
+        document.getElementById('score-container').style.display = 'none';
+        document.getElementById('question-navigator').style.display = 'flex';
+
+        startQuiz();
+    }
+
+    function updateTimer() {
+        if (!state.timerEndTime) return;
+
+        const now = Date.now();
+        const diff = state.timerEndTime - now;
+
+        if (diff <= 0) {
+            clearInterval(state.timerInterval);
+            document.getElementById('timer-display').innerText = "00:00";
+            alert("Time's up! Submitting test automatically.");
+            submitTest();
+            return;
+        }
+
+        const minutes = Math.floor(diff / 60000);
+        const seconds = Math.floor((diff % 60000) / 1000);
+
+        const display = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        const timerEl = document.getElementById('timer-display');
+        const timerContainer = document.getElementById('test-timer');
+
+        timerEl.innerText = display;
+
+        // Visual warnings
+        if (minutes < 10) {
+            timerContainer.classList.add('warning');
+        }
+        if (minutes < 1) {
+            timerContainer.classList.remove('warning');
+            timerContainer.classList.add('critical');
+        }
+    }
+
+    function submitTest() {
+        if (!confirm("Are you sure you want to submit the test?")) return;
+
+        clearInterval(state.timerInterval);
+        state.testSubmitted = true;
+
+        // Calculate Score
+        let correctCount = 0;
+        state.questions.forEach((q, index) => {
+            const userAns = state.userAnswers[index];
+            if (userAns && userAns === (q.correct_answer || q.correctAnswer)) {
+                correctCount++;
+            }
+        });
+        state.score = correctCount;
+
+        showResults();
+    }
+
     async function startQuiz() {
+        // IMPORTANT: Reset testMode for non-Mock-Test quizzes
+        // Mock Tests call startTestMode() BEFORE startQuiz(), which sets testMode = true
+        // All other quiz types call startQuiz() directly, so we reset here
+        if (!state.testMode) {
+            state.testMode = false;
+            state.testSubmitted = false;
+            state.userAnswers = {};
+            state.reviewMode = false;
+        }
+
         if (!state.questions || state.questions.length === 0) {
             alert("No questions available to start the quiz.");
             switchView('home');
@@ -388,9 +484,76 @@ document.addEventListener('DOMContentLoaded', () => {
             state.score = 0;
         }
 
+        // Reset Timer UI if NOT test mode (or fresh start handled in startTestMode)
+        if (!state.testMode) {
+            if (state.timerInterval) clearInterval(state.timerInterval);
+            document.getElementById('test-timer').style.display = 'none';
+            document.getElementById('submit-test-btn').style.display = 'none';
+            document.getElementById('score-container').style.display = 'block';
+            document.getElementById('question-navigator').style.display = 'none';
+        }
+
         els.currentScore.innerText = state.score;
         switchView('quiz');
         renderQuestion();
+
+        if (state.testMode) {
+            renderQuestionNavigator();
+            // Setup Submit Button
+            document.getElementById('submit-test-btn').onclick = submitTest;
+        }
+    }
+
+    function renderQuestionNavigator() {
+        const nav = document.getElementById('question-navigator');
+        if (!nav) return;
+        nav.innerHTML = '';
+
+        state.questions.forEach((q, i) => {
+            const btn = document.createElement('button');
+            btn.innerText = i + 1;
+
+            // Build class list
+            let classes = ['nav-btn'];
+
+            // 1. Current Question Highlight
+            // Use abstract equality (==) to handle potential string/number mismatches
+            if (i == state.currentQuestionIndex) {
+                classes.push('current');
+            }
+
+            // 2. Mode-specific coloring
+            const userAns = state.userAnswers[i];
+
+            if (state.testMode && state.testSubmitted) {
+                // --- REVIEW MODE ---
+                const correctAns = q.correct_answer || q.correctAnswer;
+
+                if (!userAns) {
+                    classes.push('review-unanswered'); // Yellow
+                } else if (userAns === correctAns) {
+                    classes.push('review-correct'); // Green
+                } else {
+                    classes.push('review-wrong'); // Red
+                }
+            } else {
+                // --- EXAM MODE ---
+                // In Exam mode, we show "Answered" status (Blue or standard color)
+                if (userAns) {
+                    classes.push('answered');
+                }
+            }
+
+            btn.className = classes.join(' ');
+
+            btn.onclick = () => {
+                state.currentQuestionIndex = i;
+                renderQuestion();
+                renderQuestionNavigator();
+            };
+
+            nav.appendChild(btn);
+        });
     }
 
     function saveProgress() {
@@ -425,11 +588,16 @@ document.addEventListener('DOMContentLoaded', () => {
         const q = state.questions[state.currentQuestionIndex];
 
         // Reset UI - PROPERLY hide and clear feedback
+        // Reset UI - PROPERLY hide and clear feedback
         els.feedbackArea.style.display = 'none';
         els.feedbackText.innerText = '';
         els.explanationText.innerHTML = '';
         els.optionsContainer.innerHTML = '';
         els.nextBtn.onclick = nextQuestion;
+
+        // Remove old 'Save & Next' if exists (cleaning up dynamic buttons)
+        const oldSaveBtn = document.getElementById('save-next-btn');
+        if (oldSaveBtn) oldSaveBtn.remove();
 
         // Content
         els.questionText.innerText = q.question_text || q.questionText;
@@ -444,16 +612,96 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Options
         const options = q.options; // Object like {A: "...", B: "..."}
+
+        // Check if answered in test mode
+        const savedAnswer = state.testMode ? state.userAnswers[state.currentQuestionIndex] : null;
+
         Object.keys(options).forEach(key => {
             const btn = document.createElement('button');
             btn.className = 'option-btn';
+
+            // In Test Mode/Review Mode, show selection
+            if (state.testMode) {
+                if (savedAnswer === key) btn.classList.add('selected');
+
+                // If Review Mode (Submitted), show correct/wrong
+                if (state.testSubmitted) {
+                    const isCorrect = (key === (q.correct_answer || q.correctAnswer));
+                    const isSelected = (savedAnswer === key);
+
+                    if (isCorrect) btn.classList.add('review-correct');
+                    if (isSelected && !isCorrect) btn.classList.add('review-wrong');
+                }
+            }
+
             btn.innerHTML = `<span class="option-letter">${key}</span> ${options[key]}`;
-            btn.onclick = () => handleAnswer(key, q.correct_answer || q.correctAnswer, q.explanation);
+
+            // Interaction logic
+            if (state.testMode && state.testSubmitted) {
+                btn.disabled = true; // Review mode is read-only
+            } else {
+                btn.onclick = () => handleAnswer(key, q.correct_answer || q.correctAnswer, q.explanation);
+            }
+
             els.optionsContainer.appendChild(btn);
         });
+
+        // Test Mode: Add "Save & Next" Button below options
+        if (state.testMode && !state.testSubmitted) {
+            const saveBtn = document.createElement('button');
+            saveBtn.id = 'save-next-btn';
+            saveBtn.className = 'primary-btn';
+            saveBtn.style.marginTop = '1rem';
+            saveBtn.innerText = state.currentQuestionIndex === state.questions.length - 1 ? 'Finish Test section' : 'Save & Next';
+            saveBtn.onclick = () => {
+                // Answer is already saved on click if we want, OR we check if selected.
+                // Current logic: click option -> saves.
+                // So this button basically just goes to next.
+                nextQuestion();
+            };
+            els.optionsContainer.appendChild(saveBtn);
+        }
+
+        // Review Mode: Show explanation
+        if (state.testMode && state.testSubmitted) {
+            const explanation = q.explanation;
+            if (explanation) {
+                const processed = explanation
+                    .replace(/\\n/g, '\n')
+                    .replace(/\[cite:\s*[^\]]+\]/g, '')
+                    .replace(/✅|❌/g, '')
+                    .trim();
+                els.explanationText.innerHTML = marked.parse(processed);
+                els.feedbackArea.style.display = 'block';
+                // Hide feedback text (correct/incorrect) as colors show it, 
+                // but we can show it if we want. Let's hide the standard feedback text.
+                els.feedbackText.style.display = 'none';
+                // Hide normal next button in feedback area
+                els.nextBtn.style.display = 'none';
+            }
+        }
     }
 
     function handleAnswer(selectedKey, correctKey, explanation) {
+
+        if (state.testMode) {
+            // EXAM MODE LOGIC
+            state.userAnswers[state.currentQuestionIndex] = selectedKey;
+
+            // Update UI (select button)
+            const buttons = els.optionsContainer.querySelectorAll('.option-btn');
+            buttons.forEach(btn => {
+                const letter = btn.querySelector('.option-letter').innerText;
+                btn.classList.remove('selected');
+                if (letter === selectedKey) btn.classList.add('selected');
+            });
+
+            // Update Navigator
+            renderQuestionNavigator();
+            return; // EXIT - do not show feedback
+        }
+
+        // PRACTICE MODE LOGIC (Original)
         // Disable all buttons
         const buttons = els.optionsContainer.querySelectorAll('.option-btn');
         buttons.forEach(btn => btn.disabled = true);
@@ -513,15 +761,28 @@ document.addEventListener('DOMContentLoaded', () => {
         state.currentQuestionIndex++;
         if (state.currentQuestionIndex < state.questions.length) {
             renderQuestion();
+            // Force Navigator Update in Test Mode to sync highlight
+            if (state.testMode) {
+                renderQuestionNavigator();
+            }
         } else {
             showResults();
         }
     }
 
     function showResults() {
+        if (state.testMode && !state.testSubmitted) {
+            // If manual navigation reached end, prompt submit
+            submitTest();
+            return;
+        }
+
         switchView('results');
         els.finalScore.innerText = state.score;
         els.totalQuestions.innerText = state.questions.length;
+
+        // Stop timer
+        if (state.timerInterval) clearInterval(state.timerInterval);
 
         // Clear progress when quiz is finished
         clearProgress();
@@ -530,6 +791,20 @@ document.addEventListener('DOMContentLoaded', () => {
         if (percentage >= 80) els.performanceMsg.innerText = "Outstanding! You're a pro! 🌟";
         else if (percentage >= 50) els.performanceMsg.innerText = "Good job! Keep practicing. 👍";
         else els.performanceMsg.innerText = "Keep studying, you'll get there! 📚";
+
+        // Add Review Button for Test Mode
+        if (state.testMode) {
+            els.retryBtn.innerText = "Review Answers";
+            els.retryBtn.onclick = () => {
+                state.currentQuestionIndex = 0;
+                switchView('quiz');
+                renderQuestion();
+                renderQuestionNavigator();
+            }
+        } else {
+            els.retryBtn.innerText = "Try Again";
+            els.retryBtn.onclick = () => startQuiz();
+        }
     }
 
     // --- Helpers ---

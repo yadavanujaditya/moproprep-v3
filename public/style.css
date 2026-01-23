@@ -81,6 +81,7 @@ body {
 .pro-badge {
     background: linear-gradient(135deg, var(--primary), var(--secondary));
     -webkit-background-clip: text;
+    background-clip: text;
     -webkit-text-fill-color: transparent;
     font-size: 0.8em;
     margin-left: 2px;
@@ -627,4 +628,280 @@ h3#question-text {
     .action-buttons {
         flex-direction: column;
     }
+}
+
+/* ========================================
+   TEST MODE STYLES
+   ======================================== */
+
+/* Timer Display */
+.test-timer {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: var(--surface);
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 1.1rem;
+    border: 1px solid var(--border);
+}
+
+.test-timer.warning {
+    background: rgba(245, 158, 11, 0.15);
+    border-color: var(--warning);
+    color: var(--warning);
+    animation: pulse 1s infinite;
+}
+
+.test-timer.critical {
+    background: rgba(239, 68, 68, 0.15);
+    border-color: var(--danger);
+    color: var(--danger);
+    animation: pulse 0.5s infinite;
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.7;
+    }
+}
+
+/* Question Navigator */
+.question-navigator {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 1rem;
+    background: var(--surface-glass);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    margin-bottom: 1rem;
+    max-height: 150px;
+    overflow-y: auto;
+}
+
+.nav-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text-main);
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.nav-btn:hover {
+    border-color: var(--primary);
+    background: rgba(79, 70, 229, 0.1);
+}
+
+.nav-btn.current {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+.nav-btn.answered {
+    background: var(--secondary);
+    color: white;
+    border-color: var(--secondary);
+}
+
+.nav-btn.current.answered {
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    border-color: var(--primary);
+}
+
+/* Test Mode Option States */
+.option-btn.selected {
+    background: rgba(79, 70, 229, 0.15);
+    border-color: var(--primary);
+    border-width: 2px;
+}
+
+.option-btn.selected .option-letter {
+    background: var(--primary);
+    color: white;
+}
+
+/* Review Mode Styles */
+.option-btn.review-correct {
+    background: rgba(16, 185, 129, 0.1);
+    border-color: var(--secondary);
+}
+
+.option-btn.review-correct .option-letter {
+    background: var(--secondary);
+    color: white;
+}
+
+.option-btn.review-wrong {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: var(--danger);
+}
+
+.option-btn.review-wrong .option-letter {
+    background: var(--danger);
+    color: white;
+}
+
+/* Test Navigation Buttons */
+.test-nav-buttons {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+
+.test-nav-buttons button {
+    flex: 1;
+}
+
+/* Submit Confirmation Modal */
+.submit-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    animation: fadeIn 0.2s ease-out;
+}
+
+.submit-modal-content {
+    background: var(--surface);
+    border-radius: 16px;
+    padding: 2rem;
+    max-width: 400px;
+    text-align: center;
+    border: 1px solid var(--border);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}
+
+.submit-modal h2 {
+    margin-bottom: 1rem;
+}
+
+.submit-modal .stats {
+    display: flex;
+    justify-content: space-around;
+    margin: 1.5rem 0;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+}
+
+.submit-modal .stat-item {
+    text-align: center;
+}
+
+.submit-modal .stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--primary);
+}
+
+.submit-modal .stat-label {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+}
+
+.submit-modal .modal-buttons {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+
+.submit-modal .modal-buttons button {
+    flex: 1;
+}
+
+/* Review Results Header */
+.review-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background: var(--surface-glass);
+    border-radius: 12px;
+    margin-bottom: 1rem;
+    border: 1px solid var(--border);
+}
+
+.review-score {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--primary);
+}
+
+/* Mobile adjustments for test mode */
+@media (max-width: 600px) {
+    .quiz-header {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .test-timer {
+        order: -1;
+        width: 100%;
+        justify-content: center;
+    }
+
+    .question-navigator {
+        max-height: 100px;
+    }
+
+    .nav-btn {
+        width: 32px;
+        height: 32px;
+        font-size: 0.75rem;
+    }
+}
+
+/* Review Mode Navigator Colors */
+.nav-btn.review-correct {
+    background-color: var(--secondary) !important;
+    /* Green */
+    color: white !important;
+    border-color: var(--secondary) !important;
+}
+
+.nav-btn.review-wrong {
+    background-color: var(--danger) !important;
+    /* Red */
+    color: white !important;
+    border-color: var(--danger) !important;
+}
+
+.nav-btn.review-unanswered {
+    background-color: var(--warning) !important;
+    /* Yellow */
+    color: black !important;
+    border-color: var(--warning) !important;
+}
+
+/* Highlight current question in ALL modes (Review & Exam) */
+/* precise selector to override the above !important backgrounds if needed, 
+   or just use box-shadow/border to indicate selection without changing the color code. */
+/* Specific handling for Review Mode + Current: Keep the status color, but add a visual indicator (Border/Scale) */
+.nav-btn.review-correct.current,
+.nav-btn.review-wrong.current,
+.nav-btn.review-unanswered.current {
+    transform: scale(1.15);
+    box-shadow: 0 0 0 3px var(--background), 0 0 0 5px var(--primary);
+    z-index: 10;
 }
