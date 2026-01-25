@@ -15,7 +15,8 @@ document.addEventListener('DOMContentLoaded', () => {
         timerEndTime: null,        // Timestamp when timer should end
         timerInterval: null,       // Interval ID for timer updates
         testSubmitted: false,      // Track if test was submitted
-        reviewMode: false          // Track if we're in review mode
+        reviewMode: false,         // Track if we're in review mode
+        userRating: 0              // Store current star selection
     };
 
     // --- Helpers ---
@@ -35,6 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
         mainContent: document.getElementById('main-content'),
         views: {
             home: document.getElementById('home-view'),
+            stateSelection: document.getElementById('state-selection-view'),
             yearSelection: document.getElementById('year-selection-view'),
             quiz: document.getElementById('quiz-view'),
             results: document.getElementById('results-view')
@@ -78,6 +80,7 @@ document.addEventListener('DOMContentLoaded', () => {
         loadYears();
         setupEventListeners();
         checkTheme();
+        initRatingSystem();
 
         // --- Auth Initialization ---
         AuthService.init((user) => {
@@ -216,10 +219,31 @@ document.addEventListener('DOMContentLoaded', () => {
         // Separate Mock Tests if tag is 'practiseset'
         let regularQuestions = allQuestions;
         let mockQuestions = [];
+        let currentAffairsQuestions = [];
+        let freqAskedQuestions = [];
 
         if (tag === 'practiseset') {
+            // Helper for case-insensitive tag check
+            const hasTag = (q, partialTag) => q.tags && q.tags.some(t => t.toLowerCase().includes(partialTag.toLowerCase()));
+
+            // 1. Extract Special Groups
             mockQuestions = allQuestions.filter(q => q.tags && q.tags.includes('mocktest'));
-            regularQuestions = allQuestions.filter(q => !q.tags || !q.tags.includes('mocktest'));
+
+            // Current Affairs (Moved/Separated)
+            currentAffairsQuestions = allQuestions.filter(q => hasTag(q, 'current affairs'));
+
+            // Frequently Asked (Copied/Duplicated)
+            freqAskedQuestions = allQuestions.filter(q => hasTag(q, 'frequently asked'));
+
+            // 2. Define Regular Questions 
+            // Exclude Mock Tests AND Current Affairs (but keep Frequently Asked as they are just copied)
+            regularQuestions = allQuestions.filter(q => {
+                const isMock = q.tags && q.tags.includes('mocktest');
+                const isCA = hasTag(q, 'current affairs');
+                return !isMock && !isCA;
+            });
+
+
         }
 
         // ADD EXTRA CARD FIRST: Previous Year Shuffle
@@ -237,6 +261,51 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
         shuffleCard.onclick = () => loadQuestionsByTag('haryanamo', true);
         els.yearsGrid.appendChild(shuffleCard);
+
+        // --- ADD SPECIAL CARDS (Current Affairs & Frequently Asked) ---
+        if (currentAffairsQuestions.length > 0) {
+            const caKey = `progress_special_current_affairs`;
+            const caSaved = getSavedProgress(caKey);
+            const caStatus = caSaved ? `<div class="card-status">Progress: ${caSaved.index + 1}/${caSaved.total}</div>` : '';
+
+            const caCard = document.createElement('div');
+            caCard.className = 'year-card';
+            caCard.style.border = '1px solid var(--info, #17a2b8)';
+            caCard.innerHTML = `
+                <div class="year-title">📰 Current Affairs</div>
+                <div class="year-desc">Latest updates and events (${currentAffairsQuestions.length})</div>
+                ${caStatus}
+            `;
+            caCard.onclick = () => {
+                state.mode = 'SET';
+                state.sessionKey = caKey;
+                state.questions = currentAffairsQuestions;
+                startQuiz();
+            };
+            els.yearsGrid.appendChild(caCard);
+        }
+
+        if (freqAskedQuestions.length > 0) {
+            const freqKey = `progress_special_freq_asked`;
+            const freqSaved = getSavedProgress(freqKey);
+            const freqStatus = freqSaved ? `<div class="card-status">Progress: ${freqSaved.index + 1}/${freqSaved.total}</div>` : '';
+
+            const freqCard = document.createElement('div');
+            freqCard.className = 'year-card';
+            freqCard.style.border = '1px solid var(--success, #28a745)';
+            freqCard.innerHTML = `
+                <div class="year-title">🔥 Frequently Asked</div>
+                <div class="year-desc">High yield questions (${freqAskedQuestions.length})</div>
+                ${freqStatus}
+            `;
+            freqCard.onclick = () => {
+                state.mode = 'SET';
+                state.sessionKey = freqKey;
+                state.questions = freqAskedQuestions;
+                startQuiz();
+            };
+            els.yearsGrid.appendChild(freqCard);
+        }
 
         // ADD MOCK TEST CARD if we have mock questions
         if (mockQuestions.length > 0) {
@@ -824,6 +893,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (window.AnalyticsTracker) {
                 const viewLabels = {
                     home: 'Home',
+                    stateSelection: 'State Selection',
                     yearSelection: 'Year Selection',
                     quiz: 'Quiz',
                     results: 'Results'
@@ -837,8 +907,52 @@ document.addEventListener('DOMContentLoaded', () => {
     function setupEventListeners() {
         // Home Menu Navigation
         els.btnPrevYear.onclick = async () => {
-            selectMode('haryanamo', 'Previous Year Papers', 'Practice with real exam questions from previous years.', 'YEAR');
+            switchView('stateSelection');
+            await checkStatesAvailability();
         };
+
+        async function checkStatesAvailability() {
+            const tags = ['haryanamo', 'rajasthanmo', 'upscmo'];
+            const btnIds = {
+                'haryanamo': 'btn-pyq-haryana',
+                'rajasthanmo': 'btn-pyq-rajasthan',
+                'upscmo': 'btn-pyq-upsc'
+            };
+
+            // Show a loader or just handle per button
+            for (const tag of tags) {
+                const btn = document.getElementById(btnIds[tag]);
+                if (!btn) continue;
+
+                try {
+                    const res = await fetch(`/api/tags/${tag}`);
+                    const data = await res.json();
+                    if (data && data.length > 0) {
+                        btn.style.display = 'flex';
+                    } else {
+                        btn.style.display = 'none';
+                    }
+                } catch (err) {
+                    console.error(`Check failed for ${tag}:`, err);
+                    // Default to hidden if check fails? Or visible? Let's keep visible on error just in case.
+                    btn.style.display = 'flex';
+                }
+            }
+        }
+
+        document.getElementById('btn-pyq-haryana').onclick = () => {
+            selectMode('haryanamo', 'Haryana Mo PYQ', 'Practice with real exam questions from Haryana.', 'YEAR');
+        };
+
+        document.getElementById('btn-pyq-rajasthan').onclick = () => {
+            selectMode('rajasthanmo', 'Rajasthan Mo PYQ', 'Practice with real exam questions from Rajasthan.', 'YEAR');
+        };
+
+        document.getElementById('btn-pyq-upsc').onclick = () => {
+            selectMode('upscmo', 'UPSC PYQ', 'Practice with real exam questions from UPSC.', 'YEAR');
+        };
+
+        document.getElementById('back-to-home-from-state').onclick = () => switchView('home');
 
         els.btnProQuiz.onclick = async () => {
             try {
@@ -849,7 +963,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // Force checks against AuthService.user directly
                 if (AuthService.isPro()) {
-                    selectMode('practiseset', 'HaryanaMo Pro', 'Challenge yourself with structured practice sets.', 'SET');
+                    selectMode('practiseset', 'MoProPrep Pro', 'Challenge yourself with structured practice sets.', 'SET');
                 } else {
                     if (!AuthService.user || !AuthService.user.email) {
                         alert("User session invalid. Please refresh.");
@@ -858,7 +972,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Trigger Razorpay for non-pro users
                     PaymentService.initiatePayment(AuthService.user.email, () => {
                         // Callback on success - directly go to practice sets!
-                        selectMode('practiseset', 'HaryanaMo Pro', 'Challenge yourself with structured practice sets.', 'SET');
+                        selectMode('practiseset', 'MoProPrep Pro', 'Challenge yourself with structured practice sets.', 'SET');
                     });
                 }
             } catch (err) {
@@ -919,5 +1033,94 @@ document.addEventListener('DOMContentLoaded', () => {
             [array[i], array[j]] = [array[j], array[i]];
         }
         return array;
+    }
+
+    // --- Rating System ---
+    function initRatingSystem() {
+        const modal = document.getElementById('rating-modal');
+        const stars = document.querySelectorAll('.star');
+        const submitBtn = document.getElementById('submit-rating-btn');
+        const closeBtn = document.getElementById('close-rating-modal');
+        const suggestionInput = document.getElementById('feedback-suggestion');
+        const thankYouMsg = document.getElementById('rating-thank-you');
+
+        if (!modal || !submitBtn) return;
+
+        // Check if already rated or dismissed
+        if (localStorage.getItem('haryanaMo_feedback_submitted')) return;
+
+        // Show popup after 90 seconds (1.5 minutes)
+        setTimeout(() => {
+            // Only show if not already closed/submitted in this session
+            if (!localStorage.getItem('haryanaMo_feedback_submitted')) {
+                modal.style.display = 'flex';
+            }
+        }, 90000);
+
+        // Star Selection
+        stars.forEach(star => {
+            star.onclick = () => {
+                const val = parseInt(star.getAttribute('data-value'));
+                state.userRating = val;
+
+                // Update UI: highlight stars up to selected value
+                stars.forEach(s => {
+                    const sVal = parseInt(s.getAttribute('data-value'));
+                    if (sVal <= val) {
+                        s.classList.add('active');
+                        s.innerText = '★';
+                    } else {
+                        s.classList.remove('active');
+                        s.innerText = '☆';
+                    }
+                });
+            };
+        });
+
+        // Close Modal
+        closeBtn.onclick = () => {
+            modal.style.display = 'none';
+        };
+
+        // Submit Feedback
+        submitBtn.onclick = async () => {
+            if (state.userRating === 0) {
+                alert("Please select a star rating first!");
+                return;
+            }
+
+            const suggestion = suggestionInput.value.trim();
+            submitBtn.disabled = true;
+            submitBtn.innerText = 'Submitting...';
+
+            try {
+                await db.collection('feedback').add({
+                    rating: state.userRating,
+                    suggestion: suggestion,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                    userId: AuthService.user ? AuthService.user.uid : 'anonymous',
+                    userEmail: AuthService.user ? AuthService.user.email : 'anonymous'
+                });
+
+                // Show success UI
+                submitBtn.style.display = 'none';
+                suggestionInput.parentElement.style.display = 'none';
+                thankYouMsg.style.display = 'block';
+
+                // Mark as submitted
+                localStorage.setItem('haryanaMo_feedback_submitted', 'true');
+
+                // Auto-close after 2 seconds
+                setTimeout(() => {
+                    modal.style.display = 'none';
+                }, 2000);
+
+            } catch (err) {
+                console.error("Feedback submission error:", err);
+                alert("Error submitting feedback. Please try again.");
+                submitBtn.disabled = false;
+                submitBtn.innerText = 'Submit Feedback';
+            }
+        };
     }
 });

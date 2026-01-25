@@ -4,14 +4,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HaryanaMo - Premium Medical Quiz | Practice for Haryana Medical Exams</title>
+    <title>MoProPrep - Premium Medical Quiz</title>
 
     <!-- SEO Meta Tags -->
     <meta name="description"
-        content="HaryanaMo is the best platform for Haryana medical exam preparation. Practice previous year questions, mock tests, and premium quiz sets for HPSC, NEET PG, and other medical exams.">
+        content="MoProPrep is the best platform for medical exam preparation. Practice previous year questions, mock tests, and premium quiz sets.">
     <meta name="keywords"
-        content="HaryanaMo, Haryana Medical Quiz, Medical Exam Preparation, HPSC Medical, Previous Year Questions, Mock Test, Medical MCQ, Haryana Health Services">
-    <meta name="author" content="HaryanaMo">
+        content="MoProPrep, Medical Quiz, Medical Exam Preparation, HPSC Medical, Previous Year Questions, Mock Test, Medical MCQ">
+    <meta name="author" content="MoProPrep">
     <meta name="robots" content="index, follow">
     <link rel="canonical" href="https://moproprep.in/">
 
@@ -94,7 +94,7 @@
             <div class="logo" id="home-logo" style="cursor: pointer; flex-direction: column; align-items: flex-start;">
                 <div style="display: flex; align-items: center; gap: 0.5rem;">
                     <span class="logo-icon">🩺</span>
-                    <h1>HaryanaMo</h1>
+                    <h1>MoProPrep</h1>
                 </div>
                 <span id="pro-badge"
                     style="display: none; background: linear-gradient(135deg, #FFD700, #FFA500); color: #000; font-size: 0.5rem; font-weight: 600; padding: 2px 6px; border-radius: 8px; margin-top: 2px;">✨
@@ -116,7 +116,7 @@
             <!-- VIEW: Home Menu -->
             <section id="home-view" class="view active-view">
                 <div class="hero-section">
-                    <h2>Welcome to HaryanaMo</h2>
+                    <h2>Welcome to MoProPrep</h2>
                     <p>Select your learning path to get started.</p>
                 </div>
                 <div class="menu-grid">
@@ -130,8 +130,42 @@
                     <div class="menu-card" id="btn-pro-quiz">
                         <div class="menu-icon">💎</div>
                         <div class="menu-content">
-                            <h3>HaryanaMo Pro</h3>
+                            <h3>MoProPrep Pro</h3>
                             <p>Unlock premium questions and advanced clinical cases.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- VIEW: State Selection for PYQs -->
+            <section id="state-selection-view" class="view hidden-view">
+                <div class="quiz-header" style="margin-bottom: 2rem;">
+                    <button id="back-to-home-from-state" class="icon-btn">← Back to Menu</button>
+                </div>
+                <div class="hero-section">
+                    <h2>Select Examination</h2>
+                    <p>Choose the state or exam board for previous year papers.</p>
+                </div>
+                <div class="menu-grid">
+                    <div class="menu-card" id="btn-pyq-haryana">
+                        <div class="menu-icon">🏙️</div>
+                        <div class="menu-content">
+                            <h3>Haryana Mo PYQ</h3>
+                            <p>Previous year papers for HPSC and Haryana medical exams.</p>
+                        </div>
+                    </div>
+                    <div class="menu-card" id="btn-pyq-rajasthan">
+                        <div class="menu-icon">🏰</div>
+                        <div class="menu-content">
+                            <h3>Rajasthan Mo PYQ</h3>
+                            <p>Previous year papers for RPSC and Rajasthan medical exams.</p>
+                        </div>
+                    </div>
+                    <div class="menu-card" id="btn-pyq-upsc">
+                        <div class="menu-icon">🏛️</div>
+                        <div class="menu-content">
+                            <h3>UPSC PYQ</h3>
+                            <p>Previous year papers for UPSC medical and CMS exams.</p>
                         </div>
                     </div>
                 </div>
@@ -221,7 +255,7 @@
         </main>
 
         <footer>
-            <p>&copy; 2026 HaryanaMo. Designed for Excellence.</p>
+            <p>&copy; 2026 MoProPrep. Designed for Excellence.</p>
             <p style="margin-top: 0.5rem; font-size: 0.9rem;">
                 <a href="https://t.me/yadavanujaditya" target="_blank" rel="noopener noreferrer"
                     style="color: var(--secondary); text-decoration: none; margin-right: 1rem;">
@@ -243,7 +277,7 @@
     <div id="login-modal" class="modal-overlay" style="display: none;">
         <div class="modal-content glass-card" style="max-width: 400px; text-align: center; padding: 2rem;">
             <h2 style="margin-bottom: 1rem;">Login to Continue</h2>
-            <p style="color: #aaa; margin-bottom: 1.5rem;">Sign in to access HaryanaMo features.</p>
+            <p style="color: #aaa; margin-bottom: 1.5rem;">Sign in to access MoProPrep features.</p>
             <button id="btn-google-login" class="primary-btn"
                 style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; width: 100%; padding: 1rem;">
                 <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google"
@@ -282,6 +316,73 @@
                 opacity: 1;
                 transform: scale(1);
             }
+        }
+    </style>
+
+    <!-- RATING POPUP MODAL -->
+    <div id="rating-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content glass-card" style="max-width: 450px; padding: 2.5rem; position: relative;">
+            <button id="close-rating-modal" class="close-btn"
+                style="position: absolute; top: 1rem; right: 1rem; background: none; border: none; color: #aaa; font-size: 1.5rem; cursor: pointer;">&times;</button>
+
+            <div class="rating-header" style="margin-bottom: 1.5rem;">
+                <span style="font-size: 3rem;">⭐</span>
+                <h2 style="margin-top: 1rem;">Enjoying MoProPrep?</h2>
+                <p style="color: #aaa;">Your feedback helps us improve your learning experience.</p>
+            </div>
+
+            <div class="star-rating" id="star-rating-container"
+                style="display: flex; justify-content: center; gap: 0.5rem; margin-bottom: 2rem;">
+                <span class="star" data-value="1">☆</span>
+                <span class="star" data-value="2">☆</span>
+                <span class="star" data-value="3">☆</span>
+                <span class="star" data-value="4">☆</span>
+                <span class="star" data-value="5">☆</span>
+            </div>
+
+            <div class="feedback-input" style="text-align: left; margin-bottom: 1.5rem;">
+                <label for="feedback-suggestion"
+                    style="display: block; margin-bottom: 0.5rem; font-size: 0.9rem; color: #ccc;">How can we
+                    improve?</label>
+                <textarea id="feedback-suggestion" placeholder="Tell us your feedback..."
+                    style="width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: white; padding: 0.8rem; height: 100px; resize: none; font-family: inherit;"></textarea>
+            </div>
+
+            <button id="submit-rating-btn" class="primary-btn" style="width: 100%; padding: 1rem;">Submit
+                Feedback</button>
+            <p id="rating-thank-you"
+                style="display: none; color: var(--secondary); margin-top: 1rem; font-weight: 500;">Thank you for your
+                feedback! ❤️</p>
+        </div>
+    </div>
+
+    <style>
+        .star {
+            font-size: 2.5rem;
+            cursor: pointer;
+            color: #555;
+            transition: color 0.2s, transform 0.2s;
+        }
+
+        .star.active,
+        .star:hover,
+        .star:hover~.star {
+            color: #FFD700;
+        }
+
+        /* Invert hover logic to highlight stars to the left */
+        .star-rating {
+            flex-direction: row-reverse;
+        }
+
+        .star:hover,
+        .star:hover~.star {
+            color: #FFD700;
+        }
+
+        .star.active {
+            color: #FFD700;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
         }
     </style>
 

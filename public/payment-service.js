@@ -16,7 +16,7 @@ const PaymentService = {
             }
 
             // Show confirmation dialog
-            const confirmed = confirm(`HaryanaMo Pro Membership costs ₹${price}.\n\nProceed to payment?`);
+            const confirmed = confirm(`MoProPrep Pro Membership costs ₹${price}.\n\nProceed to payment?`);
             if (!confirmed) {
                 console.log("User cancelled payment.");
                 return;
@@ -42,7 +42,7 @@ const PaymentService = {
                 key: "rzp_live_S5svGNMN2lRtYf", // Live Key
                 amount: order.amount,
                 currency: order.currency,
-                name: "HaryanaMo Pro",
+                name: "MoProPrep Pro",
                 description: "One-time PRO Membership",
                 order_id: order.id,
                 prefill: { email: email },

@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard - HaryanaMo</title>
+    <title>Admin Dashboard - MoProPrep</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
@@ -18,7 +18,7 @@
             <a href="/" class="logo"
                 style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 0.5rem;">
                 <span class="logo-icon">🩺</span>
-                <h1>HaryanaMo Admin</h1>
+                <h1>MoProPrep Admin</h1>
             </a>
             <div style="display: flex; gap: 0.5rem;">
                 <button id="btn-view-stats" class="secondary-btn" style="padding: 0.5rem 1rem;">Analytics 📊</button>
@@ -48,6 +48,27 @@
                     <button id="btn-save-price" class="primary-btn" style="padding: 0.5rem 1rem;">Save Price</button>
                 </div>
                 <p id="price-status" style="margin-top: 0.5rem; font-size: 0.9rem; color: #888;"></p>
+            </div>
+
+            <div class="glass-card" style="margin-top: 2rem;">
+                <h2>User Feedback & Ratings</h2>
+                <div style="max-height: 400px; overflow-y: auto; margin-top: 1rem;">
+                    <table id="feedback-table" style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="text-align: left; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                                <th>Date</th>
+                                <th>User</th>
+                                <th>Rating</th>
+                                <th>Suggestion</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colspan="4" style="text-align: center; padding: 1rem;">Loading feedback...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
             <div class="glass-card" style="margin-top: 2rem;">
@@ -81,7 +102,9 @@
             if (user && user.email === ADMIN_EMAIL) {
                 document.getElementById('login-overlay').style.display = 'none';
                 document.getElementById('admin-content').style.display = 'block';
+                document.getElementById('admin-content').style.display = 'block';
                 loadStats();
+                loadFeedback(); // Load user feedback
                 loadPrice(); // Load current price
             } else if (user) {
                 alert("Unauthorized. Access denied.");
@@ -153,6 +176,37 @@
             } catch (e) {
                 console.error("Failed to toggle Pro status:", e);
                 alert("Failed to update Pro status: " + e.message);
+            }
+        }
+
+        // --- User Feedback Logic ---
+        async function loadFeedback() {
+            try {
+                const feedbackSnap = await db.collection('feedback').orderBy('timestamp', 'desc').get();
+                const tableBody = document.querySelector('#feedback-table tbody');
+                tableBody.innerHTML = '';
+
+                if (feedbackSnap.empty) {
+                    tableBody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 1rem;">No feedback received yet.</td></tr>';
+                    return;
+                }
+
+                feedbackSnap.forEach(doc => {
+                    const f = doc.data();
+                    const date = f.timestamp ? f.timestamp.toDate().toLocaleDateString() : 'N/A';
+                    const stars = '⭐'.repeat(f.rating) + '☆'.repeat(5 - f.rating);
+
+                    const row = `<tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                        <td style="padding: 0.8rem 0; font-size: 0.85rem;">${date}</td>
+                        <td style="padding: 0.8rem 0; font-size: 0.85rem;">${f.userEmail || 'Anonymous'}</td>
+                        <td style="padding: 0.8rem 0; color: #FFD700;">${stars}</td>
+                        <td style="padding: 0.8rem 0; font-size: 0.85rem; max-width: 300px; white-space: normal; word-break: break-all;">${f.suggestion || 'No suggestion'}</td>
+                    </tr>`;
+                    tableBody.insertAdjacentHTML('beforeend', row);
+                });
+            } catch (e) {
+                console.error("Failed to load feedback:", e);
+                document.querySelector('#feedback-table tbody').innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 1rem; color: #f87171;">Error loading feedback.</td></tr>';
             }
         }
 
