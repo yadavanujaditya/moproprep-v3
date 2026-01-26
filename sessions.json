@@ -1,44 +1,34 @@
 {
-  "sess_fj6pfxk2d_1769163252635": {
-    "startTime": 1769163252726,
-    "lastSeen": 1769163252726,
+  "sess_4h5utcxek_1769423427679": {
+    "startTime": 1769423427766,
+    "lastSeen": 1769423427766,
     "ip": "127.0.0.1",
     "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
     "views": {
       "Home": 0
     }
   },
-  "sess_l3pyyjqg7_1769163281373": {
-    "startTime": 1769163281406,
-    "lastSeen": 1769163281406,
+  "sess_vqnqdau3w_1769423459628": {
+    "startTime": 1769423459651,
+    "lastSeen": 1769449736632,
     "ip": "127.0.0.1",
     "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
     "views": {
-      "Home": 0
+      "Home": 60,
+      "Year Selection": 60,
+      "Quiz": 3330
     }
   },
-  "sess_f0jx56onw_1769163291795": {
-    "startTime": 1769163291800,
-    "lastSeen": 1769165902149,
+  "sess_pwol8uwpw_1769449761355": {
+    "startTime": 1769449761396,
+    "lastSeen": 1769450430540,
     "ip": "127.0.0.1",
     "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
     "views": {
-      "Home": 120,
-      "Year Selection": 120,
-      "Quiz": 2670,
-      "Results": 120
-    }
-  },
-  "sess_fgucp2ygp_1769165920817": {
-    "startTime": 1769165920920,
-    "lastSeen": 1769169016950,
-    "ip": "127.0.0.1",
-    "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
-    "views": {
-      "Home": 720,
-      "Year Selection": 1770,
-      "Quiz": 1260,
-      "Results": 150
+      "Home": 390,
+      "Year Selection": 510,
+      "State Selection": 60,
+      "Quiz": 360
     }
   }
 }

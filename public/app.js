@@ -1038,7 +1038,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Rating System ---
     function initRatingSystem() {
         const modal = document.getElementById('rating-modal');
-        const stars = document.querySelectorAll('.star');
+        const ratingBtns = document.querySelectorAll('.rating-btn');
         const submitBtn = document.getElementById('submit-rating-btn');
         const closeBtn = document.getElementById('close-rating-modal');
         const suggestionInput = document.getElementById('feedback-suggestion');
@@ -1057,23 +1057,15 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }, 90000);
 
-        // Star Selection
-        stars.forEach(star => {
-            star.onclick = () => {
-                const val = parseInt(star.getAttribute('data-value'));
+        // Star/Number Selection
+        ratingBtns.forEach(btn => {
+            btn.onclick = () => {
+                const val = parseInt(btn.getAttribute('data-value'));
                 state.userRating = val;
 
-                // Update UI: highlight stars up to selected value
-                stars.forEach(s => {
-                    const sVal = parseInt(s.getAttribute('data-value'));
-                    if (sVal <= val) {
-                        s.classList.add('active');
-                        s.innerText = '★';
-                    } else {
-                        s.classList.remove('active');
-                        s.innerText = '☆';
-                    }
-                });
+                // Update UI: highlight selected button
+                ratingBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
             };
         });
 

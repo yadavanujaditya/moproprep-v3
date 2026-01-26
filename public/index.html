@@ -326,18 +326,18 @@
                 style="position: absolute; top: 1rem; right: 1rem; background: none; border: none; color: #aaa; font-size: 1.5rem; cursor: pointer;">&times;</button>
 
             <div class="rating-header" style="margin-bottom: 1.5rem;">
-                <span style="font-size: 3rem;">⭐</span>
+                <span style="font-size: 3rem;">📊</span>
                 <h2 style="margin-top: 1rem;">Enjoying MoProPrep?</h2>
-                <p style="color: #aaa;">Your feedback helps us improve your learning experience.</p>
+                <p style="color: #aaa;">Please rate it out of 5?</p>
             </div>
 
-            <div class="star-rating" id="star-rating-container"
-                style="display: flex; justify-content: center; gap: 0.5rem; margin-bottom: 2rem;">
-                <span class="star" data-value="1">☆</span>
-                <span class="star" data-value="2">☆</span>
-                <span class="star" data-value="3">☆</span>
-                <span class="star" data-value="4">☆</span>
-                <span class="star" data-value="5">☆</span>
+            <div class="rating-container" id="rating-container"
+                style="display: flex; justify-content: center; gap: 0.8rem; margin-bottom: 2rem;">
+                <button class="rating-btn" data-value="1">1</button>
+                <button class="rating-btn" data-value="2">2</button>
+                <button class="rating-btn" data-value="3">3</button>
+                <button class="rating-btn" data-value="4">4</button>
+                <button class="rating-btn" data-value="5">5</button>
             </div>
 
             <div class="feedback-input" style="text-align: left; margin-bottom: 1.5rem;">
@@ -357,32 +357,32 @@
     </div>
 
     <style>
-        .star {
-            font-size: 2.5rem;
+        .rating-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.05);
+            color: #fff;
+            font-size: 1.2rem;
+            font-weight: 600;
             cursor: pointer;
-            color: #555;
-            transition: color 0.2s, transform 0.2s;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
-        .star.active,
-        .star:hover,
-        .star:hover~.star {
-            color: #FFD700;
+        .rating-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-2px);
         }
 
-        /* Invert hover logic to highlight stars to the left */
-        .star-rating {
-            flex-direction: row-reverse;
-        }
-
-        .star:hover,
-        .star:hover~.star {
-            color: #FFD700;
-        }
-
-        .star.active {
-            color: #FFD700;
-            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        .rating-btn.active {
+            background: var(--secondary, #6C63FF);
+            color: white;
+            border-color: var(--secondary, #6C63FF);
+            box-shadow: 0 4px 15px rgba(108, 99, 255, 0.4);
         }
     </style>
 
