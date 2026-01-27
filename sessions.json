@@ -1,34 +1,48 @@
 {
-  "sess_4h5utcxek_1769423427679": {
-    "startTime": 1769423427766,
-    "lastSeen": 1769423427766,
+  "sess_jtlij1ur4_1769511713481": {
+    "startTime": 1769511799933,
+    "lastSeen": 1769511801454,
     "ip": "127.0.0.1",
     "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
     "views": {
-      "Home": 0
+      "State Selection": 30,
+      "Home": 30
     }
   },
-  "sess_vqnqdau3w_1769423459628": {
-    "startTime": 1769423459651,
-    "lastSeen": 1769449736632,
+  "sess_e1mkwsc2t_1769509348090": {
+    "startTime": 1769511806299,
+    "lastSeen": 1769512843093,
     "ip": "127.0.0.1",
     "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
     "views": {
-      "Home": 60,
-      "Year Selection": 60,
-      "Quiz": 3330
+      "Home": 450,
+      "State Selection": 450,
+      "Year Selection": 150,
+      "Quiz": 450
     }
   },
-  "sess_pwol8uwpw_1769449761355": {
-    "startTime": 1769449761396,
-    "lastSeen": 1769450430540,
+  "sess_q49yoj6uh_1769512852982": {
+    "startTime": 1769512853018,
+    "lastSeen": 1769515502633,
     "ip": "127.0.0.1",
     "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
     "views": {
-      "Home": 390,
-      "Year Selection": 510,
-      "State Selection": 60,
-      "Quiz": 360
+      "Home": 840,
+      "State Selection": 90,
+      "Year Selection": 120,
+      "Quiz": 60
+    }
+  },
+  "sess_7y4j3i33s_1769514444137": {
+    "startTime": 1769514444169,
+    "lastSeen": 1769517062724,
+    "ip": "127.0.0.1",
+    "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
+    "views": {
+      "Home": 180,
+      "State Selection": 240,
+      "Year Selection": 1110,
+      "Quiz": 1590
     }
   }
 }

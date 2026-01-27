@@ -77,7 +77,7 @@ document.addEventListener('DOMContentLoaded', () => {
     init();
 
     function init() {
-        loadYears();
+        // loadYears(); // Removed initial load, now loaded on demand in selectMode
         setupEventListeners();
         checkTheme();
         initRatingSystem();
@@ -99,12 +99,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- API Calls ---
-    async function loadYears() {
+    async function loadYears(tag = null) {
         try {
-            const res = await fetch('/api/years');
+            const url = tag ? `/api/years?tag=${tag}` : '/api/years';
+            const res = await fetch(url);
             const data = await res.json();
             state.years = data;
-            // No automatic render here, rendered when mode is selected
+            renderYears(); // Render immediately after loading
         } catch (err) {
             console.error('Failed to load years:', err);
             els.yearsGrid.innerHTML = '<p class="error">Failed to load quizzes. Please try again later.</p>';
@@ -119,12 +120,45 @@ document.addEventListener('DOMContentLoaded', () => {
             const res = await fetch(url);
             const data = await res.json();
 
-            if (!data || data.length === 0) {
+            let filteredData = data;
+
+            // Strict Client-Side Filtering to prevent crossover
+            if (state.activeTag) {
+                const tag = state.activeTag.toLowerCase();
+
+                // Helper to safely check tags
+                const hasInfo = (q, t) => q.tags && q.tags.some(x => x.toLowerCase() === t);
+
+                if (tag === 'haryanamo') {
+                    // Show ONLY if it has haryanamo AND does NOT have rajasthanmo or upscmo
+                    filteredData = data.filter(q =>
+                        hasInfo(q, 'haryanamo') &&
+                        !hasInfo(q, 'rajasthanmo') &&
+                        !hasInfo(q, 'upscmo')
+                    );
+                } else if (tag === 'rajasthanmo') {
+                    // Show ONLY if it has rajasthanmo AND does NOT have haryanamo or upscmo
+                    filteredData = data.filter(q =>
+                        hasInfo(q, 'rajasthanmo') &&
+                        !hasInfo(q, 'haryanamo') &&
+                        !hasInfo(q, 'upscmo')
+                    );
+                } else if (tag === 'upscmo') {
+                    // Show ONLY if it has upscmo AND does NOT have haryanamo or rajasthanmo
+                    filteredData = data.filter(q =>
+                        hasInfo(q, 'upscmo') &&
+                        !hasInfo(q, 'haryanamo') &&
+                        !hasInfo(q, 'rajasthanmo')
+                    );
+                }
+            }
+
+            if (!filteredData || filteredData.length === 0) {
                 alert('No questions found for this selection.');
                 return;
             }
 
-            state.questions = data.sort((a, b) => (a.id || 0) - (b.id || 0));
+            state.questions = filteredData.sort((a, b) => (a.id || 0) - (b.id || 0));
             state.currentYear = year;
             startQuiz();
         } catch (err) {
@@ -178,7 +212,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (mode === 'SET') {
             renderSets(tag);
         } else {
-            renderYears();
+            // Load years specifically filtered for this tag
+            els.yearsGrid.innerHTML = '<div class="loader"></div>';
+            loadYears(tag);
         }
         switchView('yearSelection');
     }
@@ -200,11 +236,46 @@ document.addEventListener('DOMContentLoaded', () => {
                 ${progressInfo}
             `;
             card.onclick = async () => {
-                const restrictedYears = ['2020', '2022'];
-                if (restrictedYears.includes(year.year.toString()) && !AuthService.isLoggedIn()) {
-                    const user = await AuthService.login();
-                    if (!user) return;
+                const yStr = year.year.toString();
+
+                // Specific Logic for Rajasthan MO
+                if (state.activeTag === 'rajasthanmo') {
+                    // Free years: 2019, 2020 (no login required check here specifically, or just no Pro check)
+                    // If strict "free accessible to all" means public, we skip checks.
+                    if (['2019', '2020'].includes(yStr)) {
+                        // Free, proceed.
+                    }
+                    // Pro years: 2015, 2016, 2018
+                    else if (['2015', '2016', '2018'].includes(yStr)) {
+                        // Must be Pro
+                        if (!AuthService.isLoggedIn()) {
+                            alert("This year is for Pro members only. Please login.");
+                            const user = await AuthService.login();
+                            if (!user) return;
+                        }
+
+                        if (!AuthService.isPro()) {
+                            alert("This specific year is locked for Pro members only.");
+                            // Trigger Payment Flow
+                            if (AuthService.user && AuthService.user.email) {
+                                PaymentService.initiatePayment(AuthService.user.email, () => {
+                                    loadQuestions(year.year);
+                                });
+                            }
+                            return;
+                        }
+                    }
+                    // For any other years in Rajasthan not mentioned, we fall back to standard behavior or open.
+                    // Assuming open for now unless listed.
+                } else {
+                    // Standard Logic for other categories
+                    const restrictedYears = ['2020', '2022'];
+                    if (restrictedYears.includes(yStr) && !AuthService.isLoggedIn()) {
+                        const user = await AuthService.login();
+                        if (!user) return;
+                    }
                 }
+
                 loadQuestions(year.year);
             };
             els.yearsGrid.appendChild(card);

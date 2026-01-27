@@ -225,11 +225,21 @@ app.post('/api/refresh', async (req, res) => {
     }
 });
 
-// Get all years
+// Get all years (optionally filtered by tag)
 app.get('/api/years', async (req, res) => {
+    const { tag } = req.query;
     try {
         const questions = await getQuestions();
-        const uniqueYears = [...new Set(questions.map(q => q.year))]
+        let relevantQuestions = questions;
+
+        if (tag) {
+            const tagList = tag.split(',').map(t => t.trim().toLowerCase());
+            relevantQuestions = questions.filter(q =>
+                q.tags && q.tags.some(t => tagList.some(reqTag => t.toLowerCase().includes(reqTag)))
+            );
+        }
+
+        const uniqueYears = [...new Set(relevantQuestions.map(q => q.year))]
             .filter(year => year && year != 0)
             .sort((a, b) => b - a);
 
