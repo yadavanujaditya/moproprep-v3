@@ -73,6 +73,22 @@
 
             <div class="glass-card" style="margin-top: 2rem;">
                 <h2>User List</h2>
+
+                <!-- Search Box -->
+                <div style="margin-bottom: 1rem;">
+                    <input type="text" id="user-search" placeholder="Search by name or email..."
+                        style="width: 100%; padding: 0.75rem; border-radius: 8px; border: 1px solid #555; background: #222; color: #fff; font-size: 1rem;">
+                </div>
+
+                <!-- Pagination Controls -->
+                <div id="pagination-controls"
+                    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <button id="prev-page" class="secondary-btn" style="padding: 0.5rem 1rem;" disabled>←
+                        Previous</button>
+                    <span id="page-info" style="color: #888;">Page 1 of 1</span>
+                    <button id="next-page" class="secondary-btn" style="padding: 0.5rem 1rem;" disabled>Next →</button>
+                </div>
+
                 <table id="user-table" style="width: 100%; border-collapse: collapse;">
                     <thead>
                         <tr style="text-align: left; border-bottom: 1px solid rgba(255,255,255,0.1);">
@@ -210,35 +226,102 @@
             }
         }
 
+        // --- Pagination & Search State ---
+        let allUsers = [];
+        let filteredUsers = [];
+        let currentPage = 1;
+        const usersPerPage = 10;
+
+        // --- Search Event Listener ---
+        document.getElementById('user-search').addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase().trim();
+            if (query === '') {
+                filteredUsers = [...allUsers];
+            } else {
+                filteredUsers = allUsers.filter(u =>
+                    (u.displayName && u.displayName.toLowerCase().includes(query)) ||
+                    (u.email && u.email.toLowerCase().includes(query))
+                );
+            }
+            currentPage = 1;
+            renderUserTable();
+        });
+
+        // --- Pagination Event Listeners ---
+        document.getElementById('prev-page').onclick = () => {
+            if (currentPage > 1) {
+                currentPage--;
+                renderUserTable();
+            }
+        };
+
+        document.getElementById('next-page').onclick = () => {
+            const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
+            if (currentPage < totalPages) {
+                currentPage++;
+                renderUserTable();
+            }
+        };
+
+        // --- Render User Table with Pagination ---
+        function renderUserTable() {
+            const tableBody = document.querySelector('#user-table tbody');
+            tableBody.innerHTML = '';
+
+            const totalPages = Math.ceil(filteredUsers.length / usersPerPage) || 1;
+            const startIndex = (currentPage - 1) * usersPerPage;
+            const endIndex = startIndex + usersPerPage;
+            const usersToShow = filteredUsers.slice(startIndex, endIndex);
+
+            if (usersToShow.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 1rem; color: #888;">No users found.</td></tr>';
+            } else {
+                usersToShow.forEach(u => {
+                    const btnClass = u.isPro ? 'secondary-btn' : 'primary-btn';
+                    const btnText = u.isPro ? '❌ Remove PRO' : '✅ Grant PRO';
+
+                    const row = `<tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                        <td style="padding: 0.75rem 0;">${u.displayName || 'N/A'}</td>
+                        <td style="padding: 0.75rem 0;">${u.email}</td>
+                        <td style="padding: 0.75rem 0;">${u.isPro ? '💎 PRO' : 'Free'}</td>
+                        <td style="padding: 0.75rem 0;">
+                            <button class="${btnClass}" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;" 
+                                    onclick="toggleProStatus('${u.uid}', ${u.isPro}, '${(u.displayName || u.email || '').replace(/'/g, "\\'")}')">
+                                ${btnText}
+                            </button>
+                        </td>
+                    </tr>`;
+                    tableBody.insertAdjacentHTML('beforeend', row);
+                });
+            }
+
+            // Update pagination controls
+            document.getElementById('page-info').innerText = `Page ${currentPage} of ${totalPages} (${filteredUsers.length} users)`;
+            document.getElementById('prev-page').disabled = currentPage === 1;
+            document.getElementById('next-page').disabled = currentPage >= totalPages;
+        }
+
         // --- User Stats ---
         async function loadStats() {
             const usersSnap = await db.collection('users').get();
             const totalUsers = usersSnap.size;
             let proUsers = 0;
-            const tableBody = document.querySelector('#user-table tbody');
-            tableBody.innerHTML = '';
+
+            allUsers = [];
 
             usersSnap.forEach(doc => {
                 const u = doc.data();
-                const uid = doc.id;
+                u.uid = doc.id;
                 if (u.isPro) proUsers++;
-
-                const btnClass = u.isPro ? 'secondary-btn' : 'primary-btn';
-                const btnText = u.isPro ? '❌ Remove PRO' : '✅ Grant PRO';
-
-                const row = `<tr>
-                    <td>${u.displayName || 'N/A'}</td>
-                    <td>${u.email}</td>
-                    <td>${u.isPro ? '💎 PRO' : 'Free'}</td>
-                    <td>
-                        <button class="${btnClass}" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;" 
-                                onclick="toggleProStatus('${uid}', ${u.isPro}, '${(u.displayName || u.email || '').replace(/'/g, "\\'")}')">
-                            ${btnText}
-                        </button>
-                    </td>
-                </tr>`;
-                tableBody.insertAdjacentHTML('beforeend', row);
+                allUsers.push(u);
             });
+
+            // Sort by name
+            allUsers.sort((a, b) => (a.displayName || '').localeCompare(b.displayName || ''));
+
+            filteredUsers = [...allUsers];
+            currentPage = 1;
+            renderUserTable();
 
             document.getElementById('total-users').innerText = totalUsers;
             document.getElementById('pro-users').innerText = proUsers;
