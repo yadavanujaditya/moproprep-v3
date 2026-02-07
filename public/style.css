@@ -101,7 +101,13 @@ body {
     background: rgba(255, 255, 255, 0.1);
 }
 
-/* Theme Switch */
+/* Header Actions */
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
 .theme-switch-wrapper {
     display: flex;
     align-items: center;
@@ -904,4 +910,64 @@ h3#question-text {
     transform: scale(1.15);
     box-shadow: 0 0 0 3px var(--background), 0 0 0 5px var(--primary);
     z-index: 10;
+}
+
+/* Bookmark Button Styles */
+.bookmark-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.5rem;
+    padding: 0;
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    color: var(--warning);
+    outline: none;
+}
+
+.bookmark-btn:hover {
+    transform: scale(1.2);
+}
+
+.bookmark-btn:active {
+    transform: scale(0.9);
+}
+
+.bookmark-btn .star-filled {
+    display: none;
+}
+
+.bookmark-btn.active .star-outline {
+    display: none;
+}
+
+.bookmark-btn.active .star-filled {
+    display: inline;
+    filter: drop-shadow(0 0 5px rgba(245, 158, 11, 0.5));
+}
+
+@media (max-width: 600px) {
+    .bookmark-btn {
+        font-size: 1.3rem;
+    }
+}
+
+#btn-bookmarks-header {
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    opacity: 0.8;
+}
+
+#btn-bookmarks-header:hover {
+    transform: scale(1.2) rotate(10deg);
+    opacity: 1;
+    filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.4));
+}
+
+@media (max-width: 600px) {
+    .header-actions {
+        gap: 0.8rem;
+    }
 }

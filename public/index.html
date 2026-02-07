@@ -4,13 +4,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MoProPrep - Medical Exam Preparation (MO, MOPRO, STATE MO)</title>
+    <title>MoProPrep - Medical Exam Preparation (STATE MO)</title>
 
     <!-- SEO Meta Tags -->
     <meta name="description"
-        content="MoProPrep (MO, MOPRO) is the premier platform for State MO medical exam preparation. Practice with PYQs, mock tests, and clinical cases for MO, MOPRO, and Medical Officers.">
+        content="MoProPrep is the premier platform for State MO medical exam preparation. Practice with PYQs, mock tests, and clinical cases for Medical Officers.">
     <meta name="keywords"
-        content="MO, MOPRO, MoProPrep, STATE MO, Medical Officer Exam, HPSC MO, RPSC MO, Medical MCQ, PYQ Medical">
+        content="MoProPrep, STATE MO, Medical Officer Exam, HPSC MO, RPSC MO, Medical MCQ, PYQ Medical">
     <meta name="author" content="MoProPrep">
     <meta name="robots" content="index, follow">
     <link rel="canonical" href="https://moproprep.in/">
@@ -23,16 +23,16 @@
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://moproprep.in/">
-    <meta property="og:title" content="MoProPrep - Medical Quiz (MO, MOPRO, STATE MO)">
+    <meta property="og:title" content="MoProPrep - Medical Quiz (STATE MO)">
     <meta property="og:description"
-        content="The best platform for MO and MOPRO medical exam preparation. State MO PYQs and Mock Tests.">
+        content="The best platform for State MO medical exam preparation. State MO PYQs and Mock Tests.">
     <meta property="og:image" content="https://moproprep.in/og-image.png">
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:url" content="https://moproprep.in/">
-    <meta name="twitter:title" content="MoProPrep - Medical Quiz (MO, MOPRO, STATE MO)">
-    <meta name="twitter:description" content="Prepare for MO, MOPRO, and State MO exams with premium medical quizzes.">
+    <meta name="twitter:title" content="MoProPrep - Medical Quiz (STATE MO)">
+    <meta name="twitter:description" content="Prepare for State MO exams with premium medical quizzes.">
     <meta name="twitter:image" content="https://moproprep.in/og-image.png">
 
     <!-- Theme Color -->
@@ -44,8 +44,7 @@
         "@context": "https://schema.org",
         "@type": "WebApplication",
         "name": "MoProPrep",
-        "alternateName": ["MO", "MOPRO", "State MO Quiz"],
-        "description": "Premium medical quiz platform for MO, MOPRO, and State MO exam preparation",
+        "description": "Premium medical quiz platform for State MO exam preparation",
         "url": "https://moproprep.in/",
         "applicationCategory": "EducationalApplication",
         "operatingSystem": "Web",
@@ -105,14 +104,18 @@
                     style="display: none; background: linear-gradient(135deg, #FFD700, #FFA500); color: #000; font-size: 0.5rem; font-weight: 600; padding: 2px 6px; border-radius: 8px; margin-top: 2px;">✨
                     PRO Member</span>
             </div>
-            <div class="theme-switch-wrapper">
-                <label class="theme-switch" for="checkbox">
-                    <input type="checkbox" id="checkbox" />
-                    <div class="slider round">
-                        <span class="sun-icon">☀️</span>
-                        <span class="moon-icon">🌙</span>
-                    </div>
-                </label>
+            <div class="header-actions">
+                <button id="btn-bookmarks-header" class="icon-btn" title="View Bookmarks"
+                    style="font-size: 1.2rem; color: var(--warning);">⭐</button>
+                <div class="theme-switch-wrapper">
+                    <label class="theme-switch" for="checkbox">
+                        <input type="checkbox" id="checkbox" />
+                        <div class="slider round">
+                            <span class="sun-icon">☀️</span>
+                            <span class="moon-icon">🌙</span>
+                        </div>
+                    </label>
+                </div>
             </div>
         </header>
 
@@ -122,7 +125,7 @@
             <section id="home-view" class="view active-view">
                 <div class="hero-section">
                     <h2>Master Your State MO Exams</h2>
-                    <p>The ultimate platform for <b>MO, MOPRO, and State MO</b> preparation. Select your path to begin.
+                    <p>The ultimate platform for <b>State MO</b> preparation. Select your path to begin.
                     </p>
                 </div>
                 <div class="menu-grid">
@@ -156,21 +159,21 @@
                     <div class="menu-card" id="btn-pyq-haryana">
                         <div class="menu-icon">🏙️</div>
                         <div class="menu-content">
-                            <h3>MoProPrep Haryana (MO/MOPRO)</h3>
+                            <h3>Previous Year Question Haryana</h3>
                             <p>State MO Previous year papers for HPSC and Haryana medical exams.</p>
                         </div>
                     </div>
                     <div class="menu-card" id="btn-pyq-rajasthan">
                         <div class="menu-icon">🏰</div>
                         <div class="menu-content">
-                            <h3>MoProPrep Rajasthan (MO/MOPRO)</h3>
+                            <h3>Previous Year Question Rajasthan</h3>
                             <p>State MO Previous year papers for RPSC and Rajasthan medical exams.</p>
                         </div>
                     </div>
                     <div class="menu-card" id="btn-pyq-upsc">
                         <div class="menu-icon">🏛️</div>
                         <div class="menu-content">
-                            <h3>MoProPrep UPSC (MO/MOPRO)</h3>
+                            <h3>Previous Year Question UPSC</h3>
                             <p>UPSC Medical Officer (MO) and CMS previous year papers.</p>
                         </div>
                     </div>
@@ -230,6 +233,10 @@
                     <div class="question-meta">
                         <span class="year-tag" id="q-year">2020</span>
                         <span class="category-tag" id="q-category">Anatomy</span>
+                        <button id="bookmark-btn" class="bookmark-btn" title="Bookmark this question">
+                            <span class="star-outline">☆</span>
+                            <span class="star-filled">★</span>
+                        </button>
                     </div>
                     <h3 id="question-text">Loading question...</h3>
                     <div id="options-container" class="options-list">

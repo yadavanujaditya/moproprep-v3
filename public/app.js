@@ -16,7 +16,8 @@ document.addEventListener('DOMContentLoaded', () => {
         timerInterval: null,       // Interval ID for timer updates
         testSubmitted: false,      // Track if test was submitted
         reviewMode: false,         // Track if we're in review mode
-        userRating: 0              // Store current star selection
+        userRating: 0,             // Store current star selection
+        bookmarks: []              // Store bookmarked question IDs or objects
     };
 
     // --- Helpers ---
@@ -47,6 +48,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Home Menu items
         btnPrevYear: document.getElementById('btn-prev-year'),
         btnProQuiz: document.getElementById('btn-pro-quiz'),
+        btnBookmarksHeader: document.getElementById('btn-bookmarks-header'),
         backToHome: document.getElementById('back-to-home'),
         // Headings
         viewTitle: document.getElementById('view-title'),
@@ -61,6 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
         currentScore: document.getElementById('current-score'),
         backBtn: document.getElementById('back-to-years'),
         prevBtn: document.getElementById('prev-question-btn'),
+        bookmarkBtn: document.getElementById('bookmark-btn'),
         // Feedback
         feedbackArea: document.getElementById('feedback-area'),
         feedbackText: document.getElementById('feedback-text'),
@@ -82,6 +85,7 @@ document.addEventListener('DOMContentLoaded', () => {
         setupEventListeners();
         checkTheme();
         initRatingSystem();
+        loadBookmarks();
 
         // --- Auth Initialization ---
         AuthService.init((user) => {
@@ -96,7 +100,76 @@ document.addEventListener('DOMContentLoaded', () => {
             if (proBadge) {
                 proBadge.style.display = (user && user.isPro) ? 'inline' : 'none';
             }
+            // Load cloud bookmarks if available
+            loadCloudBookmarks();
         });
+    }
+
+    // --- Bookmarks Logic ---
+    function loadBookmarks() {
+        const saved = localStorage.getItem('moproprep_bookmarks');
+        if (saved) {
+            try {
+                state.bookmarks = JSON.parse(saved);
+            } catch (e) {
+                console.error("Failed to parse bookmarks", e);
+                state.bookmarks = [];
+            }
+        }
+    }
+
+    async function loadCloudBookmarks() {
+        if (!state.user) return;
+        try {
+            const data = await AuthService.getProgress('bookmarks_sync');
+            if (data && data.bookmarks) {
+                // Merge or take cloud as truth? Let's merge simple strategy
+                const cloudMap = new Map(data.bookmarks.map(q => [q.id, q]));
+                state.bookmarks.forEach(q => {
+                    if (!cloudMap.has(q.id)) data.bookmarks.push(q);
+                });
+                state.bookmarks = data.bookmarks;
+                localStorage.setItem('moproprep_bookmarks', JSON.stringify(state.bookmarks));
+            }
+        } catch (e) {
+            console.error("Failed to load cloud bookmarks", e);
+        }
+    }
+
+    function toggleBookmark(e) {
+        if (e) e.stopPropagation();
+
+        const q = state.questions[state.currentQuestionIndex];
+        if (!q) return;
+
+        // Use a unique ID
+        const qId = q.id || `${q.year}_${q.category}_${q.question_text.substring(0, 20)}`;
+        const index = state.bookmarks.findIndex(b => (b.id === qId));
+
+        if (index > -1) {
+            state.bookmarks.splice(index, 1);
+            els.bookmarkBtn.classList.remove('active');
+        } else {
+            // Store enough info to render later
+            const bookmark = {
+                id: qId,
+                question_text: q.question_text || q.questionText,
+                options: q.options,
+                correct_answer: q.correct_answer || q.correctAnswer,
+                explanation: q.explanation,
+                year: q.year,
+                tags: q.tags
+            };
+            state.bookmarks.push(bookmark);
+            els.bookmarkBtn.classList.add('active');
+        }
+
+        localStorage.setItem('moproprep_bookmarks', JSON.stringify(state.bookmarks));
+
+        // Sync to cloud
+        if (state.user) {
+            AuthService.saveProgress('bookmarks_sync', { bookmarks: state.bookmarks });
+        }
     }
 
     // --- API Calls ---
@@ -745,6 +818,17 @@ document.addEventListener('DOMContentLoaded', () => {
         els.qYear.innerText = displayYear;
         els.qCategory.innerText = (q.tags && q.tags[0]) ? q.tags[0] : 'General';
 
+        // Bookmark status
+        const qId = q.id || `${q.year}_${q.category}_${q.question_text.substring(0, 20)}`;
+        const isBookmarked = state.bookmarks.some(b => b.id === qId);
+        if (els.bookmarkBtn) {
+            if (isBookmarked) {
+                els.bookmarkBtn.classList.add('active');
+            } else {
+                els.bookmarkBtn.classList.remove('active');
+            }
+        }
+
         // Progress
         const progress = ((state.currentQuestionIndex) / state.questions.length) * 100;
         els.progressFill.style.width = `${progress}%`;
@@ -1040,15 +1124,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         document.getElementById('btn-pyq-haryana').onclick = () => {
-            selectMode('haryanamo', 'MoProPrep Haryana (MO/MOPRO)', 'Practice with real state MO exam questions from Haryana.', 'YEAR');
+            selectMode('haryanamo', 'Previous Year Question Haryana', 'Practice with real state MO exam questions from Haryana.', 'YEAR');
         };
 
         document.getElementById('btn-pyq-rajasthan').onclick = () => {
-            selectMode('rajasthanmo', 'MoProPrep Rajasthan (MO/MOPRO)', 'Practice with real state MO exam questions from Rajasthan.', 'YEAR');
+            selectMode('rajasthanmo', 'Previous Year Question Rajasthan', 'Practice with real state MO exam questions from Rajasthan.', 'YEAR');
         };
 
         document.getElementById('btn-pyq-upsc').onclick = () => {
-            selectMode('upscmo', 'MoProPrep UPSC (MO/MOPRO)', 'Practice with real UPSC Medical Officer (MO) exam questions.', 'YEAR');
+            selectMode('upscmo', 'Previous Year Question UPSC', 'Practice with real UPSC Medical Officer (MO) exam questions.', 'YEAR');
         };
 
         document.getElementById('back-to-home-from-state').onclick = () => switchView('home');
@@ -1080,11 +1164,25 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         };
 
+        if (els.btnBookmarksHeader) {
+            els.btnBookmarksHeader.onclick = loadBookmarksQuiz;
+        }
+
+        if (els.bookmarkBtn) {
+            els.bookmarkBtn.onclick = toggleBookmark;
+        }
+
         els.backToHome.onclick = () => switchView('home');
         els.homeLogo.onclick = () => switchView('home');
 
         // Other Nav
-        els.backBtn.onclick = () => switchView(state.mode === 'SHUFFLE' ? 'home' : 'yearSelection');
+        els.backBtn.onclick = () => {
+            if (state.mode === 'SHUFFLE' || state.mode === 'BOOKMARKS') {
+                switchView('home');
+            } else {
+                switchView('yearSelection');
+            }
+        };
         els.prevBtn.onclick = previousQuestion;
         els.retryBtn.onclick = () => startQuiz();
         els.homeBtn.onclick = () => switchView('home');
@@ -1125,6 +1223,20 @@ document.addEventListener('DOMContentLoaded', () => {
         const savedTheme = localStorage.getItem('theme') || 'dark';
         document.body.setAttribute('data-theme', savedTheme);
         els.themeToggle.checked = (savedTheme === 'light');
+    }
+
+    function loadBookmarksQuiz() {
+        if (state.bookmarks.length === 0) {
+            alert("No bookmarks found. Start saving questions to view them here!");
+            return;
+        }
+
+        state.mode = 'BOOKMARKS';
+        state.sessionKey = 'progress_bookmarks';
+        state.questions = [...state.bookmarks];
+        state.activeTag = 'bookmarks';
+
+        startQuiz();
     }
 
     function shuffleArray(array) {
