@@ -1,15 +1,14 @@
 {
-  "sess_015jc6cb5_1770361783422": {
-    "startTime": 1770361784132,
-    "lastSeen": 1770378916619,
+  "sess_2y384lipe_1770470403918": {
+    "startTime": 1770470406138,
+    "lastSeen": 1770470824254,
     "ip": "127.0.0.1",
     "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
     "views": {
-      "Home": 180,
+      "Home": 120,
       "State Selection": 150,
       "Year Selection": 480,
-      "Quiz": 2640,
-      "Results": 3360
+      "Quiz": 90
     }
   }
 }

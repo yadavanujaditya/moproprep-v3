@@ -242,6 +242,8 @@
         let currentPage = 1;
         const usersPerPage = 10;
 
+        const PRIORITY_TERMS = ['moproprep', 'mopro', 'state mo', 'mo'];
+
         // --- Search Event Listener ---
         document.getElementById('user-search').addEventListener('input', (e) => {
             const query = e.target.value.toLowerCase().trim();
@@ -252,6 +254,21 @@
                     (u.displayName && u.displayName.toLowerCase().includes(query)) ||
                     (u.email && u.email.toLowerCase().includes(query))
                 );
+
+                // Prioritization logic: matches containing Priority Terms go to top
+                filteredUsers.sort((a, b) => {
+                    const aName = (a.displayName || '').toLowerCase();
+                    const aEmail = (a.email || '').toLowerCase();
+                    const bName = (b.displayName || '').toLowerCase();
+                    const bEmail = (b.email || '').toLowerCase();
+
+                    const aPrio = PRIORITY_TERMS.some(t => aName.includes(t) || aEmail.includes(t));
+                    const bPrio = PRIORITY_TERMS.some(t => bName.includes(t) || bEmail.includes(t));
+
+                    if (aPrio && !bPrio) return -1;
+                    if (!aPrio && bPrio) return 1;
+                    return 0; // Maintain existing sort for others
+                });
             }
             currentPage = 1;
             renderUserTable();
@@ -290,13 +307,18 @@
                     const btnClass = u.isPro ? 'secondary-btn' : 'primary-btn';
                     const btnText = u.isPro ? '❌ Remove PRO' : '✅ Grant PRO';
 
-                    const row = `<tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
-                        <td style="padding: 0.75rem 0;">${u.displayName || 'N/A'}</td>
-                        <td style="padding: 0.75rem 0;">${u.email}</td>
+                    const uName = (u.displayName || '').toLowerCase();
+                    const uEmail = (u.email || '').toLowerCase();
+                    const isPriority = PRIORITY_TERMS.some(t => uName.includes(t) || uEmail.includes(t));
+                    const priorityIcon = isPriority ? ' <span title="Priority User" style="cursor:help;">🎖️</span>' : '';
+
+                    const row = `<tr style="border-bottom: 1px solid rgba(255,255,255,0.05); ${isPriority ? 'background: rgba(79, 70, 229, 0.05);' : ''}">
+                        <td style="padding: 0.75rem 0;">${u.displayName || 'N/A'}${priorityIcon}</td>
+                        <td style="padding: 0.75rem 0; font-size: 0.8rem;">${u.email}</td>
                         <td style="padding: 0.75rem 0;">${u.isPro ? '💎 PRO' : 'Free'}</td>
                         <td style="padding: 0.75rem 0;">
                             <button class="${btnClass}" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;" 
-                                    onclick="toggleProStatus('${u.uid}', ${u.isPro}, '${(u.displayName || u.email || '').replace(/'/g, "\\'")}')">
+                                     onclick="toggleProStatus('${u.uid}', ${u.isPro}, '${(u.displayName || u.email || '').replace(/'/g, "\\'")}')">
                                 ${btnText}
                             </button>
                         </td>
