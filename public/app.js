@@ -60,6 +60,7 @@ document.addEventListener('DOMContentLoaded', () => {
         questionTracker: document.getElementById('question-tracker'),
         currentScore: document.getElementById('current-score'),
         backBtn: document.getElementById('back-to-years'),
+        prevBtn: document.getElementById('prev-question-btn'),
         // Feedback
         feedbackArea: document.getElementById('feedback-area'),
         feedbackText: document.getElementById('feedback-text'),
@@ -728,7 +729,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const q = state.questions[state.currentQuestionIndex];
 
         // Reset UI - PROPERLY hide and clear feedback
-        // Reset UI - PROPERLY hide and clear feedback
         els.feedbackArea.style.display = 'none';
         els.feedbackText.innerText = '';
         els.explanationText.innerHTML = '';
@@ -750,11 +750,15 @@ document.addEventListener('DOMContentLoaded', () => {
         els.progressFill.style.width = `${progress}%`;
         els.questionTracker.innerText = `${state.currentQuestionIndex + 1} / ${state.questions.length}`;
 
+        // Previous Button Visibility
+        els.prevBtn.style.display = (state.currentQuestionIndex > 0) ? 'block' : 'none';
+
         // Options
         const options = q.options; // Object like {A: "...", B: "..."}
 
-        // Check if answered in test mode
-        const savedAnswer = state.testMode ? state.userAnswers[state.currentQuestionIndex] : null;
+        // Check if answered
+        const savedAnswer = state.userAnswers[state.currentQuestionIndex];
+        const correctKey = q.correct_answer || q.correctAnswer;
 
         Object.keys(options).forEach(key => {
             const btn = document.createElement('button');
@@ -766,21 +770,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // If Review Mode (Submitted), show correct/wrong
                 if (state.testSubmitted) {
-                    const isCorrect = (key === (q.correct_answer || q.correctAnswer));
+                    const isCorrect = (key === correctKey);
                     const isSelected = (savedAnswer === key);
 
                     if (isCorrect) btn.classList.add('review-correct');
                     if (isSelected && !isCorrect) btn.classList.add('review-wrong');
                 }
+            } else if (savedAnswer) {
+                // Practice Mode - Answered state (when going back)
+                const isCorrect = savedAnswer === correctKey;
+                if (key === correctKey) btn.classList.add('correct');
+                if (key === savedAnswer && !isCorrect) btn.classList.add('wrong');
+                btn.disabled = true;
             }
 
             btn.innerHTML = `<span class="option-letter">${key}</span> ${options[key]}`;
 
             // Interaction logic
-            if (state.testMode && state.testSubmitted) {
-                btn.disabled = true; // Review mode is read-only
+            if ((state.testMode && state.testSubmitted) || (!state.testMode && savedAnswer)) {
+                btn.disabled = true; // Answered practice mode or review mode is read-only
             } else {
-                btn.onclick = () => handleAnswer(key, q.correct_answer || q.correctAnswer, q.explanation);
+                btn.onclick = () => handleAnswer(key, correctKey, q.explanation);
             }
 
             els.optionsContainer.appendChild(btn);
@@ -794,16 +804,13 @@ document.addEventListener('DOMContentLoaded', () => {
             saveBtn.style.marginTop = '1rem';
             saveBtn.innerText = state.currentQuestionIndex === state.questions.length - 1 ? 'Finish Test section' : 'Save & Next';
             saveBtn.onclick = () => {
-                // Answer is already saved on click if we want, OR we check if selected.
-                // Current logic: click option -> saves.
-                // So this button basically just goes to next.
                 nextQuestion();
             };
             els.optionsContainer.appendChild(saveBtn);
         }
 
-        // Review Mode: Show explanation
-        if (state.testMode && state.testSubmitted) {
+        // Show explanation if answered (Practice Mode or Review Mode)
+        if (savedAnswer && (state.testSubmitted || !state.testMode)) {
             const explanation = q.explanation;
             if (explanation) {
                 const processed = explanation
@@ -813,20 +820,31 @@ document.addEventListener('DOMContentLoaded', () => {
                     .trim();
                 els.explanationText.innerHTML = marked.parse(processed);
                 els.feedbackArea.style.display = 'block';
-                // Hide feedback text (correct/incorrect) as colors show it, 
-                // but we can show it if we want. Let's hide the standard feedback text.
-                els.feedbackText.style.display = 'none';
-                // Hide normal next button in feedback area
-                els.nextBtn.style.display = 'none';
+
+                if (state.testMode) {
+                    els.feedbackText.style.display = 'none';
+                    els.nextBtn.style.display = 'none';
+                } else {
+                    // Practice Mode
+                    const isCorrect = savedAnswer === correctKey;
+                    els.feedbackText.innerText = isCorrect ? 'Correct! 🎉' : `Incorrect. The correct answer is ${correctKey}.`;
+                    els.feedbackText.style.color = isCorrect ? 'var(--secondary)' : 'var(--danger)';
+                    els.feedbackText.style.display = 'block';
+                    els.nextBtn.style.display = 'block';
+                }
+            } else if (!state.testMode) {
+                els.explanationText.innerHTML = '<p>No explanation available.</p>';
+                els.feedbackArea.style.display = 'block';
+                els.nextBtn.style.display = 'block';
             }
         }
     }
 
     function handleAnswer(selectedKey, correctKey, explanation) {
+        state.userAnswers[state.currentQuestionIndex] = selectedKey;
 
         if (state.testMode) {
             // EXAM MODE LOGIC
-            state.userAnswers[state.currentQuestionIndex] = selectedKey;
 
             // Update UI (select button)
             const buttons = els.optionsContainer.querySelectorAll('.option-btn');
@@ -895,6 +913,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Scroll to feedback (mobile friendly)
         els.feedbackArea.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function previousQuestion() {
+        if (state.currentQuestionIndex > 0) {
+            state.currentQuestionIndex--;
+            renderQuestion();
+            if (state.testMode) {
+                renderQuestionNavigator();
+            }
+        }
     }
 
     function nextQuestion() {
@@ -1012,15 +1040,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         document.getElementById('btn-pyq-haryana').onclick = () => {
-            selectMode('haryanamo', 'Haryana Mo PYQ', 'Practice with real exam questions from Haryana.', 'YEAR');
+            selectMode('haryanamo', 'MoProPrep Haryana (MO/MOPRO)', 'Practice with real state MO exam questions from Haryana.', 'YEAR');
         };
 
         document.getElementById('btn-pyq-rajasthan').onclick = () => {
-            selectMode('rajasthanmo', 'Rajasthan Mo PYQ', 'Practice with real exam questions from Rajasthan.', 'YEAR');
+            selectMode('rajasthanmo', 'MoProPrep Rajasthan (MO/MOPRO)', 'Practice with real state MO exam questions from Rajasthan.', 'YEAR');
         };
 
         document.getElementById('btn-pyq-upsc').onclick = () => {
-            selectMode('upscmo', 'UPSC PYQ', 'Practice with real exam questions from UPSC.', 'YEAR');
+            selectMode('upscmo', 'MoProPrep UPSC (MO/MOPRO)', 'Practice with real UPSC Medical Officer (MO) exam questions.', 'YEAR');
         };
 
         document.getElementById('back-to-home-from-state').onclick = () => switchView('home');
@@ -1057,6 +1085,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Other Nav
         els.backBtn.onclick = () => switchView(state.mode === 'SHUFFLE' ? 'home' : 'yearSelection');
+        els.prevBtn.onclick = previousQuestion;
         els.retryBtn.onclick = () => startQuiz();
         els.homeBtn.onclick = () => switchView('home');
 

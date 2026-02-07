@@ -4,43 +4,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MoProPrep - Premium Medical Quiz</title>
+    <title>MoProPrep - Medical Exam Preparation (MO, MOPRO, STATE MO)</title>
 
     <!-- SEO Meta Tags -->
     <meta name="description"
-        content="MoProPrep is the best platform for medical exam preparation. Practice previous year questions, mock tests, and premium quiz sets.">
+        content="MoProPrep (MO, MOPRO) is the premier platform for State MO medical exam preparation. Practice with PYQs, mock tests, and clinical cases for MO, MOPRO, and Medical Officers.">
     <meta name="keywords"
-        content="MoProPrep, Medical Quiz, Medical Exam Preparation, HPSC Medical, Previous Year Questions, Mock Test, Medical MCQ">
+        content="MO, MOPRO, MoProPrep, STATE MO, Medical Officer Exam, HPSC MO, RPSC MO, Medical MCQ, PYQ Medical">
     <meta name="author" content="MoProPrep">
     <meta name="robots" content="index, follow">
     <link rel="canonical" href="https://moproprep.in/">
 
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="favicon-32x32.png" sizes="32x32">
+    <link rel="icon" type="image/png" href="favicon-16x16.png" sizes="16x16">
+    <link rel="shortcut icon" href="favicon.ico">
+
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://moproprep.in/">
-    <meta property="og:title" content="HaryanaMo - Premium Medical Quiz">
+    <meta property="og:title" content="MoProPrep - Medical Quiz (MO, MOPRO, STATE MO)">
     <meta property="og:description"
-        content="Practice previous year questions, mock tests, and premium quiz sets for Haryana medical exams.">
+        content="The best platform for MO and MOPRO medical exam preparation. State MO PYQs and Mock Tests.">
     <meta property="og:image" content="https://moproprep.in/og-image.png">
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:url" content="https://moproprep.in/">
-    <meta name="twitter:title" content="HaryanaMo - Premium Medical Quiz">
-    <meta name="twitter:description"
-        content="Practice previous year questions, mock tests, and premium quiz sets for Haryana medical exams.">
+    <meta name="twitter:title" content="MoProPrep - Medical Quiz (MO, MOPRO, STATE MO)">
+    <meta name="twitter:description" content="Prepare for MO, MOPRO, and State MO exams with premium medical quizzes.">
     <meta name="twitter:image" content="https://moproprep.in/og-image.png">
 
     <!-- Theme Color -->
-    <meta name="theme-color" content="#6C63FF">
+    <meta name="theme-color" content="#4F46E5">
 
     <!-- Structured Data (JSON-LD) -->
     <script type="application/ld+json">
     {
         "@context": "https://schema.org",
         "@type": "WebApplication",
-        "name": "HaryanaMo",
-        "description": "Premium medical quiz platform for Haryana exam preparation",
+        "name": "MoProPrep",
+        "alternateName": ["MO", "MOPRO", "State MO Quiz"],
+        "description": "Premium medical quiz platform for MO, MOPRO, and State MO exam preparation",
         "url": "https://moproprep.in/",
         "applicationCategory": "EducationalApplication",
         "operatingSystem": "Web",
@@ -51,8 +56,8 @@
         },
         "aggregateRating": {
             "@type": "AggregateRating",
-            "ratingValue": "4.8",
-            "ratingCount": "150"
+            "ratingValue": "4.9",
+            "ratingCount": "210"
         }
     }
     </script>
@@ -116,8 +121,9 @@
             <!-- VIEW: Home Menu -->
             <section id="home-view" class="view active-view">
                 <div class="hero-section">
-                    <h2>Welcome to MoProPrep</h2>
-                    <p>Select your learning path to get started.</p>
+                    <h2>Master Your State MO Exams</h2>
+                    <p>The ultimate platform for <b>MO, MOPRO, and State MO</b> preparation. Select your path to begin.
+                    </p>
                 </div>
                 <div class="menu-grid">
                     <div class="menu-card" id="btn-prev-year">
@@ -150,22 +156,22 @@
                     <div class="menu-card" id="btn-pyq-haryana">
                         <div class="menu-icon">🏙️</div>
                         <div class="menu-content">
-                            <h3>Haryana Mo PYQ</h3>
-                            <p>Previous year papers for HPSC and Haryana medical exams.</p>
+                            <h3>MoProPrep Haryana (MO/MOPRO)</h3>
+                            <p>State MO Previous year papers for HPSC and Haryana medical exams.</p>
                         </div>
                     </div>
                     <div class="menu-card" id="btn-pyq-rajasthan">
                         <div class="menu-icon">🏰</div>
                         <div class="menu-content">
-                            <h3>Rajasthan Mo PYQ</h3>
-                            <p>Previous year papers for RPSC and Rajasthan medical exams.</p>
+                            <h3>MoProPrep Rajasthan (MO/MOPRO)</h3>
+                            <p>State MO Previous year papers for RPSC and Rajasthan medical exams.</p>
                         </div>
                     </div>
                     <div class="menu-card" id="btn-pyq-upsc">
                         <div class="menu-icon">🏛️</div>
                         <div class="menu-content">
-                            <h3>UPSC PYQ</h3>
-                            <p>Previous year papers for UPSC medical and CMS exams.</p>
+                            <h3>MoProPrep UPSC (MO/MOPRO)</h3>
+                            <p>UPSC Medical Officer (MO) and CMS previous year papers.</p>
                         </div>
                     </div>
                 </div>
@@ -189,7 +195,12 @@
             <!-- VIEW: Quiz Interface -->
             <section id="quiz-view" class="view hidden-view">
                 <div class="quiz-header">
-                    <button id="back-to-years" class="icon-btn">← Back</button>
+                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+                        <button id="back-to-years" class="icon-btn">← Back</button>
+                        <button id="prev-question-btn" class="icon-btn"
+                            style="background: rgba(255,255,255,0.05); padding: 0.5rem 0.8rem; display: none; font-weight: 600; font-size: 0.9rem; border-radius: 8px;">←
+                            Prev</button>
+                    </div>
                     <div class="progress-container">
                         <div class="progress-bar">
                             <div id="progress-fill" class="progress-fill" style="width: 0%"></div>
