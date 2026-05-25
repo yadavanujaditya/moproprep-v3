@@ -13,5 +13,14 @@
       "upscChoice": 30,
       "upscSuperCms": 30
     }
+  },
+  "sess_ribn23rxx_1779725592608": {
+    "startTime": 1779725593387,
+    "lastSeen": 1779726686867,
+    "ip": "127.0.0.1",
+    "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36 Edg/148.0.0.0",
+    "views": {
+      "Home": 630
+    }
   }
 }
