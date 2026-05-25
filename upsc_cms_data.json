@@ -1,0 +1,21 @@
+[
+  {
+    "id": "upsccms-2021-p1-q1",
+    "question_no": 1,
+    "examtype": "upscCms",
+    "year": 2021,
+    "paper": 1,
+    "question_text": "A 60-year-old man comes to emergency with history\nof chest pain, which is acute onset. The ECG shows\nST depression and T waves inversion. Cardiac\nbiomarkers in blood are not elevated. What will be\nthe appropriate management ?",
+    "option_a": "Oxygen + Aspirin + Ticagrelor + Metoprolol",
+    "option_b": "Oxygen + Sublingual nitroglycerin + Antiplatelets + Streptokinase",
+    "option_c": "Antiplatelets + LMW Heparin subcutaneous",
+    "option_d": "Oxygen + Sublingual nitroglycerin + Digoxin",
+    "difficulty": "Medium",
+    "correct_answer": "A",
+    "explanation": "",
+    "subject": "Medicine",
+    "chapter": "Cardiology",
+    "topic": "Unstable Angina",
+    "exam_weightage": "Medium"
+  }
+]

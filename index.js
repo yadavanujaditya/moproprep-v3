@@ -5,9 +5,45 @@ const { parse } = require('csv-parse/sync');
 const path = require('path');
 const fs = require('fs');
 
+// --- Global Crash Guards: keep server alive on unexpected errors ---
+process.on('uncaughtException', (err) => {
+    console.error('[CRASH GUARD] Uncaught Exception:', err.message);
+});
+process.on('unhandledRejection', (reason) => {
+    console.error('[CRASH GUARD] Unhandled Promise Rejection:', reason);
+});
+
+// Firebase Admin SDK for server-side Firestore operations
+const admin = require('firebase-admin');
 
 // Load environment variables FIRST
 require('dotenv').config();
+
+// Initialize Firebase Admin
+// Check if service account file exists, otherwise use default credentials
+const serviceAccountPath = path.join(__dirname, 'serviceAccountKey.json');
+if (fs.existsSync(serviceAccountPath)) {
+    const serviceAccount = require(serviceAccountPath);
+    admin.initializeApp({
+        credential: admin.credential.cert(serviceAccount)
+    });
+    console.log('Firebase Admin initialized with service account.');
+} else if (process.env.FIREBASE_PROJECT_ID) {
+    // Use environment variables (for Vercel/production)
+    admin.initializeApp({
+        credential: admin.credential.cert({
+            projectId: process.env.FIREBASE_PROJECT_ID,
+            clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+            privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n')
+        })
+    });
+    console.log('Firebase Admin initialized with environment variables.');
+} else {
+    console.warn('WARNING: Firebase Admin not initialized. Payment verification will not update Firestore.');
+}
+
+// Get Firestore instance (if Admin is initialized)
+const adminDb = admin.apps.length > 0 ? admin.firestore() : null;
 
 const app = express();
 
@@ -38,6 +74,7 @@ if (process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET) {
 
 // --- Visitor Analytics Logger ---
 const VISITS_FILE = path.join(__dirname, 'visits.json');
+let visitsWriteLock = false; // Prevent concurrent writes corrupting JSON
 
 app.use((req, res, next) => {
     // Only log page views and meaningful API calls, ignore static files/favicons
@@ -51,18 +88,26 @@ app.use((req, res, next) => {
         ua: req.headers['user-agent']
     };
 
-    // Use async file operations to avoid blocking the event loop
+    // Skip write if lock is active (prevents concurrent write corruption)
+    if (visitsWriteLock) return next();
+    visitsWriteLock = true;
+
     fs.readFile(VISITS_FILE, 'utf8', (err, data) => {
         let visits = [];
         if (!err && data) {
             try {
                 visits = JSON.parse(data);
-            } catch (e) { console.error('Parse error visits:', e.message); }
+                if (!Array.isArray(visits)) visits = [];
+            } catch (e) {
+                console.warn('visits.json corrupted — resetting.');
+                visits = []; // Auto-heal: reset corrupted file
+            }
         }
         visits.push(visit);
-        if (visits.length > 1000) visits.shift();
-        fs.writeFile(VISITS_FILE, JSON.stringify(visits, null, 2), (writeErr) => {
+        if (visits.length > 1000) visits = visits.slice(-1000);
+        fs.writeFile(VISITS_FILE, JSON.stringify(visits), (writeErr) => {
             if (writeErr) console.error('Failed to log visit:', writeErr.message);
+            visitsWriteLock = false; // Release lock
         });
     });
     next();
@@ -118,11 +163,13 @@ app.post('/api/analytics/heartbeat', (req, res) => {
 
 
 const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS2XBDgArRwbSDeYrFOS4gj3pwWafbCV8_RHGd3v9tb_9S35ApQEzG43pvR6KX-zHaiucsQ0iXClaI0/pub?output=csv';
+const UPSC_CMS_SHEET_URL = 'https://docs.google.com/spreadsheets/d/1eiXDqtyMgHf-k-AdcKx0VWmFG1Dz22K5LJ2pLtQFFDg/export?format=csv';
 
 // Cache configuration
 let cachedData = null;
 let lastFetchTime = 0;
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutes in milliseconds
+let fetchPromise = null; // Lock: prevents multiple simultaneous fetches
+const CACHE_TTL = 30 * 60 * 1000; // 30 minutes — reduces Google Sheets fetch load
 
 
 // Helper: Fetch and Parse Data
@@ -134,12 +181,25 @@ async function getQuestions(forceRefresh = false) {
         return cachedData;
     }
 
+    // If a fetch is already in progress, wait for it instead of starting another
+    if (fetchPromise) {
+        return fetchPromise;
+    }
+
     console.log('Fetching fresh data from Google Sheets...');
-    console.time('fetchSheets');
+    fetchPromise = _doFetch().finally(() => { fetchPromise = null; });
+    return fetchPromise;
+}
+
+async function _doFetch() {
+    
+    // --- 1. Fetch State MO questions ---
+    let stateMOQuestions = [];
+    console.time('fetchStateMOSheets');
     try {
         const response = await axios.get(SHEET_CSV_URL, { timeout: 10000 }); // 10s timeout
         const csvData = response.data;
-        console.timeEnd('fetchSheets');
+        console.timeEnd('fetchStateMOSheets');
 
         // Parse CSV
         const records = parse(csvData, {
@@ -149,7 +209,7 @@ async function getQuestions(forceRefresh = false) {
         });
 
         // Transform to App format
-        const transformed = records.map(record => {
+        stateMOQuestions = records.map(record => {
             const rawYear = String(record.year || record.Year || "").trim();
             const year = parseInt(rawYear) || 0;
 
@@ -174,35 +234,155 @@ async function getQuestions(forceRefresh = false) {
                 tags: tags
             };
         });
-
-        cachedData = transformed;
-        lastFetchTime = now;
-        console.log(`Loaded ${transformed.length} questions from Sheets.`);
-        return transformed;
-
+        console.log(`Loaded ${stateMOQuestions.length} State MO questions from Sheets.`);
     } catch (err) {
-        console.error('Error fetching/parsing Sheets data:', err.message);
-
+        console.error('Error fetching/parsing State MO Sheets data:', err.message);
         // Fallback to local data.json
         try {
             const dataPath = path.join(__dirname, 'data.json');
             if (fs.existsSync(dataPath)) {
                 console.log('Falling back to local data.json...');
-                const localData = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
-                cachedData = localData;
-                lastFetchTime = now; // Mark as "fetched" to avoid immediate retry
-                return localData;
+                stateMOQuestions = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
             }
         } catch (localErr) {
             console.error('Error reading local data.json:', localErr.message);
         }
+    }
 
+    // --- 2. Fetch UPSC CMS questions ---
+    let upscCMSQuestions = [];
+    console.time('fetchUPSCCMSSheets');
+    try {
+        const response = await axios.get(UPSC_CMS_SHEET_URL, { timeout: 10000 }); // 10s timeout
+        const csvData = response.data;
+        console.timeEnd('fetchUPSCCMSSheets');
+
+        // Parse CSV
+        const records = parse(csvData, {
+            columns: true,
+            skip_empty_lines: true,
+            trim: true
+        });
+
+        // Transform to App format (UPSC CMS specific mapping)
+        upscCMSQuestions = records.map(record => {
+            const rawYear = String(record.year || record.Year || "").trim();
+            const year = parseInt(rawYear) || 0;
+
+            // Generate tags automatically for UPSC CMS
+            let tags = ['upscmo']; // Default tag to match frontend selectMode('upscmo')
+            if (record.examtype) tags.push(record.examtype.toString().trim());
+            if (record.subject) tags.push(record.subject.toString().trim());
+            if (record.chapter) tags.push(record.chapter.toString().trim());
+            if (record.topic) tags.push(record.topic.toString().trim());
+            if (record.paper) tags.push(`Paper ${record.paper}`);
+            
+            // Merge any existing explicit tags
+            if (record.tags) {
+                const extraTags = record.tags.split(/[|,]/).map(t => t.trim()).filter(Boolean);
+                tags = [...new Set([...tags, ...extraTags])];
+            }
+
+            return {
+                id: record.id || record.ID,
+                question_no: record.question_no ? parseInt(record.question_no) : undefined,
+                examtype: record.examtype,
+                year: year,
+                paper: record.paper ? parseInt(record.paper) : undefined,
+                question_text: record.question_text || record.questionText,
+                option_a: record.option_a || record.option_A || "",
+                option_b: record.option_b || record.option_B || "",
+                option_c: record.option_c || record.option_C || "",
+                option_d: record.option_d || record.option_D || "",
+                options: {
+                    A: record.option_a || record.option_A || "",
+                    B: record.option_b || record.option_B || "",
+                    C: record.option_c || record.option_C || "",
+                    D: record.option_d || record.option_D || ""
+                },
+                correct_answer: (record.correct_answer || record.correctAnswer || "").toString().trim().toUpperCase(),
+                explanation: record.explanation || "",
+                difficulty: record.difficulty,
+                subject: record.subject,
+                chapter: record.chapter,
+                topic: record.topic,
+                exam_weightage: record.exam_weightage,
+                tags: tags
+            };
+        });
+        console.log(`Loaded ${upscCMSQuestions.length} UPSC CMS questions from Sheets.`);
+    } catch (err) {
+        console.error('Error fetching/parsing UPSC CMS Sheets data:', err.message);
+        // Fallback to local upsc_cms_data.json
+        try {
+            const upscDataPath = path.join(__dirname, 'upsc_cms_data.json');
+            if (fs.existsSync(upscDataPath)) {
+                console.log('Falling back to local upsc_cms_data.json...');
+                const localData = JSON.parse(fs.readFileSync(upscDataPath, 'utf8'));
+                upscCMSQuestions = localData.map(record => {
+                    const rawYear = String(record.year || record.Year || "").trim();
+                    const year = parseInt(rawYear) || 0;
+                    
+                    let tags = ['upscmo'];
+                    if (record.examtype) tags.push(record.examtype.toString().trim());
+                    if (record.subject) tags.push(record.subject.toString().trim());
+                    if (record.chapter) tags.push(record.chapter.toString().trim());
+                    if (record.topic) tags.push(record.topic.toString().trim());
+                    if (record.paper) tags.push(`Paper ${record.paper}`);
+
+                    if (record.tags) {
+                        const extraTags = Array.isArray(record.tags) ? record.tags : record.tags.split(/[|,]/).map(t => t.trim()).filter(Boolean);
+                        tags = [...new Set([...tags, ...extraTags])];
+                    }
+
+                    return {
+                        id: record.id || record.ID,
+                        question_no: record.question_no ? parseInt(record.question_no) : undefined,
+                        examtype: record.examtype,
+                        year: year,
+                        paper: record.paper ? parseInt(record.paper) : undefined,
+                        question_text: record.question_text || record.questionText,
+                        option_a: record.option_a || record.option_A || "",
+                        option_b: record.option_b || record.option_B || "",
+                        option_c: record.option_c || record.option_C || "",
+                        option_d: record.option_d || record.option_D || "",
+                        options: {
+                            A: record.option_a || record.option_A || "",
+                            B: record.option_b || record.option_B || "",
+                            C: record.option_c || record.option_C || "",
+                            D: record.option_d || record.option_D || ""
+                        },
+                        correct_answer: (record.correct_answer || record.correctAnswer || "").toString().trim().toUpperCase(),
+                        explanation: record.explanation || "",
+                        difficulty: record.difficulty,
+                        subject: record.subject,
+                        chapter: record.chapter,
+                        topic: record.topic,
+                        exam_weightage: record.exam_weightage,
+                        tags: tags
+                    };
+                });
+            }
+        } catch (localErr) {
+            console.error('Error reading local upsc_cms_data.json:', localErr.message);
+        }
+    }
+
+    // Merge both arrays
+    const combinedQuestions = [...stateMOQuestions, ...upscCMSQuestions];
+
+    if (combinedQuestions.length === 0) {
         if (cachedData) {
-            console.warn('Returning stale cache due to fetch error.');
+            console.warn('Returning stale cache due to empty combined dataset.');
             return cachedData;
         }
-        throw err;
+        throw new Error('No questions could be loaded from sheets or local fallbacks.');
     }
+
+    cachedData = combinedQuestions;
+    lastFetchTime = Date.now();
+    console.log(`Successfully cached ${cachedData.length} total questions.`);
+    return cachedData;
 }
 
 // Logs for debugging
@@ -308,9 +488,7 @@ app.post('/api/create-order', async (req, res) => {
     }
 });
 
-// Step 2: Verify Payment
-// NOTE: For full security, we'd use Firebase Admin SDK to update Firestore
-// Here we just return success, and the frontend handles the immediate UI update after verification
+// Step 2: Verify Payment and Update Firestore
 app.post('/api/verify-payment', async (req, res) => {
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature, uid } = req.body;
 
@@ -321,11 +499,31 @@ app.post('/api/verify-payment', async (req, res) => {
         .digest("hex");
 
     if (expectedSignature === razorpay_signature) {
-        // Ideally: Use firebase-admin to update firestore: users[uid].isPro = true
-        // For now, return success to frontend
+        console.log(`Payment verified for user ${uid}, payment ID: ${razorpay_payment_id}`);
+
+        // Update Firestore to grant Pro status
+        if (adminDb && uid) {
+            try {
+                await adminDb.collection('users').doc(uid).update({
+                    isPro: true,
+                    proGrantedAt: admin.firestore.FieldValue.serverTimestamp(),
+                    paymentId: razorpay_payment_id,
+                    orderId: razorpay_order_id
+                });
+                console.log(`Successfully granted Pro status to user ${uid}`);
+            } catch (firestoreError) {
+                console.error("Failed to update Firestore:", firestoreError);
+                // Still return success since payment was verified
+                // The client-side will update the user's local state
+            }
+        } else {
+            console.warn("Firestore admin not available or no uid provided. Pro status not saved to database.");
+        }
+
         res.json({ success: true });
     } else {
-        res.status(400).json({ success: false });
+        console.error("Payment signature verification failed");
+        res.status(400).json({ success: false, error: "Invalid signature" });
     }
 });
 

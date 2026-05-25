@@ -20,12 +20,22 @@
                 <span class="logo-icon">🩺</span>
                 <h1>MoProPrep Admin</h1>
             </a>
-            <div style="display: flex; gap: 0.5rem;">
-                <button id="btn-view-stats" class="secondary-btn" style="padding: 0.5rem 1rem;">Analytics 📊</button>
-                <button id="btn-logout" class="icon-btn">Logout</button>
+            <div style="text-align: right;">
+                <div id="admin-email-display" style="font-size: 0.8rem; color: #aaa; margin-bottom: 4px;">Connecting...
+                </div>
+                <div style="display: flex; gap: 0.5rem;">
+                    <button id="btn-view-stats" class="secondary-btn" style="padding: 0.5rem 1rem;">Analytics
+                        📊</button>
+                    <button id="btn-logout" class="icon-btn">Logout</button>
+                </div>
             </div>
-
         </header>
+
+        <!-- Diagnostic Alert Box -->
+        <div id="diagnostic-box"
+            style="display:none; background: #e74c3c; color: white; padding: 1rem; margin: 1rem 0; border-radius: 8px;">
+            <strong>Diagnostics:</strong> <span id="diagnostic-msg"></span>
+        </div>
 
         <main id="admin-content" style="display: none;">
             <div class="stats-grid">
@@ -125,16 +135,23 @@
         const ADMIN_EMAIL = "adityasonofashok@gmail.com";
 
         auth.onAuthStateChanged(async (user) => {
-            if (user && user.email === ADMIN_EMAIL) {
-                document.getElementById('login-overlay').style.display = 'none';
-                document.getElementById('admin-content').style.display = 'block';
-                document.getElementById('admin-content').style.display = 'block';
-                loadStats();
-                loadFeedback(); // Load user feedback
-                loadPrice(); // Load current price
-            } else if (user) {
-                alert("Unauthorized. Access denied.");
-                auth.signOut();
+            const emailDisplay = document.getElementById('admin-email-display');
+            if (user) {
+                emailDisplay.innerText = `Logged in as: ${user.email}`;
+                if (user.email === ADMIN_EMAIL) {
+                    document.getElementById('login-overlay').style.display = 'none';
+                    document.getElementById('admin-content').style.display = 'block';
+                    loadStats();
+                    loadFeedback();
+                    loadPrice();
+                } else {
+                    document.getElementById('diagnostic-box').style.display = 'block';
+                    document.getElementById('diagnostic-msg').innerText = `Unauthorized Email: ${user.email}. Expected: ${ADMIN_EMAIL}`;
+                    // alert("Unauthorized. Access denied.");
+                    // auth.signOut(); // Commented out to allow user to see the error
+                }
+            } else {
+                emailDisplay.innerText = "Not logged in";
             }
         });
 
@@ -242,8 +259,6 @@
         let currentPage = 1;
         const usersPerPage = 10;
 
-        const PRIORITY_TERMS = ['moproprep', 'mopro', 'state mo', 'mo'];
-
         // --- Search Event Listener ---
         document.getElementById('user-search').addEventListener('input', (e) => {
             const query = e.target.value.toLowerCase().trim();
@@ -254,21 +269,6 @@
                     (u.displayName && u.displayName.toLowerCase().includes(query)) ||
                     (u.email && u.email.toLowerCase().includes(query))
                 );
-
-                // Prioritization logic: matches containing Priority Terms go to top
-                filteredUsers.sort((a, b) => {
-                    const aName = (a.displayName || '').toLowerCase();
-                    const aEmail = (a.email || '').toLowerCase();
-                    const bName = (b.displayName || '').toLowerCase();
-                    const bEmail = (b.email || '').toLowerCase();
-
-                    const aPrio = PRIORITY_TERMS.some(t => aName.includes(t) || aEmail.includes(t));
-                    const bPrio = PRIORITY_TERMS.some(t => bName.includes(t) || bEmail.includes(t));
-
-                    if (aPrio && !bPrio) return -1;
-                    if (!aPrio && bPrio) return 1;
-                    return 0; // Maintain existing sort for others
-                });
             }
             currentPage = 1;
             renderUserTable();
@@ -307,18 +307,13 @@
                     const btnClass = u.isPro ? 'secondary-btn' : 'primary-btn';
                     const btnText = u.isPro ? '❌ Remove PRO' : '✅ Grant PRO';
 
-                    const uName = (u.displayName || '').toLowerCase();
-                    const uEmail = (u.email || '').toLowerCase();
-                    const isPriority = PRIORITY_TERMS.some(t => uName.includes(t) || uEmail.includes(t));
-                    const priorityIcon = isPriority ? ' <span title="Priority User" style="cursor:help;">🎖️</span>' : '';
-
-                    const row = `<tr style="border-bottom: 1px solid rgba(255,255,255,0.05); ${isPriority ? 'background: rgba(79, 70, 229, 0.05);' : ''}">
-                        <td style="padding: 0.75rem 0;">${u.displayName || 'N/A'}${priorityIcon}</td>
-                        <td style="padding: 0.75rem 0; font-size: 0.8rem;">${u.email}</td>
+                    const row = `<tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                        <td style="padding: 0.75rem 0;">${u.displayName || 'N/A'}</td>
+                        <td style="padding: 0.75rem 0;">${u.email}</td>
                         <td style="padding: 0.75rem 0;">${u.isPro ? '💎 PRO' : 'Free'}</td>
                         <td style="padding: 0.75rem 0;">
                             <button class="${btnClass}" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;" 
-                                     onclick="toggleProStatus('${u.uid}', ${u.isPro}, '${(u.displayName || u.email || '').replace(/'/g, "\\'")}')">
+                                    onclick="toggleProStatus('${u.uid}', ${u.isPro}, '${(u.displayName || u.email || '').replace(/'/g, "\\'")}')">
                                 ${btnText}
                             </button>
                         </td>
@@ -335,28 +330,51 @@
 
         // --- User Stats ---
         async function loadStats() {
-            const usersSnap = await db.collection('users').get();
-            const totalUsers = usersSnap.size;
-            let proUsers = 0;
+            try {
+                console.log("Starting loadStats...");
+                const usersSnap = await db.collection('users').get();
+                console.log("Users snapshot received. Size:", usersSnap.size);
 
-            allUsers = [];
+                const totalUsers = usersSnap.size;
+                let proUsers = 0;
 
-            usersSnap.forEach(doc => {
-                const u = doc.data();
-                u.uid = doc.id;
-                if (u.isPro) proUsers++;
-                allUsers.push(u);
-            });
+                allUsers = [];
 
-            // Sort by name
-            allUsers.sort((a, b) => (a.displayName || '').localeCompare(b.displayName || ''));
+                usersSnap.forEach(doc => {
+                    const u = doc.data();
+                    u.uid = doc.id;
+                    if (u.isPro) proUsers++;
+                    allUsers.push(u);
+                });
 
-            filteredUsers = [...allUsers];
-            currentPage = 1;
-            renderUserTable();
+                // Sort by name
+                allUsers.sort((a, b) => (a.displayName || '').localeCompare(b.displayName || ''));
 
-            document.getElementById('total-users').innerText = totalUsers;
-            document.getElementById('pro-users').innerText = proUsers;
+                filteredUsers = [...allUsers];
+                currentPage = 1;
+                renderUserTable();
+
+                document.getElementById('total-users').innerText = totalUsers;
+                document.getElementById('pro-users').innerText = proUsers;
+            } catch (error) {
+                console.error("Error loading user stats:", error);
+                document.getElementById('total-users').innerText = "Err";
+                document.getElementById('pro-users').innerText = "Err";
+
+                document.getElementById('diagnostic-box').style.display = 'block';
+                document.getElementById('diagnostic-msg').innerHTML = `
+                    <strong>Firestore Error:</strong> ${error.message}<br>
+                    Code: ${error.code}<br>
+                    Type: ${error.name}
+                `;
+
+                const tableBody = document.querySelector('#user-table tbody');
+                if (tableBody) {
+                    tableBody.innerHTML = `<tr><td colspan="4" style="text-align: center; padding: 1rem; color: #f87171;">
+                        Failed to load data. See diagnostics above.
+                    </td></tr>`;
+                }
+            }
         }
     </script>
 </body>

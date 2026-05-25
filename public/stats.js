@@ -77,6 +77,14 @@ async function loadUserStats() {
 
     } catch (err) {
         console.error("Error loading user stats:", err);
+        document.getElementById('val-total-users').innerText = "Error";
+        document.getElementById('val-pro-users').innerText = "Error";
+        document.getElementById('val-revenue').innerText = "Error";
+
+        const userTableBody = document.getElementById('user-table-body');
+        if (userTableBody) {
+            userTableBody.innerHTML = `<tr><td colspan="3" style="text-align: center; color: red;">Error loading users: ${err.message}</td></tr>`;
+        }
     }
 }
 

@@ -63,7 +63,7 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
@@ -124,16 +124,23 @@
             <!-- VIEW: Home Menu -->
             <section id="home-view" class="view active-view">
                 <div class="hero-section">
-                    <h2>Master Your State MO Exams</h2>
-                    <p>The ultimate platform for <b>State MO</b> preparation. Select your path to begin.
+                    <h2>Master Your Medical Exams</h2>
+                    <p>The ultimate platform for <b>State MO &amp; UPSC CMS</b> preparation. Select your path to begin.
                     </p>
                 </div>
                 <div class="menu-grid">
                     <div class="menu-card" id="btn-prev-year">
                         <div class="menu-icon">📚</div>
                         <div class="menu-content">
-                            <h3>Previous Year Paper</h3>
-                            <p>Practice with real exam questions from previous years.</p>
+                            <h3>State MO PYQ</h3>
+                            <p>Practice with real State MO exam questions from Haryana &amp; Rajasthan.</p>
+                        </div>
+                    </div>
+                    <div class="menu-card" id="btn-upsc-cms">
+                        <div class="menu-icon">🏛️</div>
+                        <div class="menu-content">
+                            <h3>UPSC CMS PYQ</h3>
+                            <p>Practice with real UPSC Combined Medical Services previous year papers.</p>
                         </div>
                     </div>
                     <div class="menu-card" id="btn-pro-quiz">
@@ -152,8 +159,8 @@
                     <button id="back-to-home-from-state" class="icon-btn">← Back to Menu</button>
                 </div>
                 <div class="hero-section">
-                    <h2>Select Examination</h2>
-                    <p>Choose the state or exam board for previous year papers.</p>
+                    <h2>Select State MO Exam</h2>
+                    <p>Choose your state for State MO previous year papers.</p>
                 </div>
                 <div class="menu-grid">
                     <div class="menu-card" id="btn-pyq-haryana">
@@ -170,12 +177,356 @@
                             <p>State MO Previous year papers for RPSC and Rajasthan medical exams.</p>
                         </div>
                     </div>
-                    <div class="menu-card" id="btn-pyq-upsc">
-                        <div class="menu-icon">🏛️</div>
+                </div>
+            </section>
+
+            <!-- VIEW: UPSC Entry View -->
+            <section id="upsc-entry-view" class="view hidden-view">
+                <div class="quiz-header" style="margin-bottom: 2rem;">
+                    <button id="back-to-home-from-upsc-entry" class="icon-btn">← Back to Menu</button>
+                </div>
+                <div class="hero-section">
+                    <h2>UPSC CMS Hub</h2>
+                    <p>Select your preferred learning path.</p>
+                </div>
+                <div class="menu-grid">
+                    <!-- Option 1: CMS Learning Hub -->
+                    <div class="menu-card" id="btn-cms-learning-hub" style="padding: 2.5rem; cursor: pointer; transition: transform 0.2s;">
+                        <div class="menu-icon" style="font-size: 3rem;">🏥</div>
                         <div class="menu-content">
-                            <h3>Previous Year Question UPSC</h3>
-                            <p>UPSC Medical Officer (MO) and CMS previous year papers.</p>
+                            <h3>CMS Learning Hub</h3>
+                            <p>Standard exam preparation. Practice papers by years, subjects, difficulty levels, or build custom quizzes.</p>
                         </div>
+                    </div>
+                    <!-- Option 2: Super CMS (Gamified) -->
+                    <div class="menu-card" id="btn-super-cms-entry" style="padding: 2.5rem; cursor: pointer; transition: transform 0.2s; background: linear-gradient(135deg, rgba(165, 49, 115, 0.05), rgba(76, 85, 182, 0.05)); border: 1px solid rgba(165, 49, 115, 0.15);">
+                        <div class="menu-icon" style="font-size: 3rem;">⚡</div>
+                        <div class="menu-content">
+                            <h3>Super CMS (Gamified)</h3>
+                            <p>Gamified study modes. Save patients in Clinical Case mode, race a simulated AI peer, or hit consecutive streaks.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- VIEW: UPSC Super CMS Selection -->
+            <section id="upsc-super-cms-view" class="view hidden-view">
+                <div class="quiz-header" style="margin-bottom: 2rem;">
+                    <button id="back-to-entry-from-super" class="icon-btn">← Back to Menu</button>
+                </div>
+                <div class="hero-section">
+                    <h2>Super CMS (Gamified Arena)</h2>
+                    <p>A new, highly engaging way to master your medical MCQ exams.</p>
+                </div>
+                <div class="menu-grid">
+                    <!-- Mode 1: Patient Case File -->
+                    <div class="menu-card" id="btn-mode-case-file">
+                        <div class="menu-icon">🩺</div>
+                        <div class="menu-content">
+                            <h3>Patient Case File</h3>
+                            <p>Every MCQ is a patient clinical case. Answer correctly to save them; incorrect answers drop patient stability!</p>
+                        </div>
+                    </div>
+                    <!-- Mode 2: AI Speed Duel -->
+                    <div class="menu-card" id="btn-mode-ai-duel">
+                        <div class="menu-icon">⚔️</div>
+                        <div class="menu-content">
+                            <h3>AI Speed Duel</h3>
+                            <p>Race against a simulated AI Resident companion. Accuracy and speed count!</p>
+                        </div>
+                    </div>
+                    <!-- Mode 3: Hot Seat Streak -->
+                    <div class="menu-card" id="btn-mode-hot-seat">
+                        <div class="menu-icon">🔥</div>
+                        <div class="menu-content">
+                            <h3>Hot Seat Streak</h3>
+                            <p>Build consecutive MCQ answer streaks to multiply your points. Answering incorrectly resets it all!</p>
+                        </div>
+                    </div>
+                    <!-- Mode 4: Outbreak Clearance -->
+                    <div class="menu-card" id="btn-mode-clearance">
+                        <div class="menu-icon">🛡️</div>
+                        <div class="menu-content">
+                            <h3>Error Clearance</h3>
+                            <p>Fight and clear your previously incorrect questions. Cure them twice to build immunity badges.</p>
+                        </div>
+                    </div>
+                    <!-- Mode 5: Progress & Analytics -->
+                    <div class="menu-card" id="btn-super-cms-analytics">
+                        <div class="menu-icon"><span class="mascot-live">📊</span></div>
+                        <div class="menu-content">
+                            <h3>Progress & Analytics</h3>
+                            <p>Check your detailed stats, solved questions, and category completion in the arena.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- VIEW: UPSC AI Level Selection -->
+            <section id="upsc-ai-selection-view" class="view hidden-view">
+                <div class="quiz-header" style="margin-bottom: 2rem;">
+                    <button id="back-to-super-from-ai" class="icon-btn">← Back to Modes</button>
+                </div>
+                <div class="hero-section">
+                    <h2>Select AI Opponent Level</h2>
+                    <p>Choose the clinical expertise level of the AI Resident you wish to compete against.</p>
+                </div>
+
+                <!-- Custom Selection Filter for AI Duel -->
+                <div id="ai-duel-filters-card" class="glass-card" style="display: flex; flex-direction: column; align-items: stretch; gap: 1.5rem; padding: 2.5rem; margin-bottom: 2rem;">
+                    <h3 style="font-size: 1.2rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.5rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                        <span>🎯</span> Customize Duel Questions (Optional)
+                    </h3>
+                    
+                    <!-- Subject Selector -->
+                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        <label style="font-weight: 600; font-size: 0.95rem; color: var(--text-main);">Subject</label>
+                        <select id="ai-duel-subject" style="background: var(--surface); color: var(--text-main); border: 1px solid var(--border); padding: 0.8rem 1.2rem; border-radius: 12px; font-family: var(--font-family); font-size: 0.95rem; outline: none; cursor: pointer; width: 100%;">
+                            <option value="all">All Subjects</option>
+                        </select>
+                    </div>
+
+                    <!-- Chapter Selector -->
+                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        <label style="font-weight: 600; font-size: 0.95rem; color: var(--text-main);">Chapter</label>
+                        <select id="ai-duel-chapter" style="background: var(--surface); color: var(--text-main); border: 1px solid var(--border); padding: 0.8rem 1.2rem; border-radius: 12px; font-family: var(--font-family); font-size: 0.95rem; outline: none; cursor: pointer; width: 100%;">
+                            <option value="all">All Chapters</option>
+                        </select>
+                    </div>
+
+                    <!-- Topic Selector -->
+                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        <label style="font-weight: 600; font-size: 0.95rem; color: var(--text-main);">Topic</label>
+                        <select id="ai-duel-topic" style="background: var(--surface); color: var(--text-main); border: 1px solid var(--border); padding: 0.8rem 1.2rem; border-radius: 12px; font-family: var(--font-family); font-size: 0.95rem; outline: none; cursor: pointer; width: 100%;">
+                            <option value="all">All Topics</option>
+                        </select>
+                    </div>
+
+                    <!-- Years selector panel -->
+                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <label style="font-weight: 600; font-size: 0.95rem; color: var(--text-main);">Select Years</label>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <button id="ai-duel-years-select-all" class="secondary-btn" style="padding: 0.25rem 0.5rem; font-size: 0.75rem; border-radius: 6px; width: auto; height: auto; margin: 0;">All</button>
+                                <button id="ai-duel-years-clear-all" class="secondary-btn" style="padding: 0.25rem 0.5rem; font-size: 0.75rem; border-radius: 6px; width: auto; height: auto; margin: 0;">Clear</button>
+                            </div>
+                        </div>
+                        <div id="ai-duel-years-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; background: var(--surface); padding: 1rem; border-radius: 12px; border: 1px solid var(--border);">
+                            <!-- Year checkboxes built dynamically -->
+                        </div>
+                    </div>
+
+                    <!-- Available questions counter -->
+                    <div style="font-size: 0.95rem; font-weight: 600; color: var(--text-muted); text-align: right;">
+                        Available Questions for Duel: <span id="ai-duel-q-count" style="color: var(--secondary); font-weight: 700;">0</span>
+                    </div>
+                </div>
+
+                <div class="menu-grid">
+                    <!-- Option 1: 1st Year MBBS -->
+                    <div class="menu-card ai-level-card" data-level="1st_year" data-accuracy="0.15" data-speed="13500" data-name="1st Year MBBS Student">
+                        <div class="menu-icon"><span class="mascot-live">🐣</span></div>
+                        <div class="menu-content">
+                            <h3>1st Year MBBS</h3>
+                            <p>Focuses on clinical fundamentals. Slow pace with novice mistakes.</p>
+                        </div>
+                    </div>
+                    <!-- Option 2: 2nd Year MBBS -->
+                    <div class="menu-card ai-level-card" data-level="2nd_year" data-accuracy="0.30" data-speed="11500" data-name="2nd Year MBBS Student">
+                        <div class="menu-icon"><span class="mascot-live">📚</span></div>
+                        <div class="menu-content">
+                            <h3>2nd/3rd Year MBBS</h3>
+                            <p>Understands general ward management. Moderate pace.</p>
+                        </div>
+                    </div>
+                    <!-- Option 3: 4th Year MBBS -->
+                    <div class="menu-card ai-level-card" data-level="4th_year" data-accuracy="0.40" data-speed="10500" data-name="4th Year MBBS Student">
+                        <div class="menu-icon"><span class="mascot-live">🩺</span></div>
+                        <div class="menu-content">
+                            <h3>4th Year MBBS</h3>
+                            <p>Familiar with core clinical guidelines. Steady pace.</p>
+                        </div>
+                    </div>
+                    <!-- Option 4: Intern -->
+                    <div class="menu-card ai-level-card" data-level="intern" data-accuracy="0.50" data-speed="9500" data-name="Medical Intern">
+                        <div class="menu-icon"><span class="mascot-live">⚡</span></div>
+                        <div class="menu-content">
+                            <h3>Medical Intern</h3>
+                            <p>Competent clinical decision maker. Good speed and confidence.</p>
+                        </div>
+                    </div>
+                    <!-- Option 5: Junior Resident -->
+                    <div class="menu-card ai-level-card" data-level="jr" data-accuracy="0.60" data-speed="9000" data-name="Junior Resident (JR)">
+                        <div class="menu-icon"><span class="mascot-live">👨‍⚕️</span></div>
+                        <div class="menu-content">
+                            <h3>Junior Resident</h3>
+                            <p>Experienced in acute management. Fast and decisive diagnostics.</p>
+                        </div>
+                    </div>
+                    <!-- Option 6: Senior Resident -->
+                    <div class="menu-card ai-level-card" data-level="sr" data-accuracy="0.80" data-speed="8000" data-name="Senior Resident (SR)">
+                        <div class="menu-icon"><span class="mascot-live">👩‍⚕️</span></div>
+                        <div class="menu-content">
+                            <h3>Senior Resident</h3>
+                            <p>Highly skilled specialist resident. Very rapid clinical judgment.</p>
+                        </div>
+                    </div>
+                    <!-- Option 7: Consultant -->
+                    <div class="menu-card ai-level-card" data-level="consultant" data-accuracy="0.95" data-speed="6500" data-name="Consultant Specialist">
+                        <div class="menu-icon"><span class="mascot-live">👑</span></div>
+                        <div class="menu-content">
+                            <h3>Consultant Specialist</h3>
+                            <p>Chief consultant physician. Near-instant diagnosis and expertise.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- VIEW: UPSC Hub View -->
+            <section id="upsc-hub-view" class="view hidden-view">
+                <div class="quiz-header" style="margin-bottom: 2rem;">
+                    <button id="back-to-home-from-upsc-hub" class="icon-btn">← Back to Menu</button>
+                </div>
+                <div class="hero-section">
+                    <h2>UPSC CMS Learning Hub</h2>
+                    <p>Select a learning mode to practice and prepare efficiently.</p>
+                </div>
+                <div class="menu-grid upsc-hub-grid">
+                    <div class="menu-card" id="btn-upsc-yearwise">
+                        <div class="menu-icon">📅</div>
+                        <div class="menu-content">
+                            <h3>Year-wise PYQs</h3>
+                            <p>Browse and practice complete papers from previous years.</p>
+                        </div>
+                    </div>
+                    <div class="menu-card" id="btn-upsc-subjectwise">
+                        <div class="menu-icon">🏥</div>
+                        <div class="menu-content">
+                            <h3>Subject-wise</h3>
+                            <p>Master specific subjects, chapters, and topics.</p>
+                        </div>
+                    </div>
+                    <div class="menu-card" id="btn-upsc-highpriority">
+                        <div class="menu-icon">🎯</div>
+                        <div class="menu-content">
+                            <h3>High Weightage</h3>
+                            <p>Focus on questions from high-priority topics.</p>
+                        </div>
+                    </div>
+                    <div class="menu-card" id="btn-upsc-difficulty">
+                        <div class="menu-icon">📈</div>
+                        <div class="menu-content">
+                            <h3>Difficulty Mode</h3>
+                            <p>Practice Easy, Medium, or Hard questions.</p>
+                        </div>
+                    </div>
+                    <div class="menu-card" id="btn-upsc-revision">
+                        <div class="menu-icon">🔖</div>
+                        <div class="menu-content">
+                            <h3>Revision Mode</h3>
+                            <p>Focus on unseen or previously incorrect questions.</p>
+                        </div>
+                    </div>
+                    <div class="menu-card" id="btn-upsc-custom-builder">
+                        <div class="menu-icon"><span class="mascot-live">🛠️</span></div>
+                        <div class="menu-content">
+                            <h3>Custom Quiz Builder</h3>
+                            <p>Design a custom test using subjects, years, weightage, and status filters.</p>
+                        </div>
+                    </div>
+                    <!-- Option 7: Progress & Analytics -->
+                    <div class="menu-card" id="btn-upsc-analytics">
+                        <div class="menu-icon"><span class="mascot-live">📊</span></div>
+                        <div class="menu-content">
+                            <h3>Progress & Analytics</h3>
+                            <p>Check your detailed stats, solved questions over time, and see pending topics/papers.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- VIEW: UPSC Custom Quiz Builder -->
+            <section id="upsc-custom-builder-view" class="view hidden-view">
+                <div class="quiz-header" style="margin-bottom: 2rem;">
+                    <button id="back-to-hub-from-custom" class="icon-btn">← Back to Menu</button>
+                </div>
+                <div class="hero-section">
+                    <h2>Custom Quiz Builder</h2>
+                    <p>Build your personalized practice session with specific filters.</p>
+                </div>
+                <div class="glass-card" style="display: flex; flex-direction: column; align-items: stretch; gap: 1.5rem; padding: 2.5rem; margin-bottom: 2rem;">
+                    <!-- Subject Selector -->
+                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        <label style="font-weight: 600; font-size: 0.95rem; color: var(--text-main);">Subject</label>
+                        <select id="builder-subject" style="background: var(--surface); color: var(--text-main); border: 1px solid var(--border); padding: 0.8rem 1.2rem; border-radius: 12px; font-family: var(--font-family); font-size: 0.95rem; outline: none; cursor: pointer; width: 100%;">
+                            <option value="all">All Subjects</option>
+                        </select>
+                    </div>
+
+                    <!-- Chapter Selector -->
+                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        <label style="font-weight: 600; font-size: 0.95rem; color: var(--text-main);">Chapter</label>
+                        <select id="builder-chapter" style="background: var(--surface); color: var(--text-main); border: 1px solid var(--border); padding: 0.8rem 1.2rem; border-radius: 12px; font-family: var(--font-family); font-size: 0.95rem; outline: none; cursor: pointer; width: 100%;">
+                            <option value="all">All Chapters</option>
+                        </select>
+                    </div>
+
+                    <!-- Topic Selector -->
+                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        <label style="font-weight: 600; font-size: 0.95rem; color: var(--text-main);">Topic</label>
+                        <select id="builder-topic" style="background: var(--surface); color: var(--text-main); border: 1px solid var(--border); padding: 0.8rem 1.2rem; border-radius: 12px; font-family: var(--font-family); font-size: 0.95rem; outline: none; cursor: pointer; width: 100%;">
+                            <option value="all">All Topics</option>
+                        </select>
+                    </div>
+
+                    <!-- Weightage filter -->
+                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        <label style="font-weight: 600; font-size: 0.95rem; color: var(--text-main);">Exam Weightage</label>
+                        <div style="display: flex; gap: 1.5rem; flex-wrap: wrap;">
+                            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; color: var(--text-main);">
+                                <input type="radio" name="builder-weightage" value="all" checked style="width: 18px; height: 18px; cursor: pointer;"> All Weightages
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; color: var(--text-main);">
+                                <input type="radio" name="builder-weightage" value="high" style="width: 18px; height: 18px; cursor: pointer;"> High Priority Only
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Status filter -->
+                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        <label style="font-weight: 600; font-size: 0.95rem; color: var(--text-main);">Question Status</label>
+                        <div style="display: flex; gap: 1.5rem; flex-wrap: wrap;">
+                            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; color: var(--text-main);">
+                                <input type="radio" name="builder-status" value="all" checked style="width: 18px; height: 18px; cursor: pointer;"> All Questions
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; color: var(--text-main);">
+                                <input type="radio" name="builder-status" value="unseen" style="width: 18px; height: 18px; cursor: pointer;"> Unseen Only
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; color: var(--text-main);">
+                                <input type="radio" name="builder-status" value="incorrect" style="width: 18px; height: 18px; cursor: pointer;"> Incorrectly Answered Only
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Years selector panel inside builder -->
+                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <label style="font-weight: 600; font-size: 0.95rem; color: var(--text-main);">Select Years</label>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <button id="builder-years-select-all" class="secondary-btn" style="padding: 0.25rem 0.5rem; font-size: 0.75rem; border-radius: 6px; width: auto; height: auto; margin: 0;">All</button>
+                                <button id="builder-years-clear-all" class="secondary-btn" style="padding: 0.25rem 0.5rem; font-size: 0.75rem; border-radius: 6px; width: auto; height: auto; margin: 0;">Clear</button>
+                            </div>
+                        </div>
+                        <div id="builder-years-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; background: var(--surface); padding: 1rem; border-radius: 12px; border: 1px solid var(--border);">
+                            <!-- Year checkboxes built dynamically -->
+                        </div>
+                    </div>
+
+                    <!-- Start Button -->
+                    <div style="margin-top: 1.5rem; display: flex; justify-content: center;">
+                        <button id="builder-start-btn" class="primary-btn" style="padding: 1rem 2.5rem; font-size: 1.1rem; border-radius: 14px; box-shadow: 0 8px 30px var(--primary-glow); transform: translateY(0); transition: all 0.2s;">
+                            Start Quiz (<span id="builder-q-count">0</span> Questions)
+                        </button>
                     </div>
                 </div>
             </section>
@@ -189,9 +540,178 @@
                     <h2 id="view-title">Select Year</h2>
                     <p id="view-desc">Choose a year to test your knowledge.</p>
                 </div>
+                <div id="upsc-year-filter-container" style="display: none; margin-bottom: 2rem; flex-direction: column; align-items: center; gap: 1rem;">
+                    <div style="display: flex; align-items: center; gap: 0.8rem; flex-wrap: wrap; justify-content: center;">
+                        <label for="upsc-year-filter" style="font-weight: 500; font-size: 0.95rem; color: var(--text-muted);">Year:</label>
+                        <select id="upsc-year-filter" style="background: var(--surface); color: var(--text-main); border: 1px solid var(--border); padding: 0.6rem 1.2rem; border-radius: 12px; font-family: var(--font-family); font-size: 0.95rem; outline: none; cursor: pointer; min-width: 140px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); transition: border-color 0.2s;">
+                            <option value="all">All Years</option>
+                            <option value="custom">Custom Selection...</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Custom Years Checkbox Panel -->
+                    <div id="upsc-custom-years-panel" class="glass-card" style="display: none; width: 100%; max-width: 500px; margin-top: 1.5rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <span style="font-weight: 600; font-size: 0.95rem; color: var(--text-main);">Select Years</span>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <button id="upsc-custom-years-select-all" class="secondary-btn" style="padding: 0.25rem 0.6rem; font-size: 0.8rem; border-radius: 8px; width: auto; height: auto; margin: 0;">Select All</button>
+                                <button id="upsc-custom-years-clear-all" class="secondary-btn" style="padding: 0.25rem 0.6rem; font-size: 0.8rem; border-radius: 8px; width: auto; height: auto; margin: 0;">Clear All</button>
+                            </div>
+                        </div>
+                        <div id="upsc-custom-years-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.8rem; margin-bottom: 1rem;">
+                            <!-- Checkboxes injected dynamically -->
+                        </div>
+                        <div style="display: flex; justify-content: flex-end; gap: 0.8rem;">
+                            <button id="upsc-custom-years-apply" class="primary-btn" style="padding: 0.4rem 1.2rem; font-size: 0.9rem; border-radius: 8px; width: auto;">Apply Filter</button>
+                        </div>
+                    </div>
+                </div>
                 <div id="years-grid" class="cards-grid">
                     <!-- Year cards injected here -->
                     <div class="loader"></div>
+                </div>
+            </section>
+
+            <!-- VIEW: UPSC Choice (Solve vs See Children) -->
+            <section id="upsc-choice-view" class="view hidden-view">
+                <div class="quiz-header" style="margin-bottom: 2rem;">
+                    <button id="back-from-choice" class="icon-btn">← Back</button>
+                </div>
+                <div class="hero-section">
+                    <h2 id="choice-title">Medicine</h2>
+                    <p id="choice-desc">Choose whether to start practice or explore chapters/topics.</p>
+                </div>
+                <div class="menu-grid">
+                    <!-- Option 1: Solve -->
+                    <div class="menu-card" id="btn-choice-solve" style="border: 2px solid var(--primary); background: linear-gradient(135deg, rgba(194, 24, 91, 0.02), rgba(255, 141, 161, 0.02));">
+                        <div class="menu-icon"><span class="mascot-live">📝</span></div>
+                        <div class="menu-content">
+                            <h3>Solve Entire Section</h3>
+                            <p id="choice-solve-desc">Start practicing immediately with all questions in this category.</p>
+                        </div>
+                    </div>
+                    <!-- Option 2: Browse -->
+                    <div class="menu-card" id="btn-choice-see">
+                        <div class="menu-icon"><span class="mascot-live">🔍</span></div>
+                        <div class="menu-content">
+                            <h3 id="choice-see-title">See Chapters</h3>
+                            <p id="choice-see-desc">Drill down further and select specific chapters/topics to practice.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- VIEW: UPSC Analytics & Progress -->
+            <section id="upsc-analytics-view" class="view hidden-view">
+                <div class="quiz-header" style="margin-bottom: 2rem;">
+                    <button id="back-to-hub-from-analytics" class="icon-btn">← Back to Hub</button>
+                </div>
+                <div class="hero-section">
+                    <h2>UPSC CMS Analytics Dashboard</h2>
+                    <p>Track your preparation progress, solved history, and category mastery.</p>
+                </div>
+
+                <!-- Time Range & Filter Controls Card -->
+                <div class="glass-card" style="display: flex; flex-direction: column; gap: 1.5rem; padding: 2rem; margin-bottom: 2rem;">
+                    <!-- Time Range Filters -->
+                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        <label style="font-weight: 700; font-size: 0.95rem; color: var(--text-main);">Select Time Period</label>
+                        <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+                            <button id="btn-analytics-today" class="secondary-btn" style="padding: 0.5rem 1.25rem; font-size: 0.9rem; width: auto;">Today</button>
+                            <button id="btn-analytics-week" class="secondary-btn" style="padding: 0.5rem 1.25rem; font-size: 0.9rem; width: auto;">This Week</button>
+                            <button id="btn-analytics-month" class="secondary-btn" style="padding: 0.5rem 1.25rem; font-size: 0.9rem; width: auto;">This Month</button>
+                            <button id="btn-analytics-custom" class="secondary-btn" style="padding: 0.5rem 1.25rem; font-size: 0.9rem; width: auto;">Custom...</button>
+                        </div>
+                    </div>
+
+                    <!-- Custom Date Selection (Collapsible) -->
+                    <div id="analytics-custom-dates" style="display: none; align-items: center; gap: 1rem; flex-wrap: wrap; margin-top: 0.5rem;">
+                        <div style="display: flex; flex-direction: column; gap: 0.25rem;">
+                            <span style="font-size: 0.85rem; color: var(--text-muted);">Start Date</span>
+                            <input type="date" id="analytics-start-date" style="padding: 0.4rem 0.8rem; border-radius: 8px; font-size: 0.9rem;">
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 0.25rem;">
+                            <span style="font-size: 0.85rem; color: var(--text-muted);">End Date</span>
+                            <input type="date" id="analytics-end-date" style="padding: 0.4rem 0.8rem; border-radius: 8px; font-size: 0.9rem;">
+                        </div>
+                        <button id="btn-analytics-apply-custom" class="primary-btn" style="padding: 0.5rem 1.2rem; font-size: 0.85rem; border-radius: 8px; width: auto; margin-top: 1.25rem;">Apply Range</button>
+                    </div>
+
+                    <hr style="border: 0; border-top: 1px solid var(--border); margin: 0.5rem 0;">
+
+                    <!-- Categorical Filters -->
+                    <div style="display: flex; gap: 1rem; flex-wrap: wrap; width: 100%;">
+                        <div style="flex: 1; min-width: 180px; display: flex; flex-direction: column; gap: 0.4rem;">
+                            <label style="font-weight: 600; font-size: 0.85rem; color: var(--text-muted);">Subject</label>
+                            <select id="analytics-subject" style="padding: 0.6rem 1rem; border-radius: 10px; font-size: 0.85rem; width: 100%;">
+                                <option value="all">All Subjects</option>
+                            </select>
+                        </div>
+                        <div style="flex: 1; min-width: 180px; display: flex; flex-direction: column; gap: 0.4rem;">
+                            <label style="font-weight: 600; font-size: 0.85rem; color: var(--text-muted);">Chapter</label>
+                            <select id="analytics-chapter" style="padding: 0.6rem 1rem; border-radius: 10px; font-size: 0.85rem; width: 100%;">
+                                <option value="all">All Chapters</option>
+                            </select>
+                        </div>
+                        <div style="flex: 1; min-width: 180px; display: flex; flex-direction: column; gap: 0.4rem;">
+                            <label style="font-weight: 600; font-size: 0.85rem; color: var(--text-muted);">Topic</label>
+                            <select id="analytics-topic" style="padding: 0.6rem 1rem; border-radius: 10px; font-size: 0.85rem; width: 100%;">
+                                <option value="all">All Topics</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Core Summary Metrics -->
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 2rem; width: 100%;">
+                    <div class="glass-card" style="padding: 1.5rem; text-align: center; background: rgba(194, 24, 91, 0.03);">
+                        <div style="font-size: 2rem; margin-bottom: 0.25rem;">📚</div>
+                        <div style="font-size: 2.2rem; font-weight: 800; color: var(--primary);" id="stat-total-solved">0</div>
+                        <div style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Questions Solved</div>
+                    </div>
+                    <div class="glass-card" style="padding: 1.5rem; text-align: center; background: rgba(16, 185, 129, 0.03);">
+                        <div style="font-size: 2rem; margin-bottom: 0.25rem;">🎯</div>
+                        <div style="font-size: 2.2rem; font-weight: 800; color: #10b981;" id="stat-accuracy">0%</div>
+                        <div style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Overall Accuracy</div>
+                    </div>
+                    <div class="glass-card" style="padding: 1.5rem; text-align: center; background: rgba(250, 204, 21, 0.03);">
+                        <div style="font-size: 2rem; margin-bottom: 0.25rem;">🔥</div>
+                        <div style="font-size: 2.2rem; font-weight: 800; color: var(--warning);" id="stat-streak">0 Days</div>
+                        <div style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Solve Streak</div>
+                    </div>
+                </div>
+
+                <!-- Subject Progress Breakdown -->
+                <div class="glass-card" style="padding: 2rem; margin-bottom: 2rem; width: 100%;">
+                    <h3 style="font-size: 1.25rem; font-weight: 700; color: var(--text-main); margin-bottom: 1.5rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem;">
+                        📊 Subject Completion Status
+                    </h3>
+                    <div id="analytics-subjects-breakdown" style="display: flex; flex-direction: column; gap: 1.25rem; width: 100%;">
+                        <!-- Dynamically filled with completion status bars -->
+                    </div>
+                </div>
+
+                <!-- Pending Mastery Areas -->
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; width: 100%;">
+                    <!-- Pending Topics -->
+                    <div class="glass-card" style="padding: 2rem;">
+                        <h3 style="font-size: 1.15rem; font-weight: 700; color: var(--text-main); margin-bottom: 1rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                            <span>⏳</span> Pending Topics
+                        </h3>
+                        <div id="analytics-pending-topics" style="display: flex; flex-direction: column; gap: 0.8rem; max-height: 250px; overflow-y: auto; padding-right: 0.5rem;">
+                            <!-- Incomplete topics list -->
+                        </div>
+                    </div>
+
+                    <!-- Pending Papers/Years -->
+                    <div class="glass-card" style="padding: 2rem;">
+                        <h3 style="font-size: 1.15rem; font-weight: 700; color: var(--text-main); margin-bottom: 1rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                            <span>📅</span> Pending Papers & Years
+                        </h3>
+                        <div id="analytics-pending-papers" style="display: flex; flex-direction: column; gap: 0.8rem; max-height: 250px; overflow-y: auto; padding-right: 0.5rem;">
+                            <!-- Incomplete papers list -->
+                        </div>
+                    </div>
                 </div>
             </section>
 
@@ -229,6 +749,73 @@
                     <!-- Question number buttons injected here -->
                 </div>
 
+                <!-- Super CMS Gamification Panel -->
+                <div id="super-cms-panel" style="display: none; flex-direction: column; gap: 1rem; margin-bottom: 1.5rem; width: 100%;">
+                    <!-- Patient Stability Status -->
+                    <div id="gamified-stability-container" class="glass-card" style="display: none; padding: 1.5rem; flex-direction: column; gap: 0.75rem; background: linear-gradient(135deg, rgba(239, 83, 80, 0.05), rgba(76, 175, 80, 0.05)); border: 1px solid var(--outline);">
+                        <div style="display: flex; align-items: center; gap: 1rem; width: 100%;">
+                            <div style="font-size: 2rem;">🩺</div>
+                            <div style="flex: 1; display: flex; flex-direction: column; gap: 0.25rem;">
+                                <div style="display: flex; justify-content: space-between; font-weight: 700; font-size: 0.95rem; color: var(--text-main);">
+                                    <span>Patient Stability</span>
+                                    <span id="stability-percent">100%</span>
+                                </div>
+                                <div class="progress-bar" style="background: rgba(0,0,0,0.06); height: 12px; border-radius: 9999px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1);">
+                                    <div id="stability-fill" style="width: 100%; height: 100%; background: linear-gradient(90deg, #ef5350 0%, #ffca28 50%, #66bb6a 100%); transition: width 0.3s ease;"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; font-size: 0.85rem; padding: 0 0.5rem;">
+                            <span>Clinical Status: <strong id="patient-condition-text" style="color: #66bb6a;">Stable Condition 🟢</strong></span>
+                            <span>Lives Today: <strong id="lives-counter-text" style="color: var(--secondary);">3</strong> ❤️</span>
+                        </div>
+                        <div id="patient-walk-track" style="width: 100%; font-family: monospace; font-size: 0.95rem; text-align: center; background: var(--surface); padding: 0.5rem; border-radius: 8px; color: var(--text-main); font-weight: bold; letter-spacing: 1px; margin-top: 0.5rem; overflow: hidden; white-space: nowrap;">
+                            🚑 ------------------- 🏃 ------------------- 🏠
+                        </div>
+                    </div>
+
+                    <!-- AI Speed Duel Tracker -->
+                    <div id="gamified-ai-container" class="glass-card" style="display: none; padding: 1.25rem; align-items: center; gap: 1rem; background: linear-gradient(135deg, rgba(76, 85, 182, 0.05), rgba(140, 149, 251, 0.05)); border: 1px solid var(--outline);">
+                        <div style="font-size: 1.75rem;">⚔️</div>
+                        <div style="flex: 1; display: flex; flex-direction: column; gap: 0.5rem;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span style="font-weight: 700; font-size: 0.95rem; color: var(--text-main);">AI Resident Duel</span>
+                                <span style="font-size: 0.85rem; padding: 0.25rem 0.5rem; background: var(--surface); border-radius: 6px; font-weight: 600; color: var(--primary);" id="ai-status-text">Simulating...</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--text-muted);">
+                                <span>Your Score: <strong id="user-score-stat" style="color: var(--text-main);">0</strong></span>
+                                <span>AI Score: <strong id="ai-score-stat" style="color: var(--text-main);">0</strong></span>
+                            </div>
+                            <!-- Side-by-side Race Track -->
+                            <div style="position: relative; background: var(--surface); height: 24px; border-radius: 12px; display: flex; align-items: center; padding: 0 0.5rem;">
+                                <!-- User indicator -->
+                                <div id="duel-user-indicator" style="position: absolute; left: 0%; transition: left 0.3s ease; font-size: 0.85rem; font-weight: 600; z-index: 2; background: rgba(102, 187, 106, 0.2); padding: 0.1rem 0.4rem; border-radius: 6px; color: var(--text-main);">🩺 You</div>
+                                <!-- AI indicator -->
+                                <div id="duel-ai-indicator" style="position: absolute; left: 0%; transition: left 0.3s ease; font-size: 0.85rem; font-weight: 600; z-index: 1; background: rgba(76, 85, 182, 0.2); padding: 0.1rem 0.4rem; border-radius: 6px; color: var(--text-main); margin-left: 20px;">🤖 AI</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- MCQ Hot Seat Streak -->
+                    <div id="gamified-streak-container" class="glass-card" style="display: none; padding: 1.25rem; align-items: center; gap: 1rem; background: linear-gradient(135deg, rgba(165, 49, 115, 0.05), rgba(255, 193, 7, 0.05)); border: 1px solid var(--outline);">
+                        <div style="font-size: 1.75rem;" id="streak-flame-icon">🔥</div>
+                        <div style="flex: 1; display: flex; align-items: center; justify-content: space-between;">
+                            <div>
+                                <div style="font-weight: 700; font-size: 0.95rem; color: var(--text-main);">Hot Seat Streak</div>
+                                <div style="font-size: 0.85rem; color: var(--text-muted);">Answer correctly to build XP multiplier!</div>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                <div style="font-size: 0.85rem; padding: 0.25rem 0.5rem; background: var(--surface); border-radius: 6px; font-weight: 600; color: var(--text-main);">
+                                    Streak: <span id="streak-counter" style="color: #a53173; font-weight: 700;">0</span>
+                                </div>
+                                <div style="font-size: 0.85rem; padding: 0.25rem 0.5rem; background: var(--surface); border-radius: 6px; font-weight: 600; color: var(--text-main);">
+                                    Multiplier: <span id="streak-multiplier" style="color: #4c55b6; font-weight: 700;">1.0x</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="question-card glass-card">
                     <div class="question-meta">
                         <span class="year-tag" id="q-year">2020</span>
@@ -264,6 +851,49 @@
                         <span class="total-score">/ <span id="total-questions">0</span></span>
                     </div>
                     <p id="performance-msg">Great job!</p>
+
+                    <!-- Super CMS Gamified Results Cards -->
+                    <div id="super-cms-results" style="display: none; flex-direction: column; gap: 1rem; margin: 1.5rem 0; width: 100%;">
+                        <!-- Card 1: Case File Stars & Stats -->
+                        <div id="results-case-file-card" class="glass-card" style="display: none; padding: 1.5rem; text-align: center; background: rgba(255,255,255,0.03);">
+                            <div style="font-size: 2.5rem; margin-bottom: 0.5rem;" id="case-file-stars">⭐⭐⭐</div>
+                            <h4 style="font-size: 1.2rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.5rem;">Diagnostic Report</h4>
+                            <p style="font-size: 0.95rem; color: var(--text-muted); line-height: 1.5; margin: 0;">
+                                Patients Saved: <strong id="results-saved-patients" style="color: var(--secondary);">0</strong><br>
+                                Cases Failed: <strong id="results-failed-patients" style="color: var(--text-main);">0</strong>
+                            </p>
+                        </div>
+
+                        <!-- Card 2: AI Duel Comparison -->
+                        <div id="results-ai-duel-card" class="glass-card" style="display: none; padding: 1.5rem; text-align: center; background: rgba(255,255,255,0.03);">
+                            <div style="font-size: 2.5rem; margin-bottom: 0.5rem;" id="ai-duel-outcome-icon">🏆</div>
+                            <h4 id="ai-duel-outcome-title" style="font-size: 1.2rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.5rem;">You Won!</h4>
+                            <p style="font-size: 0.95rem; color: var(--text-muted); line-height: 1.5; margin: 0;">
+                                Your Score: <strong id="results-user-score" style="color: var(--primary);">0</strong><br>
+                                AI Resident Score: <strong id="results-ai-score" style="color: var(--text-main);">0</strong>
+                            </p>
+                        </div>
+
+                        <!-- Card 3: Hot Seat Streak Stat -->
+                        <div id="results-hot-seat-card" class="glass-card" style="display: none; padding: 1.5rem; text-align: center; background: rgba(255,255,255,0.03);">
+                            <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">🔥</div>
+                            <h4 style="font-size: 1.2rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.5rem;">Streak Accomplishment</h4>
+                            <p style="font-size: 0.95rem; color: var(--text-muted); line-height: 1.5; margin: 0;">
+                                Highest Streak: <strong id="results-max-streak" style="color: #a53173;">0 Correct</strong><br>
+                                Final Multiplier: <strong id="results-final-multiplier" style="color: #4c55b6;">1.0x</strong>
+                            </p>
+                        </div>
+
+                        <!-- Card 4: Error Clearance Stat -->
+                        <div id="results-clearance-card" class="glass-card" style="display: none; padding: 1.5rem; text-align: center; background: rgba(255,255,255,0.03);">
+                            <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">🛡️</div>
+                            <h4 style="font-size: 1.2rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.5rem;">Outbreak Cleared</h4>
+                            <p style="font-size: 0.95rem; color: var(--text-muted); line-height: 1.5; margin: 0;">
+                                Questions Cured: <strong id="results-cured-count" style="color: #66bb6a;">0</strong>
+                            </p>
+                        </div>
+                    </div>
+
                     <div class="action-buttons">
                         <button id="retry-btn" class="secondary-btn">Try Again</button>
                         <button id="home-btn" class="primary-btn">Back to Home</button>
@@ -303,6 +933,25 @@
                 Sign in with Google
             </button>
             <button id="btn-close-login" class="secondary-btn" style="margin-top: 1rem; width: 100%;">Cancel</button>
+        </div>
+    </div>
+
+    <!-- RESUSCITATION (REVIVE) MODAL -->
+    <div id="resuscitate-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content glass-card" style="max-width: 420px; text-align: center; padding: 2.5rem; background: var(--surface-card); border: 1px solid rgba(239, 83, 80, 0.3);">
+            <div style="font-size: 4rem; margin-bottom: 1rem;">💀</div>
+            <h2 style="margin-bottom: 0.75rem; color: #ef5350; font-weight: 800;">Patient Deceased</h2>
+            <p id="resuscitate-msg" style="color: var(--text-muted); margin-bottom: 1.5rem; line-height: 1.6; font-size: 0.95rem;">
+                Your patient has lost all stability. You have <strong>3</strong> daily lives left. Spend 1 life to perform CPR and resuscitation?
+            </p>
+            <div style="display: flex; flex-direction: column; gap: 0.75rem; width: 100%;">
+                <button id="btn-resuscitate" class="primary-btn" style="width: 100%; padding: 1rem; background: linear-gradient(135deg, #ef5350, #d32f2f); border-radius: var(--radius-pill); font-weight: bold; color: white; border: none; cursor: pointer;">
+                    ❤️ Resuscitate (Use 1 Life)
+                </button>
+                <button id="btn-exit-resuscitate" class="secondary-btn" style="width: 100%; padding: 1rem; border-radius: var(--radius-pill); cursor: pointer;">
+                    🚪 Exit Session
+                </button>
+            </div>
         </div>
     </div>
 
@@ -378,29 +1027,32 @@
         .rating-btn {
             width: 50px;
             height: 50px;
-            border-radius: 8px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            background: rgba(255, 255, 255, 0.05);
-            color: #fff;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            color: var(--text-main);
             font-size: 1.2rem;
-            font-weight: 600;
+            font-weight: 700;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
             display: flex;
             align-items: center;
             justify-content: center;
         }
 
         .rating-btn:hover {
-            background: rgba(255, 255, 255, 0.15);
-            transform: translateY(-2px);
+            background: var(--primary-glow);
+            border-color: var(--primary);
+            color: var(--primary);
+            transform: translateY(-3px);
+            box-shadow: 0 4px 12px var(--primary-glow);
         }
 
         .rating-btn.active {
-            background: var(--secondary, #6C63FF);
-            color: white;
-            border-color: var(--secondary, #6C63FF);
-            box-shadow: 0 4px 15px rgba(108, 99, 255, 0.4);
+            background: var(--secondary);
+            color: white !important;
+            border-color: var(--secondary);
+            box-shadow: 0 8px 20px rgba(16, 185, 129, 0.35);
         }
     </style>
 

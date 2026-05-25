@@ -1,14 +1,17 @@
 {
-  "sess_2y384lipe_1770470403918": {
-    "startTime": 1770470406138,
-    "lastSeen": 1770470824254,
+  "sess_51juf46ls_1779709139066": {
+    "startTime": 1779723575690,
+    "lastSeen": 1779725066683,
     "ip": "127.0.0.1",
-    "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
+    "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36 Edg/148.0.0.0",
     "views": {
-      "Home": 120,
-      "State Selection": 150,
-      "Year Selection": 480,
-      "Quiz": 90
+      "Quiz": 1470,
+      "Home": 0,
+      "upscEntry": 60,
+      "upscHub": 30,
+      "Year Selection": 30,
+      "upscChoice": 30,
+      "upscSuperCms": 30
     }
   }
 }
