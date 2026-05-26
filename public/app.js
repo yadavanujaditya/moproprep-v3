@@ -3382,7 +3382,11 @@ document.addEventListener('DOMContentLoaded', () => {
         // Direct UPSC CMS button on home screen
         const btnUpscCms = document.getElementById('btn-upsc-cms');
         if (btnUpscCms) {
-            btnUpscCms.onclick = () => {
+            btnUpscCms.onclick = async () => {
+                if (!AuthService.isLoggedIn()) {
+                    const user = await AuthService.login();
+                    if (!user) return;
+                }
                 showUpscEntry();
             };
         }
