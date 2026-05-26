@@ -3402,6 +3402,19 @@ document.addEventListener('DOMContentLoaded', () => {
         const btnSuperCmsEntry = document.getElementById('btn-super-cms-entry');
         if (btnSuperCmsEntry) {
             btnSuperCmsEntry.onclick = () => {
+                if (!AuthService.isLoggedIn()) {
+                    alert("Please login to access this section.");
+                    return;
+                }
+                if (!AuthService.isPro()) {
+                    alert("Super CMS (Gamified Arena) is locked for Pro members only.");
+                    if (AuthService.user && AuthService.user.email) {
+                        PaymentService.initiatePayment(AuthService.user.email, () => {
+                            showUpscSuperCms();
+                        });
+                    }
+                    return;
+                }
                 showUpscSuperCms();
             };
         }
