@@ -1,4 +1,15 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // Check for referral code in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const refCode = urlParams.get('ref');
+    if (refCode) {
+        console.log("Found referral code:", refCode);
+        localStorage.setItem('referredBy', refCode);
+        // Clean URL parameters from address bar
+        const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+        window.history.replaceState({ path: cleanUrl }, '', cleanUrl);
+    }
+
     // --- State Management ---
     const state = {
         years: [],
@@ -192,6 +203,7 @@ document.addEventListener('DOMContentLoaded', () => {
         checkTheme();
         initRatingSystem();
         loadBookmarks();
+        initProfileAndReferralSystem();
 
         // Premium Feedback Observer
         const feedbackObserver = new MutationObserver((mutations) => {
@@ -221,6 +233,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const logoutLink = document.getElementById('logout-link');
             if (logoutLink) {
                 logoutLink.style.display = user ? 'inline' : 'none';
+            }
+            // Update Profile button visibility
+            const profileBtn = document.getElementById('btn-profile-header');
+            if (profileBtn) {
+                profileBtn.style.display = user ? 'inline-block' : 'none';
             }
             // Update PRO badge visibility
             const proBadge = document.getElementById('pro-badge');
@@ -4179,6 +4196,169 @@ document.addEventListener('DOMContentLoaded', () => {
                 submitBtn.disabled = false;
                 submitBtn.innerText = 'Submit Feedback';
             }
+        };
+    }
+
+    // --- Profile & Referral System ---
+    function initProfileAndReferralSystem() {
+        const modal = document.getElementById('profile-modal');
+        const profileBtn = document.getElementById('btn-profile-header');
+        const closeBtn = document.getElementById('close-profile-modal');
+        const copyBtn = document.getElementById('btn-copy-ref-link');
+        const refLinkInput = document.getElementById('referral-link-input');
+        const copySuccess = document.getElementById('copy-ref-success-msg');
+        
+        const profileName = document.getElementById('profile-name');
+        const profileEmail = document.getElementById('profile-email');
+        const profileStatusBadge = document.getElementById('profile-status-badge');
+        
+        const refCountEl = document.getElementById('ref-stat-count');
+        const refConvertedEl = document.getElementById('ref-stat-converted');
+        const referredListContainer = document.getElementById('referred-list-container');
+        const emptyRefMsg = document.getElementById('empty-ref-msg');
+        
+        let referralListener = null;
+
+        if (!modal || !profileBtn || !closeBtn) return;
+
+        // Open Modal
+        profileBtn.onclick = () => {
+            const user = AuthService.user;
+            if (!user) {
+                alert("Please log in first!");
+                return;
+            }
+
+            // Populate profile details
+            profileName.textContent = user.displayName || 'Anonymous User';
+            profileEmail.textContent = user.email || '';
+            
+            if (user.isPro) {
+                profileStatusBadge.textContent = '💎 PRO MEMBER';
+                profileStatusBadge.className = 'badge-pill warning';
+                profileStatusBadge.style.background = 'linear-gradient(135deg, #FFD700, #FFA500)';
+                profileStatusBadge.style.color = '#000';
+            } else {
+                profileStatusBadge.textContent = 'FREE MEMBER';
+                profileStatusBadge.className = 'badge-pill';
+                profileStatusBadge.style.background = 'var(--border)';
+                profileStatusBadge.style.color = 'var(--text-muted)';
+            }
+
+            // Generate Referral Link
+            const referralLink = window.location.origin + '/?ref=' + user.uid;
+            refLinkInput.value = referralLink;
+            copySuccess.style.display = 'none';
+
+            // Show Modal
+            modal.style.display = 'flex';
+
+            // Setup Real-time Listener on referrals subcollection
+            if (referralListener) {
+                referralListener(); // unsubscribe previous listener just in case
+            }
+
+            referralListener = db.collection('users').doc(user.uid).collection('referrals')
+                .orderBy('joinedAt', 'desc')
+                .onSnapshot((snapshot) => {
+                    referredListContainer.innerHTML = '';
+                    let totalReferred = 0;
+                    let totalConverted = 0;
+
+                    if (!snapshot.empty) {
+                        snapshot.forEach(doc => {
+                            const data = doc.data();
+                            totalReferred++;
+                            if (data.isPro) {
+                                totalConverted++;
+                            }
+
+                            // Create referred item element
+                            const item = document.createElement('div');
+                            item.className = 'referred-item';
+                            
+                            // Format joined date
+                            let dateStr = 'Joined recently';
+                            if (data.joinedAt) {
+                                const d = data.joinedAt.toDate ? data.joinedAt.toDate() : new Date(data.joinedAt);
+                                dateStr = d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+                            }
+
+                            // Mask name if required or display name directly
+                            const displayName = data.displayName || 'Anonymous Friend';
+                            
+                            // Status badge
+                            const statusText = data.isPro ? 'PRO Member 💎' : 'Registered 🟢';
+                            const statusClass = data.isPro ? 'referred-status pro' : 'referred-status registered';
+
+                            item.innerHTML = `
+                                <div class="referred-info">
+                                    <span class="referred-name">${displayName}</span>
+                                    <span class="referred-date">${dateStr}</span>
+                                </div>
+                                <span class="${statusClass}">${statusText}</span>
+                            `;
+                            referredListContainer.appendChild(item);
+                        });
+                        
+                        if (emptyRefMsg) emptyRefMsg.style.display = 'none';
+                    } else {
+                        // Empty message
+                        referredListContainer.appendChild(emptyRefMsg);
+                        if (emptyRefMsg) emptyRefMsg.style.display = 'block';
+                    }
+
+                    // Update count stats
+                    if (refCountEl) refCountEl.textContent = totalReferred;
+                    if (refConvertedEl) refConvertedEl.textContent = totalConverted;
+                }, (error) => {
+                    console.error("Error loading referrals:", error);
+                });
+        };
+
+        // Close Modal
+        closeBtn.onclick = () => {
+            modal.style.display = 'none';
+            if (referralListener) {
+                referralListener();
+                referralListener = null;
+            }
+        };
+
+        // Click outside modal to close
+        window.addEventListener('click', (event) => {
+            if (event.target === modal) {
+                modal.style.display = 'none';
+                if (referralListener) {
+                    referralListener();
+                    referralListener = null;
+                }
+            }
+        });
+
+        // Copy Link
+        copyBtn.onclick = () => {
+            refLinkInput.select();
+            refLinkInput.setSelectionRange(0, 99999); // For mobile devices
+            
+            navigator.clipboard.writeText(refLinkInput.value).then(() => {
+                copySuccess.style.display = 'inline';
+                setTimeout(() => {
+                    copySuccess.style.display = 'none';
+                }, 3000);
+            }).catch(err => {
+                console.error('Could not copy text: ', err);
+                // Fallback for older browsers
+                try {
+                    document.execCommand('copy');
+                    copySuccess.style.display = 'inline';
+                    setTimeout(() => {
+                        copySuccess.style.display = 'none';
+                    }, 3000);
+                } catch (fallbackErr) {
+                    alert("Failed to copy link. Please manually select and copy.");
+                }
+            });
         };
     }
 });

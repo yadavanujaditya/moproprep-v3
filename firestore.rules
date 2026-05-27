@@ -42,6 +42,12 @@ service cloud.firestore {
       match /progress/{progressId} {
         allow read, write: if isOwner(userId);
       }
+
+      // Referrals Subcollection
+      match /referrals/{referralId} {
+        allow read: if isOwner(userId);
+        allow create, update: if request.auth != null && request.auth.uid == referralId;
+      }
     }
     
     // Settings Collection (Pricing, Config)

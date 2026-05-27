@@ -511,6 +511,19 @@ app.post('/api/verify-payment', async (req, res) => {
                     orderId: razorpay_order_id
                 });
                 console.log(`Successfully granted Pro status to user ${uid}`);
+
+                // --- Referral Conversion Tracking ---
+                const userDoc = await adminDb.collection('users').doc(uid).get();
+                if (userDoc.exists && userDoc.data().referredBy) {
+                    const referrerUid = userDoc.data().referredBy;
+                    await adminDb.collection('users').doc(referrerUid)
+                        .collection('referrals').doc(uid)
+                        .update({
+                            isPro: true,
+                            convertedAt: admin.firestore.FieldValue.serverTimestamp()
+                        }).catch(err => console.error("Failed to update referral conversion log:", err));
+                    console.log(`Updated referral conversion for referrer ${referrerUid}`);
+                }
             } catch (firestoreError) {
                 console.error("Failed to update Firestore:", firestoreError);
                 // Still return success since payment was verified

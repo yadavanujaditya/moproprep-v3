@@ -37,12 +37,32 @@ const AuthService = {
                             isPro: false,
                             joinedAt: firebase.firestore.FieldValue.serverTimestamp()
                         };
+
+                        const referrerUid = localStorage.getItem('referredBy');
+                        if (referrerUid && referrerUid !== firebaseUser.uid) {
+                            userData.referredBy = referrerUid;
+                            
+                            // Write entry to referrer's referrals subcollection
+                            db.collection('users').doc(referrerUid).collection('referrals').doc(firebaseUser.uid).set({
+                                displayName: firebaseUser.displayName || 'Anonymous User',
+                                isPro: false,
+                                joinedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                                referredUid: firebaseUser.uid
+                            }).then(() => {
+                                console.log(`Logged referral for referrer ${referrerUid}`);
+                            }).catch(err => {
+                                console.error("Failed to write to referrer's referrals subcollection:", err);
+                            });
+                        }
+
                         try {
                             await db.collection('users').doc(firebaseUser.uid).set(userData);
                         } catch (err) {
                             console.error("Failed to create user doc:", err);
                         }
                     }
+                    // Always clear referral tracking once auth state resolves
+                    localStorage.removeItem('referredBy');
 
                     this.user = {
                         uid: firebaseUser.uid,

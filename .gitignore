@@ -7,3 +7,4 @@ visits.json
 serviceAccountKey.json
 firebase-admin-key.json
 *-firebase-adminsdk-*.json
+.firebase/
