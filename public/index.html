@@ -211,6 +211,214 @@
                 </div>
             </section>
 
+            <!-- VIEW: UPSC CMS Candidate Dashboard -->
+            <section id="upsc-dashboard-view" class="view hidden-view">
+                <div class="quiz-header" style="margin-bottom: 1.5rem;">
+                    <button id="back-to-home-from-dashboard" class="icon-btn">← Back to Menu</button>
+                    <div style="font-weight: 700; color: var(--secondary); background: var(--secondary-container); padding: 4px 14px; border-radius: var(--radius-pill); font-size: 0.85rem;" id="countdown-to-exam">
+                        -- Days to Exam (August 2, 2026)
+                    </div>
+                </div>
+
+                <div class="hero-section" style="margin-bottom: 1.5rem;">
+                    <h2>Candidate Dashboard &amp; Roadmap</h2>
+                    <p>Track your milestones, get custom AI guidance, and study with your squad.</p>
+                </div>
+
+                <!-- 🗺️ Journey Roadmap Section -->
+                <div class="glass-card" style="margin-bottom: 1.5rem; padding: 1.5rem; position: relative; overflow: hidden; background: linear-gradient(180deg, var(--surface), rgba(99, 102, 241, 0.02));">
+                    <h3 style="font-size: 1.15rem; font-weight: 700; color: var(--text-main); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                        <span>🗺️</span> UPSC CMS Mastery Road
+                    </h3>
+                    
+                    <div class="roadmap-container" style="position: relative; width: 100%; height: 260px; background: rgba(0,0,0,0.1); border-radius: 16px; overflow: hidden; border: 1px solid var(--border);">
+                        <!-- SVG Road Path -->
+                        <svg id="roadmap-svg" width="100%" height="100%" viewBox="0 0 800 260" style="display: block;">
+                            <defs>
+                                <linearGradient id="road-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+                                    <stop offset="0%" stop-color="#4F46E5" />
+                                    <stop offset="100%" stop-color="#10B981" />
+                                </linearGradient>
+                                <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+                                    <drop-shadow dx="0" dy="4" stdDeviation="6" flood-color="#6366F1" flood-opacity="0.3"/>
+                                </filter>
+                            </defs>
+                            <!-- Background Grid Lines -->
+                            <line x1="0" y1="65" x2="800" y2="65" stroke="var(--border)" stroke-dasharray="5 5" />
+                            <line x1="0" y1="130" x2="800" y2="130" stroke="var(--border)" stroke-dasharray="5 5" />
+                            <line x1="0" y1="195" x2="800" y2="195" stroke="var(--border)" stroke-dasharray="5 5" />
+                            
+                            <!-- Winding Road Path -->
+                            <path id="road-path" d="M 50 130 C 150 30, 250 230, 350 130 C 450 30, 550 230, 650 130 C 700 80, 720 100, 750 130" fill="none" stroke="url(#road-grad)" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" />
+                            <path id="road-path-inner" d="M 50 130 C 150 30, 250 230, 350 130 C 450 30, 550 230, 650 130 C 700 80, 720 100, 750 130" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="2" stroke-dasharray="8 6" stroke-linecap="round" />
+
+                            <!-- Milestones -->
+                            <!-- Milestone 1: Medicine -->
+                            <g class="milestone-node" id="milestone-medicine" transform="translate(180, 95)" style="cursor: pointer;">
+                                <circle r="14" fill="var(--surface)" stroke="var(--border)" stroke-width="3" />
+                                <circle r="7" fill="var(--text-muted)" class="milestone-status-dot" />
+                                <text y="-20" text-anchor="middle" fill="var(--text-main)" font-size="11" font-weight="700" font-family="var(--font-headings)">Medicine (0%)</text>
+                            </g>
+                            <!-- Milestone 2: Pediatrics -->
+                            <g class="milestone-node" id="milestone-pediatrics" transform="translate(350, 130)" style="cursor: pointer;">
+                                <circle r="14" fill="var(--surface)" stroke="var(--border)" stroke-width="3" />
+                                <circle r="7" fill="var(--text-muted)" class="milestone-status-dot" />
+                                <text y="30" text-anchor="middle" fill="var(--text-main)" font-size="11" font-weight="700" font-family="var(--font-headings)">Pediatrics (0%)</text>
+                            </g>
+                            <!-- Milestone 3: Surgery -->
+                            <g class="milestone-node" id="milestone-surgery" transform="translate(520, 95)" style="cursor: pointer;">
+                                <circle r="14" fill="var(--surface)" stroke="var(--border)" stroke-width="3" />
+                                <circle r="7" fill="var(--text-muted)" class="milestone-status-dot" />
+                                <text y="-20" text-anchor="middle" fill="var(--text-main)" font-size="11" font-weight="700" font-family="var(--font-headings)">Surgery (0%)</text>
+                            </g>
+                            <!-- Milestone 4: OBGY & PSM -->
+                            <g class="milestone-node" id="milestone-obgy" transform="translate(680, 150)" style="cursor: pointer;">
+                                <circle r="14" fill="var(--surface)" stroke="var(--border)" stroke-width="3" />
+                                <circle r="7" fill="var(--text-muted)" class="milestone-status-dot" />
+                                <text y="30" text-anchor="middle" fill="var(--text-main)" font-size="11" font-weight="700" font-family="var(--font-headings)">OBGY / PSM (0%)</text>
+                            </g>
+
+                            <!-- End Flag: August 2, 2026 -->
+                            <g transform="translate(750, 130)">
+                                <circle r="16" fill="var(--secondary)" filter="url(#glow)" />
+                                <text dy="5" text-anchor="middle" fill="#fff" font-size="14" font-weight="700">🏁</text>
+                                <text y="-24" text-anchor="middle" fill="var(--secondary)" font-size="11" font-weight="700">August 2</text>
+                            </g>
+
+                            <!-- 3D Mascot Representation (Stethoscope or Badge Mascot) -->
+                            <g id="mascot-marker" transform="translate(50, 130)" style="transition: transform 1s ease-in-out; filter: drop-shadow(0px 8px 8px rgba(99, 102, 241, 0.45));">
+                                <circle r="18" fill="var(--primary)" />
+                                <text dy="6" text-anchor="middle" fill="#fff" font-size="16" class="mascot-live">🩺</text>
+                            </g>
+                        </svg>
+                    </div>
+                </div>
+
+                <!-- Split Grid for AI Coach, Daily Test & Squads -->
+                <div class="menu-grid" style="grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); display: grid; gap: 1.5rem; margin-top: 0;">
+                    
+                    <!-- 🤖 Gemini AI Personal Study Coach -->
+                    <div class="glass-card" style="display: flex; flex-direction: column; gap: 1rem; border-color: rgba(99, 102, 241, 0.15); background: linear-gradient(135deg, var(--surface-card), rgba(99, 102, 241, 0.01));">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <h3 style="font-size: 1.15rem; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 0.5rem;">
+                                <span>🤖</span> Gemini AI Study Coach
+                            </h3>
+                            <span id="ai-coach-caps" style="font-size: 0.75rem; font-weight: 700; padding: 4px 10px; border-radius: var(--radius-pill); background: rgba(99,102,241,0.12); color: var(--primary);">2 Free Requests Left</span>
+                        </div>
+                        
+                        <div id="ai-coach-response-box" class="explanation" style="margin: 0; min-height: 120px; max-height: 180px; overflow-y: auto; background: rgba(99,102,241,0.02); border-radius: 12px; font-size: 0.9rem; line-height: 1.5; border-left-color: var(--primary);">
+                            <p style="color: var(--text-muted); font-style: italic;">Tap below to generate your personalized study plan. I'll inspect your previous incorrect answers to recommend weightage-guided targets.</p>
+                        </div>
+
+                        <div style="display: flex; gap: 0.5rem;">
+                            <button id="btn-ai-coach-advice" class="primary-btn" style="padding: 0.7rem 1.2rem; font-size: 0.9rem; border-radius: 10px; flex: 1;">Ask Coach</button>
+                            <button id="btn-ai-coach-unlock" class="secondary-btn" style="padding: 0.7rem 1.2rem; font-size: 0.9rem; border-radius: 10px; display: none; width: auto; color: var(--warning); border-color: rgba(245, 158, 11, 0.2); background: rgba(245, 158, 11, 0.03);">Unlock (+₹10)</button>
+                        </div>
+                    </div>
+
+                    <!-- 🏆 Daily Mini-Test & Kickstart Pomodoro -->
+                    <div class="glass-card" style="display: flex; flex-direction: column; gap: 1rem; border-color: rgba(16, 185, 129, 0.15);">
+                        <h3 style="font-size: 1.15rem; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 0.5rem;">
+                            <span>🏆</span> Daily Mini-Test &amp; Kickstart
+                        </h3>
+
+                        <div style="background: rgba(16,185,129,0.02); border-radius: 12px; padding: 0.85rem; border-left: 3px solid var(--secondary); display: flex; flex-direction: column; gap: 0.4rem;">
+                            <div style="font-size: 0.9rem; font-weight: 600; display: flex; justify-content: space-between;">
+                                <span>⚡ Daily 20-Q Mini Test</span>
+                                <span class="badge-pill success" style="margin: 0; padding: 2px 8px; font-size: 0.7rem;">FREE FOR ALL</span>
+                            </div>
+                            <p style="font-size: 0.82rem; color: var(--text-muted); line-height: 1.45;">
+                                Window: **5:00 PM to 8:00 PM** daily. Ranks/Answers lock &amp; reveal synchronously at **8:00 PM**.
+                            </p>
+                            <button id="btn-start-daily-mini" class="secondary-btn" style="padding: 0.5rem 1rem; font-size: 0.85rem; border-radius: 8px; width: 100%; border-color: var(--secondary); color: var(--secondary); background: rgba(16,185,129,0.03); margin-top: 0.25rem;">Solve Today's Test</button>
+                        </div>
+
+                        <!-- Pomodoro Kickstart -->
+                        <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 0.85rem; display: flex; align-items: center; justify-content: space-between;">
+                            <div>
+                                <span style="font-size: 0.88rem; font-weight: 700; display: block; color: var(--text-main);">⏱️ Morning Kickstart</span>
+                                <span style="font-size: 0.78rem; color: var(--text-muted);">Synchronized Study Lobby at **8:30 AM**</span>
+                            </div>
+                            <button id="btn-kickstart-pomodoro" class="icon-btn" style="background: var(--primary-glow); color: var(--primary); padding: 0.5rem 1rem; font-size: 0.85rem; border-radius: 8px;">
+                                Join (8:30 AM)
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 👥 Study Squads & real-time chat -->
+                    <div class="glass-card" style="display: flex; flex-direction: column; gap: 1rem; grid-column: 1 / -1; min-height: 300px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem;">
+                            <h3 style="font-size: 1.15rem; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 0.5rem;">
+                                <span>👥</span> Study Squad &amp; Library
+                            </h3>
+                            <!-- Simulated active peers count -->
+                            <div style="font-size: 0.82rem; font-weight: 700; color: var(--secondary); display: flex; align-items: center; gap: 0.25rem;">
+                                <span style="width: 8px; height: 8px; border-radius: 50%; background: var(--secondary); display: inline-block; animation: rotation 2s linear infinite;"></span>
+                                <span id="active-peers-count">24</span> Medical Students Study-Active Now
+                            </div>
+                        </div>
+
+                        <div style="display: flex; gap: 1.5rem; flex-wrap: wrap; width: 100%;">
+                            <!-- Squad Members Panel -->
+                            <div style="flex: 1; min-width: 200px; display: flex; flex-direction: column; gap: 0.6rem;">
+                                <span style="font-size: 0.85rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Your Squad Members</span>
+                                <div id="squad-members-list" style="display: flex; flex-direction: column; gap: 0.5rem; max-height: 200px; overflow-y: auto;">
+                                    <!-- Populated dynamically -->
+                                    <div style="display: flex; align-items: center; justify-content: space-between; background: var(--surface); padding: 0.6rem 0.8rem; border-radius: 8px; font-size: 0.85rem; border: 1px solid var(--border);">
+                                        <span style="font-weight: 600;">Dr. Anuj (You)</span>
+                                        <span style="color: var(--secondary); font-weight: 700;">🟢 Active</span>
+                                    </div>
+                                    <div style="display: flex; align-items: center; justify-content: space-between; background: var(--surface); padding: 0.6rem 0.8rem; border-radius: 8px; font-size: 0.85rem; border: 1px solid var(--border);">
+                                        <span>Dr. Sneha</span>
+                                        <span style="color: var(--secondary); font-weight: 700;">🟢 Active</span>
+                                    </div>
+                                    <div style="display: flex; align-items: center; justify-content: space-between; background: var(--surface); padding: 0.6rem 0.8rem; border-radius: 8px; font-size: 0.85rem; border: 1px solid var(--border);">
+                                        <span>Dr. Rohan</span>
+                                        <span style="color: var(--text-muted);">🔴 Idle</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Squad Chat Panel -->
+                            <div style="flex: 2; min-width: 300px; display: flex; flex-direction: column; gap: 0.6rem; border-left: 1px solid var(--border); padding-left: 1.5rem;" id="squad-chat-container">
+                                <span style="font-size: 0.85rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; display: flex; justify-content: space-between;">
+                                    <span>💬 Squad Discussion</span>
+                                    <span style="font-size: 0.75rem; text-transform: none; color: var(--primary);">Tag @coach for AI explanations</span>
+                                </span>
+
+                                <div id="squad-chat-messages" style="height: 140px; background: rgba(0,0,0,0.1); border: 1px solid var(--border); border-radius: 12px; padding: 0.75rem; overflow-y: auto; display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.85rem;">
+                                    <!-- Chat Messages dynamic list -->
+                                    <div style="text-align: center; color: var(--text-muted); font-style: italic; margin-top: auto; font-size: 0.8rem;">Beginning of Squad Chat. Messages are synchronized locally.</div>
+                                </div>
+
+                                <div style="display: flex; gap: 0.5rem; align-items: center; width: 100%;">
+                                    <input type="text" id="squad-chat-input" placeholder="Type a message or ask @coach..." style="flex: 1; padding: 0.6rem 0.85rem !important; border-radius: 10px !important; font-size: 0.85rem !important;">
+                                    <button id="btn-squad-chat-send" class="primary-btn" style="width: auto; padding: 0.6rem 1.2rem; border-radius: 10px; font-size: 0.85rem;">Send</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Navigation shortcuts to Hub & Super CMS -->
+                <div class="menu-grid" style="grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); display: grid; gap: 1rem; margin-top: 1.5rem;">
+                    <div class="menu-card" id="btn-dashboard-learning-hub" style="padding: 1.5rem; gap: 1rem; cursor: pointer; min-height: 80px; border-radius: 16px;">
+                        <div class="menu-icon" style="font-size: 1.8rem; width: 50px; height: 50px; border-radius: 10px;">🏥</div>
+                        <div class="menu-content">
+                            <h3 style="font-size: 1.1rem; margin-bottom: 0.2rem;">CMS Learning Hub</h3>
+                            <p style="font-size: 0.82rem;">Select subject-wise, difficulty, or year-wise PYQs.</p>
+                        </div>
+                    </div>
+                    <div class="menu-card" id="btn-dashboard-super-cms" style="padding: 1.5rem; gap: 1rem; cursor: pointer; min-height: 80px; border-radius: 16px; background: linear-gradient(135deg, rgba(165, 49, 115, 0.03), rgba(76, 85, 182, 0.03));">
+                        <div class="menu-icon" style="font-size: 1.8rem; width: 50px; height: 50px; border-radius: 10px;">⚡</div>
+                        <div class="menu-content">
+                            <h3 style="font-size: 1.1rem; margin-bottom: 0.2rem;">Super CMS (Gamified)</h3>
+                            <p style="font-size: 0.82rem;">Case File stability duels, streaks, and AI speed duels.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
             <!-- VIEW: UPSC Super CMS Selection -->
             <section id="upsc-super-cms-view" class="view hidden-view">
                 <div class="quiz-header" style="margin-bottom: 2rem;">

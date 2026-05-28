@@ -490,7 +490,7 @@ app.post('/api/create-order', async (req, res) => {
 
 // Step 2: Verify Payment and Update Firestore
 app.post('/api/verify-payment', async (req, res) => {
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, uid } = req.body;
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, uid, purpose } = req.body;
 
     const body = razorpay_order_id + "|" + razorpay_payment_id;
     const expectedSignature = crypto
@@ -499,38 +499,47 @@ app.post('/api/verify-payment', async (req, res) => {
         .digest("hex");
 
     if (expectedSignature === razorpay_signature) {
-        console.log(`Payment verified for user ${uid}, payment ID: ${razorpay_payment_id}`);
+        console.log(`Payment verified for user ${uid}, purpose: ${purpose || 'Pro status'}, payment ID: ${razorpay_payment_id}`);
 
-        // Update Firestore to grant Pro status
         if (adminDb && uid) {
             try {
-                await adminDb.collection('users').doc(uid).update({
-                    isPro: true,
-                    proGrantedAt: admin.firestore.FieldValue.serverTimestamp(),
-                    paymentId: razorpay_payment_id,
-                    orderId: razorpay_order_id
-                });
-                console.log(`Successfully granted Pro status to user ${uid}`);
+                if (purpose === 'ai_coach') {
+                    // Reset AI Coach daily limit counter for today
+                    const todayStr = new Date().toISOString().split('T')[0];
+                    await adminDb.collection('users').doc(uid).update({
+                        'aiCoachStats.lastDate': todayStr,
+                        'aiCoachStats.count': 0,
+                        'aiCoachStats.lastPaymentId': razorpay_payment_id
+                    });
+                    console.log(`Successfully reset AI Coach request limit for user ${uid}`);
+                } else {
+                    // Update Firestore to grant Pro status
+                    await adminDb.collection('users').doc(uid).update({
+                        isPro: true,
+                        proGrantedAt: admin.firestore.FieldValue.serverTimestamp(),
+                        paymentId: razorpay_payment_id,
+                        orderId: razorpay_order_id
+                    });
+                    console.log(`Successfully granted Pro status to user ${uid}`);
 
-                // --- Referral Conversion Tracking ---
-                const userDoc = await adminDb.collection('users').doc(uid).get();
-                if (userDoc.exists && userDoc.data().referredBy) {
-                    const referrerUid = userDoc.data().referredBy;
-                    await adminDb.collection('users').doc(referrerUid)
-                        .collection('referrals').doc(uid)
-                        .update({
-                            isPro: true,
-                            convertedAt: admin.firestore.FieldValue.serverTimestamp()
-                        }).catch(err => console.error("Failed to update referral conversion log:", err));
-                    console.log(`Updated referral conversion for referrer ${referrerUid}`);
+                    // --- Referral Conversion Tracking ---
+                    const userDoc = await adminDb.collection('users').doc(uid).get();
+                    if (userDoc.exists && userDoc.data().referredBy) {
+                        const referrerUid = userDoc.data().referredBy;
+                        await adminDb.collection('users').doc(referrerUid)
+                            .collection('referrals').doc(uid)
+                            .update({
+                                isPro: true,
+                                convertedAt: admin.firestore.FieldValue.serverTimestamp()
+                            }).catch(err => console.error("Failed to update referral conversion log:", err));
+                        console.log(`Updated referral conversion for referrer ${referrerUid}`);
+                    }
                 }
             } catch (firestoreError) {
-                console.error("Failed to update Firestore:", firestoreError);
-                // Still return success since payment was verified
-                // The client-side will update the user's local state
+                console.error("Failed to update Firestore after payment:", firestoreError);
             }
         } else {
-            console.warn("Firestore admin not available or no uid provided. Pro status not saved to database.");
+            console.warn("Firestore admin not available or no uid provided. Payment verified but not recorded in database.");
         }
 
         res.json({ success: true });
@@ -539,6 +548,138 @@ app.post('/api/verify-payment', async (req, res) => {
         res.status(400).json({ success: false, error: "Invalid signature" });
     }
 });
+
+// --- AI Coach Endpoint ---
+app.post('/api/ai-coach', async (req, res) => {
+    const { uid, history } = req.body;
+    if (!uid) {
+        return res.status(400).json({ error: "Missing User ID (uid)." });
+    }
+
+    const todayStr = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+    let limitReached = false;
+    let requestsRemaining = 2;
+
+    if (adminDb) {
+        try {
+            const userDocRef = adminDb.collection('users').doc(uid);
+            const userDoc = await userDocRef.get();
+            if (userDoc.exists) {
+                const userData = userDoc.data();
+                const isPro = userData.isPro === true;
+                const coachStats = userData.aiCoachStats || {};
+                const lastDate = coachStats.lastDate || "";
+                let count = coachStats.count || 0;
+
+                if (lastDate === todayStr) {
+                    if (count >= 2 && !isPro) {
+                        limitReached = true;
+                    }
+                    requestsRemaining = Math.max(0, 2 - count);
+                } else {
+                    count = 0; // Reset for new day
+                    requestsRemaining = 2;
+                }
+
+                if (!limitReached) {
+                    count++;
+                    await userDocRef.update({
+                        'aiCoachStats.lastDate': todayStr,
+                        'aiCoachStats.count': count
+                    });
+                    requestsRemaining = Math.max(0, 2 - count);
+                }
+            }
+        } catch (err) {
+            console.error("Error checking/updating AI limit in Firestore:", err);
+        }
+    }
+
+    if (limitReached) {
+        return res.json({
+            limitReached: true,
+            message: "You have used your 2 free AI planner requests for today. Unlock MoProPrep Pro for unlimited advice, or pay ₹10 to unlock an extra request."
+        });
+    }
+
+    const geminiKey = process.env.GEMINI_API_KEY;
+    let coachPlan = "";
+
+    if (geminiKey) {
+        try {
+            const promptText = `
+You are the MoProPrep AI Study Coach, an expert medical preparation mentor for the UPSC Combined Medical Services (CMS) exam which is scheduled for August 2, 2026.
+Analyze the student's study history below and provide a concise, encouraging revision plan on individual basis.
+History: ${JSON.stringify(history || [])}
+Focus on high-weightage subjects: Medicine (Cardiology, Pulmonology), Surgery (General & Abdominal), OBGY (Antenatal Care, Labor), Pediatrics (Neonatology, Immunization), PSM (Epidemiology, Health Programs).
+Suggest the exact top 1-2 topics they got wrong or have not solved that have high weightage and suggest they revise these first. Tell them to start a custom quiz for those topics.
+Keep the response engaging, professional, and clear. Format in markdown.
+`;
+            const response = await axios.post(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`, {
+                contents: [{ parts: [{ text: promptText }] }]
+            }, { headers: { 'Content-Type': 'application/json' }, timeout: 10000 });
+
+            if (response.data && response.data.candidates && response.data.candidates[0].content.parts[0].text) {
+                coachPlan = response.data.candidates[0].content.parts[0].text;
+            } else {
+                throw new Error("Invalid response structure from Gemini API");
+            }
+        } catch (geminiErr) {
+            console.error("Gemini API error, falling back to local advisor logic:", geminiErr.message);
+            coachPlan = getHeuristicPlan(history);
+        }
+    } else {
+        coachPlan = getHeuristicPlan(history);
+    }
+
+    res.json({
+        limitReached: false,
+        requestsRemaining: requestsRemaining,
+        plan: coachPlan
+    });
+});
+
+function getHeuristicPlan(history) {
+    const wrongTopics = {};
+    if (Array.isArray(history)) {
+        history.forEach(h => {
+            if (h.isCorrect === false && h.topic) {
+                wrongTopics[h.topic] = (wrongTopics[h.topic] || 0) + 1;
+            }
+        });
+    }
+
+    const sortedWrong = Object.entries(wrongTopics).sort((a, b) => b[1] - a[1]);
+    if (sortedWrong.length > 0) {
+        const topWrong = sortedWrong[0][0];
+        return `### 🩺 UPSC CMS Personalized Study Plan
+
+Hello Dr. Anuj! Based on your revision log, you have recently struggled with **${topWrong}**. 
+
+**Why this matters:**
+*   This topic holds high weightage in the UPSC CMS exam.
+*   Getting this correct can lift your Paper score significantly.
+
+**Your Action Plan:**
+1.  **Immediate Revision:** Go back to your clinical notes for **${topWrong}**.
+2.  **Custom Practice:** Head to the **Custom Quiz Builder** and select **${topWrong}** to test your updated understanding.
+3.  **Peer Review:** Discuss any doubts with your **Study Squad** to solidify your concepts.
+
+*Keep climbing, the exam is on August 2, 2026! 🏁*`;
+    } else {
+        return `### 🩺 UPSC CMS Study Plan
+
+Hello Dr. Anuj! Let's build your active recall dashboard:
+
+**Your Action Plan:**
+1.  **Solve a Practice Set:** Complete at least 20 questions in the **CMS Learning Hub** under *Medicine* or *Pediatrics*.
+2.  **Highlight Areas:** Once we record your performance, I will construct a tailored revision roadmap highlighting your exact weak areas.
+3.  **Active Recall:** Focus on high-weightage chapters like **Cardiology** and **Neonatology** early.
+
+*Exam Date: August 2, 2026. Let's make every solve count! 🏁*`;
+    }
+}
+
 
 // Analytics Endpoint
 app.get('/api/admin/stats', requireAuth, (req, res) => {

@@ -1,26 +1,20 @@
 {
-  "sess_51juf46ls_1779709139066": {
-    "startTime": 1779723575690,
-    "lastSeen": 1779725186548,
+  "sess_8ljedwggj_1779986096820": {
+    "startTime": 1779986102184,
+    "lastSeen": 1779993930707,
     "ip": "127.0.0.1",
-    "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36 Edg/148.0.0.0",
+    "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36",
     "views": {
-      "Quiz": 1530,
-      "Home": 0,
+      "Home": 3630,
       "upscEntry": 60,
-      "upscHub": 30,
-      "Year Selection": 30,
-      "upscChoice": 30,
-      "upscSuperCms": 30
-    }
-  },
-  "sess_ribn23rxx_1779725592608": {
-    "startTime": 1779725593387,
-    "lastSeen": 1779731701096,
-    "ip": "127.0.0.1",
-    "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36 Edg/148.0.0.0",
-    "views": {
-      "Home": 1650
+      "upscHub": 150,
+      "upscCustomBuilder": 30,
+      "State Selection": 60,
+      "upscDashboard": 660,
+      "Quiz": 210,
+      "Results": 60,
+      "Year Selection": 60,
+      "upscAnalytics": 30
     }
   }
 }

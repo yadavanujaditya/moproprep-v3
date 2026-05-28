@@ -1630,4 +1630,105 @@ select:focus, input[type="text"]:focus, input[type="number"]:focus, textarea:foc
     color: #000;
     box-shadow: 0 4px 10px rgba(255, 215, 0, 0.25);
 }
+
+/* ========================================
+   CANDIDATE DASHBOARD & ROADMAP STYLES
+   ======================================== */
+
+.roadmap-container {
+    background: rgba(15, 23, 42, 0.15) !important;
+    position: relative;
+    border: 1px solid var(--border);
+}
+
+[data-theme="light"] .roadmap-container {
+    background: rgba(255, 255, 255, 0.4) !important;
+}
+
+.milestone-node circle {
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.milestone-node:hover circle {
+    r: 17px;
+    stroke: var(--primary);
+    filter: drop-shadow(0 0 8px var(--primary-glow));
+}
+
+#roadmap-svg line {
+    opacity: 0.3;
+}
+
+/* Mascot Glowing pulse */
+@keyframes mascot-glow {
+    0% {
+        filter: drop-shadow(0 2px 4px rgba(99, 102, 241, 0.4));
+    }
+    100% {
+        filter: drop-shadow(0 8px 16px rgba(99, 102, 241, 0.7));
+    }
+}
+
+#mascot-marker {
+    animation: mascot-glow 1.5s ease-in-out infinite alternate;
+}
+
+/* Custom Scrollbar for Chat Box */
+#squad-chat-messages::-webkit-scrollbar,
+#ai-coach-response-box::-webkit-scrollbar {
+    width: 6px;
+}
+
+#squad-chat-messages::-webkit-scrollbar-track,
+#ai-coach-response-box::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+#squad-chat-messages::-webkit-scrollbar-thumb,
+#ai-coach-response-box::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 99px;
+}
+
+#squad-chat-messages::-webkit-scrollbar-thumb:hover,
+#ai-coach-response-box::-webkit-scrollbar-thumb:hover {
+    background: var(--text-muted);
+}
+
+/* Mobile Dashboard Media Query */
+@media (max-width: 600px) {
+    #upsc-dashboard-view .menu-grid {
+        grid-template-columns: 1fr !important;
+        display: flex !important;
+        flex-direction: column !important;
+    }
+    
+    .roadmap-container {
+        height: 220px !important;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    #roadmap-svg {
+        min-width: 700px; /* Enables horizontal scrolling so milestones do not compress on small viewports */
+    }
+    
+    #squad-chat-container {
+        border-left: none !important;
+        padding-left: 0 !important;
+        margin-top: 1rem;
+        border-top: 1px solid var(--border);
+        padding-top: 1rem;
+    }
+    
+    #squad-chat-messages {
+        height: 120px !important;
+    }
+    
+    #countdown-to-exam {
+        font-size: 0.75rem !important;
+        padding: 4px 10px !important;
+    }
+}
+
 

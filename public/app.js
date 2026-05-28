@@ -149,6 +149,7 @@ document.addEventListener('DOMContentLoaded', () => {
             home: document.getElementById('home-view'),
             stateSelection: document.getElementById('state-selection-view'),
             upscEntry: document.getElementById('upsc-entry-view'),
+            upscDashboard: document.getElementById('upsc-dashboard-view'),
             upscHub: document.getElementById('upsc-hub-view'),
             upscSuperCms: document.getElementById('upsc-super-cms-view'),
             upscCustomBuilder: document.getElementById('upsc-custom-builder-view'),
@@ -3404,7 +3405,42 @@ document.addEventListener('DOMContentLoaded', () => {
                     const user = await AuthService.login();
                     if (!user) return;
                 }
-                showUpscEntry();
+                showUpscDashboard();
+            };
+        }
+
+        // UPSC CMS Candidate Dashboard Events
+        const btnBackFromDashboard = document.getElementById('back-to-home-from-dashboard');
+        if (btnBackFromDashboard) {
+            btnBackFromDashboard.onclick = () => {
+                switchView('home');
+            };
+        }
+
+        const btnDashboardHub = document.getElementById('btn-dashboard-learning-hub');
+        if (btnDashboardHub) {
+            btnDashboardHub.onclick = () => {
+                showUpscHub();
+            };
+        }
+
+        const btnDashboardSuper = document.getElementById('btn-dashboard-super-cms');
+        if (btnDashboardSuper) {
+            btnDashboardSuper.onclick = () => {
+                if (!AuthService.isLoggedIn()) {
+                    alert("Please login to access this section.");
+                    return;
+                }
+                if (!AuthService.isPro()) {
+                    alert("Super CMS (Gamified Arena) is locked for Pro members only.");
+                    if (AuthService.user && AuthService.user.email) {
+                        PaymentService.initiatePayment(AuthService.user.email, () => {
+                            showUpscSuperCms();
+                        });
+                    }
+                    return;
+                }
+                showUpscSuperCms();
             };
         }
 
@@ -3446,7 +3482,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const btnBackFromSuper = document.getElementById('back-to-entry-from-super');
         if (btnBackFromSuper) {
             btnBackFromSuper.onclick = () => {
-                showUpscEntry();
+                showUpscDashboard();
             };
         }
 
@@ -3731,7 +3767,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const btnBackFromUpscHub = document.getElementById('back-to-home-from-upsc-hub');
         if (btnBackFromUpscHub) {
-            btnBackFromUpscHub.onclick = () => showUpscEntry();
+            btnBackFromUpscHub.onclick = () => showUpscDashboard();
         }
 
         const btnBackFromCustom = document.getElementById('back-to-hub-from-custom');
@@ -4360,5 +4396,426 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
         };
+    }
+
+    // --- UPSC CMS Candidate Dashboard Helper Functions ---
+
+    function showUpscDashboard() {
+        state.activeTag = 'upscmo';
+        state.upscDrillLevel = 'dashboard';
+        switchView('upscDashboard');
+        
+        updateExamCountdown();
+        renderVisualRoadmap();
+        updateAiCoachUI();
+        initSquadsUI();
+        preloadUpscQuestions();
+    }
+
+    function updateExamCountdown() {
+        const examDate = new Date('2026-08-02T00:00:00');
+        const now = new Date();
+        const diffTime = examDate - now;
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        const countdownEl = document.getElementById('countdown-to-exam');
+        if (countdownEl) {
+            if (diffDays > 0) {
+                countdownEl.innerText = `${diffDays} Days to Exam (August 2, 2026)`;
+            } else if (diffDays === 0) {
+                countdownEl.innerText = `🎯 Exam Day is Today!`;
+            } else {
+                countdownEl.innerText = `Exam was on August 2, 2026`;
+            }
+        }
+    }
+
+    function renderVisualRoadmap() {
+        let history = [];
+        try {
+            history = JSON.parse(localStorage.getItem('moproprep_solve_history') || '[]');
+        } catch (e) {}
+
+        const subjects = {
+            medicine: { correct: 0, total: 0, node: 'milestone-medicine', label: 'Medicine' },
+            pediatrics: { correct: 0, total: 0, node: 'milestone-pediatrics', label: 'Pediatrics' },
+            surgery: { correct: 0, total: 0, node: 'milestone-surgery', label: 'Surgery' },
+            obgy: { correct: 0, total: 0, node: 'milestone-obgy', label: 'OBGY / PSM' }
+        };
+        
+        history.forEach(h => {
+            const sub = (h.subject || '').toLowerCase();
+            if (sub.includes('med')) {
+                subjects.medicine.total++;
+                if (h.isCorrect) subjects.medicine.correct++;
+            } else if (sub.includes('paed') || sub.includes('ped')) {
+                subjects.pediatrics.total++;
+                if (h.isCorrect) subjects.pediatrics.correct++;
+            } else if (sub.includes('surg')) {
+                subjects.surgery.total++;
+                if (h.isCorrect) subjects.surgery.correct++;
+            } else if (sub.includes('obg') || sub.includes('gyn') || sub.includes('prev') || sub.includes('psm') || sub.includes('soc')) {
+                subjects.obgy.total++;
+                if (h.isCorrect) subjects.obgy.correct++;
+            }
+        });
+
+        const getPercent = (sub) => {
+            if (sub.total === 0) return 0;
+            return Math.round((sub.correct / sub.total) * 100);
+        };
+
+        Object.keys(subjects).forEach(key => {
+            const sub = subjects[key];
+            const pct = getPercent(sub);
+            const el = document.getElementById(sub.node);
+            if (el) {
+                const txt = el.querySelector('text');
+                if (txt) txt.textContent = `${sub.label} (${pct}%)`;
+                
+                const dot = el.querySelector('.milestone-status-dot');
+                if (dot) {
+                    if (pct >= 75) {
+                        dot.setAttribute('fill', '#10B981'); // Green (Mastered)
+                    } else if (pct > 0) {
+                        dot.setAttribute('fill', '#F59E0B'); // Orange (Needs Review)
+                    } else {
+                        dot.setAttribute('fill', '#94A3B8'); // Locked / Unseen
+                    }
+                }
+            }
+        });
+
+        const medPct = getPercent(subjects.medicine);
+        const pedPct = getPercent(subjects.pediatrics);
+        const surgPct = getPercent(subjects.surgery);
+        const obgyPct = getPercent(subjects.obgy);
+        const avgPct = Math.round((medPct + pedPct + surgPct + obgyPct) / 4);
+        
+        // Dynamic mascot path coordinates mapping
+        const coords = [
+            { pct: 0, x: 50, y: 130 },
+            { pct: 25, x: 180, y: 95 },
+            { pct: 50, x: 350, y: 130 },
+            { pct: 75, x: 520, y: 95 },
+            { pct: 100, x: 680, y: 150 }
+        ];
+        
+        let targetX = 50;
+        let targetY = 130;
+        
+        if (avgPct >= 100) {
+            targetX = 750;
+            targetY = 130;
+        } else {
+            for (let i = 0; i < coords.length - 1; i++) {
+                const start = coords[i];
+                const end = coords[i+1];
+                if (avgPct >= start.pct && avgPct <= end.pct) {
+                    const range = end.pct - start.pct;
+                    const progress = (avgPct - start.pct) / range;
+                    targetX = start.x + (end.x - start.x) * progress;
+                    targetY = start.y + (end.y - start.y) * progress;
+                    break;
+                }
+            }
+        }
+        
+        const mascot = document.getElementById('mascot-marker');
+        if (mascot) {
+            mascot.setAttribute('transform', `translate(${targetX}, ${targetY})`);
+        }
+    }
+
+    function updateAiCoachUI() {
+        const user = AuthService.user;
+        const capsEl = document.getElementById('ai-coach-caps');
+        const adviceBtn = document.getElementById('btn-ai-coach-advice');
+        const unlockBtn = document.getElementById('btn-ai-coach-unlock');
+        const responseBox = document.getElementById('ai-coach-response-box');
+        
+        if (user) {
+            const isPro = user.isPro === true;
+            const coachStats = user.aiCoachStats || {};
+            const todayStr = new Date().toISOString().split('T')[0];
+            const count = (coachStats.lastDate === todayStr) ? (coachStats.count || 0) : 0;
+            const remaining = Math.max(0, 2 - count);
+            
+            if (capsEl) {
+                if (isPro) {
+                    capsEl.innerText = "PRO Member: Unlimited Requests";
+                    capsEl.style.background = "rgba(16, 185, 129, 0.12)";
+                    capsEl.style.color = "var(--secondary)";
+                } else {
+                    capsEl.innerText = `${remaining} Free Requests Left Today`;
+                    capsEl.style.background = "rgba(99, 102, 241, 0.12)";
+                    capsEl.style.color = "var(--primary)";
+                }
+            }
+            
+            if (count >= 2 && !isPro) {
+                adviceBtn.disabled = true;
+                adviceBtn.style.opacity = "0.5";
+                if (unlockBtn) unlockBtn.style.display = "block";
+            } else {
+                adviceBtn.disabled = false;
+                adviceBtn.style.opacity = "1";
+                if (unlockBtn) unlockBtn.style.display = "none";
+            }
+        }
+
+        // Setup click handler once dynamically
+        adviceBtn.onclick = async () => {
+            const user = AuthService.user;
+            if (!user) return;
+            
+            adviceBtn.disabled = true;
+            adviceBtn.innerText = "Consulting Coach...";
+            
+            let history = [];
+            try {
+                history = JSON.parse(localStorage.getItem('moproprep_solve_history') || '[]');
+            } catch (e) {}
+            
+            try {
+                const res = await fetch('/api/ai-coach', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ uid: user.uid, history: history })
+                });
+                const result = await res.json();
+                
+                if (result.limitReached) {
+                    alert(result.message);
+                } else {
+                    if (responseBox) {
+                        responseBox.innerHTML = marked.parse(result.plan);
+                    }
+                    
+                    // Update local user stats and UI
+                    if (user.aiCoachStats) {
+                        user.aiCoachStats.count = 2 - result.requestsRemaining;
+                        user.aiCoachStats.lastDate = new Date().toISOString().split('T')[0];
+                    } else {
+                        user.aiCoachStats = {
+                            count: 2 - result.requestsRemaining,
+                            lastDate: new Date().toISOString().split('T')[0]
+                        };
+                    }
+                    updateAiCoachUI();
+                }
+            } catch (err) {
+                console.error("AI Coach query failed:", err);
+                alert("Failed to query AI Coach. Please check your internet connection.");
+            } finally {
+                adviceBtn.innerText = "Ask Coach";
+                adviceBtn.disabled = false;
+            }
+        };
+
+        if (unlockBtn) {
+            unlockBtn.onclick = async () => {
+                const user = AuthService.user;
+                if (!user || !user.email) return;
+                
+                unlockBtn.disabled = true;
+                unlockBtn.innerText = "Processing...";
+                
+                try {
+                    const orderRes = await fetch('/api/create-order', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ amount: 10 })
+                    });
+                    
+                    if (!orderRes.ok) throw new Error("Failed to create order");
+                    const order = await orderRes.json();
+                    
+                    const options = {
+                        key: 'rzp_live_SsWJknuClDmrqN', // Razorpay Key ID
+                        amount: order.amount,
+                        currency: "INR",
+                        name: "MoProPrep",
+                        description: "AI Coach Request Reset",
+                        order_id: order.id,
+                        prefill: { email: user.email },
+                        theme: { color: "#6C63FF" },
+                        handler: async (response) => {
+                            const verifyRes = await fetch('/api/verify-payment', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    razorpay_order_id: response.razorpay_order_id,
+                                    razorpay_payment_id: response.razorpay_payment_id,
+                                    razorpay_signature: response.razorpay_signature,
+                                    uid: user.uid,
+                                    purpose: 'ai_coach'
+                                })
+                            });
+                            const result = await verifyRes.json();
+                            
+                            if (result.success) {
+                                alert("🎉 Payment successful! Your daily AI Coach requests have been reset.");
+                                if (user.aiCoachStats) {
+                                    user.aiCoachStats.count = 0;
+                                    user.aiCoachStats.lastDate = new Date().toISOString().split('T')[0];
+                                }
+                                updateAiCoachUI();
+                            } else {
+                                alert("Payment verification failed.");
+                            }
+                        }
+                    };
+                    const rzp = new Razorpay(options);
+                    rzp.open();
+                } catch (err) {
+                    console.error("AI Coach unlock failed:", err);
+                    alert("Error: " + err.message);
+                } finally {
+                    unlockBtn.innerText = "Unlock (+₹10)";
+                    unlockBtn.disabled = false;
+                }
+            };
+        }
+    }
+
+    let squadsInitialized = false;
+    function initSquadsUI() {
+        // 1. Peer Studying Count Fluctuation
+        const countEl = document.getElementById('active-peers-count');
+        if (!squadsInitialized) {
+            let peerCount = Math.floor(Math.random() * 29) + 2; // 2 to 30
+            if (countEl) countEl.innerText = peerCount;
+            
+            setInterval(() => {
+                const change = Math.floor(Math.random() * 5) - 2; // -2, -1, 0, 1, 2
+                peerCount = Math.max(2, Math.min(30, peerCount + change));
+                if (countEl) countEl.innerText = peerCount;
+            }, 10000);
+        }
+
+        // 2. Chat Send setup
+        const sendBtn = document.getElementById('btn-squad-chat-send');
+        const inputField = document.getElementById('squad-chat-input');
+        const msgBox = document.getElementById('squad-chat-messages');
+        
+        const postMessage = (name, text, isAI = false) => {
+            const msg = document.createElement('div');
+            msg.style.cssText = `
+                background: ${isAI ? 'rgba(99,102,241,0.06)' : 'rgba(255,255,255,0.03)'};
+                border-left: 3px solid ${isAI ? 'var(--primary)' : 'var(--border)'};
+                padding: 0.5rem 0.75rem;
+                border-radius: 8px;
+                text-align: left;
+                word-break: break-word;
+            `;
+            msg.innerHTML = `
+                <span style="font-weight: 700; color: ${isAI ? 'var(--primary)' : 'var(--text-main)'}; display: block; font-size: 0.8rem; margin-bottom: 0.15rem;">
+                    ${isAI ? '🤖 ' : '👤 '}${name}
+                </span>
+                <span style="color: var(--text-main); font-size: 0.85rem;">${text}</span>
+            `;
+            msgBox.appendChild(msg);
+            msgBox.scrollTop = msgBox.scrollHeight;
+        };
+        
+        const handleSend = () => {
+            const val = inputField.value.trim();
+            if (!val) return;
+            
+            postMessage('Dr. Anuj (You)', val);
+            inputField.value = '';
+            
+            if (val.toLowerCase().includes('@coach')) {
+                setTimeout(() => {
+                    const response = getCoachChatResponse(val);
+                    postMessage('AI Coach Moderator', response, true);
+                }, 1200);
+            }
+        };
+        
+        if (sendBtn && !squadsInitialized) {
+            sendBtn.onclick = handleSend;
+            inputField.onkeydown = (e) => {
+                if (e.key === 'Enter') handleSend();
+            };
+        }
+
+        // 3. Daily Mini Test binding
+        const startDailyBtn = document.getElementById('btn-start-daily-mini');
+        if (startDailyBtn && !squadsInitialized) {
+            startDailyBtn.onclick = async () => {
+                const allQ = await preloadUpscQuestions();
+                if (allQ.length === 0) return;
+                
+                const shuffled = shuffleArray([...allQ]);
+                state.questions = shuffled.slice(0, 20);
+                state.sessionKey = 'progress_upsc_daily_mini_test';
+                state.mode = 'YEAR';
+                
+                state.testMode = true;
+                state.userAnswers = {};
+                state.testSubmitted = false;
+                state.reviewMode = false;
+                state.timerEndTime = Date.now() + 30 * 60 * 1000;
+                
+                if (state.timerInterval) clearInterval(state.timerInterval);
+                state.timerInterval = setInterval(updateTimer, 1000);
+                
+                document.getElementById('test-timer').style.display = 'flex';
+                document.getElementById('submit-test-btn').style.display = 'block';
+                document.getElementById('score-container').style.display = 'none';
+                document.getElementById('question-navigator').style.display = 'flex';
+                
+                startQuiz();
+            };
+        }
+        
+        // 4. Pomodoro Kickstart Timer logic
+        const pomodoroBtn = document.getElementById('btn-kickstart-pomodoro');
+        if (pomodoroBtn && !squadsInitialized) {
+            pomodoroBtn.onclick = () => {
+                showToast("🍅 Morning Kickstart study clock started! Focus for 25 minutes with 30 active peers.", 5000);
+                
+                let minutes = 25;
+                let seconds = 0;
+                pomodoroBtn.disabled = true;
+                
+                const timer = setInterval(() => {
+                    if (seconds === 0) {
+                        if (minutes === 0) {
+                            clearInterval(timer);
+                            pomodoroBtn.disabled = false;
+                            pomodoroBtn.innerText = "Join (8:30 AM)";
+                            showToast("🎉 Pomodoro complete! Take a 5-minute break.", 5000);
+                            return;
+                        }
+                        minutes--;
+                        seconds = 59;
+                    } else {
+                        seconds--;
+                    }
+                    pomodoroBtn.innerText = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                }, 1000);
+            };
+        }
+
+        squadsInitialized = true;
+    }
+
+    function getCoachChatResponse(text) {
+        const t = text.toLowerCase();
+        if (t.includes('cardio') || t.includes('heart')) {
+            return "For Cardiology in UPSC CMS Paper 1, pay special attention to **Rheumatic Heart Disease** diagnostic criteria (Jones Criteria) and **Hypertension management guidelines**. These appear in almost every previous paper.";
+        }
+        if (t.includes('pediatrics') || t.includes('child') || t.includes('immuniz')) {
+            return "Pediatrics (Neonatology & Immunization) accounts for about 20% of Paper 1. Focus on the **National Immunization Schedule** changes and **APGAR scores / Neonatal Resuscitation steps**.";
+        }
+        if (t.includes('surgery') || t.includes('burn')) {
+            return "General Surgery is highly clinical. Make sure to master **Rule of Nines for Burns** and **fluid resuscitation calculations (Parkland Formula)**. These are high yield topics.";
+        }
+        if (t.includes('obgy') || t.includes('labor') || t.includes('pregnant')) {
+            return "In Obstetrics, review **Preeclampsia/Eclampsia management** (Magnesium Sulfate regimen) and **Partogram monitoring**. Gynaecology has a strong focus on **Cervical Cancer screening (PAP smear/HPV guidelines)**.";
+        }
+        return "I am monitoring your squad's progress. Make sure to solve the **Daily 20-Q Mini Test** before 8:00 PM today. Let's keep the study streak alive! 🩺🔥";
     }
 });

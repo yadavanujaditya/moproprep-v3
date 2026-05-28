@@ -1,0 +1,46 @@
+{
+  "subjects": {
+    "Medicine": {
+      "weightage": 5,
+      "chapters": {
+        "Cardiology": { "weightage": 5, "topics": ["Hypertension", "Infective Endocarditis", "Rheumatic Heart Disease", "Myocardial Infarction"] },
+        "Neurology": { "weightage": 4, "topics": ["Stroke", "Meningitis", "Epilepsy", "Multiple Sclerosis"] },
+        "Gastroenterology": { "weightage": 4, "topics": ["Hepatitis", "Peptic Ulcer Disease", "Cirrhosis", "Pancreatitis"] },
+        "Pulmonology": { "weightage": 5, "topics": ["Tuberculosis", "Asthma", "COPD", "Pneumonia"] },
+        "Endocrinology": { "weightage": 4, "topics": ["Diabetes Mellitus", "Thyroid Disorders", "Adrenal Insufficiency"] }
+      }
+    },
+    "Paediatrics": {
+      "weightage": 4,
+      "chapters": {
+        "Neonatology": { "weightage": 5, "topics": ["Neonatal Jaundice", "Respiratory Distress Syndrome", "Birth Asphyxia"] },
+        "Growth & Development": { "weightage": 4, "topics": ["Developmental Milestones", "Malnutrition", "Rickets"] },
+        "Immunization": { "weightage": 5, "topics": ["National Immunization Schedule", "Vaccine Storage", "Adverse Events"] }
+      }
+    },
+    "Surgery": {
+      "weightage": 5,
+      "chapters": {
+        "General Surgery": { "weightage": 5, "topics": ["Wound Healing", "Burns", "Shock", "Hernias"] },
+        "Abdominal Surgery": { "weightage": 5, "topics": ["Appendicitis", "Cholecystitis", "Intestinal Obstruction", "Peritonitis"] },
+        "Urology": { "weightage": 4, "topics": ["Renal Calculi", "Benign Prostatic Hyperplasia", "Prostate Cancer"] }
+      }
+    },
+    "Obstetrics & Gynaecology": {
+      "weightage": 5,
+      "chapters": {
+        "Antenatal Care": { "weightage": 5, "topics": ["Preeclampsia", "Gestational Diabetes", "Anemia in Pregnancy"] },
+        "Labor & Delivery": { "weightage": 5, "topics": ["Stages of Labor", "Postpartum Hemorrhage", "Obstructed Labor"] },
+        "Gynecological Oncology": { "weightage": 4, "topics": ["Cervical Cancer", "Ovarian Cancer", "Fibroids"] }
+      }
+    },
+    "Preventive & Social Medicine": {
+      "weightage": 4,
+      "chapters": {
+        "Epidemiology": { "weightage": 5, "topics": ["Study Designs", "Screening Tests", "Vaccine Epidemiology"] },
+        "Health Programs": { "weightage": 5, "topics": ["NHM", "RNTCP", "NACP", "National Vector Borne Disease Control"] },
+        "Biostatistics": { "weightage": 3, "topics": ["Measures of Central Tendency", "Tests of Significance", "Correlation"] }
+      }
+    }
+  }
+}
