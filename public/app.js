@@ -1,11 +1,38 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Check for referral code in URL
+    // Check for query parameters in URL
     const urlParams = new URLSearchParams(window.location.search);
     const refCode = urlParams.get('ref');
+    const sessionParam = urlParams.get('session');
+    const isSharedQuiz = urlParams.get('share_quiz') === 'true';
+    const sharedQids = urlParams.get('qids');
+    const isChallenge = urlParams.get('challenge') === 'true';
+    const challengeCreator = urlParams.get('creator');
+    const challengeCreatorScore = urlParams.get('creatorScore');
+    const joinSquadParam = urlParams.get('join_squad');
+
     if (refCode) {
         console.log("Found referral code:", refCode);
         localStorage.setItem('referredBy', refCode);
-        // Clean URL parameters from address bar
+    }
+    if (sessionParam) {
+        console.log("Found target session:", sessionParam);
+        sessionStorage.setItem('targetSession', sessionParam);
+    }
+    if (joinSquadParam) {
+        console.log("Found target join squad:", joinSquadParam);
+        sessionStorage.setItem('targetJoinSquad', joinSquadParam);
+    }
+    if (isSharedQuiz && sharedQids) {
+        sessionStorage.setItem('sharedQuiz_qids', sharedQids);
+        if (isChallenge) {
+            sessionStorage.setItem('sharedQuiz_challenge', 'true');
+            sessionStorage.setItem('sharedQuiz_creator', challengeCreator || 'A Friend');
+            sessionStorage.setItem('sharedQuiz_creatorScore', challengeCreatorScore || '0');
+        }
+    }
+
+    // Clean URL parameters from address bar if any parameters were present
+    if (window.location.search) {
         const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
         window.history.replaceState({ path: cleanUrl }, '', cleanUrl);
     }
@@ -52,7 +79,16 @@ document.addEventListener('DOMContentLoaded', () => {
         maxStreak: 0,
         curedCount: 0,
         analyticsBackView: null,
-        choiceBackView: null
+        choiceBackView: null,
+        // Challenge Mode
+        challengeMode: false,
+        challengeCreator: null,
+        challengeCreatorScore: null,
+        // Squad Firestore State
+        squadId: null,
+        squadCode: null,
+        squadUnsubMembers: null,
+        squadUnsubMessages: null
     };
 
     // --- Helpers ---
@@ -248,7 +284,59 @@ document.addEventListener('DOMContentLoaded', () => {
             // Load cloud bookmarks if available
             loadCloudBookmarks();
             loadCloudSolveHistory();
+
+            // Handle target session routing once user is authenticated
+            handleTargetSessionRouting();
         });
+
+        // Check for shared quiz in sessionStorage
+        const savedQids = sessionStorage.getItem('sharedQuiz_qids');
+        if (savedQids) {
+            const qidList = savedQids.split(',').map(id => id.trim());
+            const isChallenge = sessionStorage.getItem('sharedQuiz_challenge') === 'true';
+            const challengeCreator = sessionStorage.getItem('sharedQuiz_creator') || 'A Friend';
+            const challengeCreatorScore = parseInt(sessionStorage.getItem('sharedQuiz_creatorScore') || '0', 10);
+
+            // Clean session storage so it doesn't run again on reload
+            sessionStorage.removeItem('sharedQuiz_qids');
+            sessionStorage.removeItem('sharedQuiz_challenge');
+            sessionStorage.removeItem('sharedQuiz_creator');
+            sessionStorage.removeItem('sharedQuiz_creatorScore');
+
+            if (isChallenge) {
+                state.challengeMode = true;
+                state.challengeCreator = challengeCreator;
+                state.challengeCreatorScore = challengeCreatorScore;
+            }
+
+            preloadUpscQuestions().then(allQ => {
+                if (allQ && allQ.length > 0) {
+                    const filtered = allQ.filter(q => q.id && qidList.includes(q.id.toString()));
+                    if (filtered.length > 0) {
+                        state.questions = filtered;
+                        state.sessionKey = 'progress_shared_quiz';
+                        state.mode = 'YEAR';
+                        state.testMode = false;
+                        state.userAnswers = {};
+                        state.testSubmitted = false;
+                        state.reviewMode = false;
+
+                        // Show challenge banner if in challenge mode
+                        if (state.challengeMode) {
+                            const banner = document.getElementById('challenge-banner');
+                            const bannerText = document.getElementById('challenge-banner-text');
+                            if (banner) banner.style.display = 'block';
+                            if (bannerText) bannerText.textContent = `You are challenging ${state.challengeCreator}'s score of ${state.challengeCreatorScore}/${filtered.length}!`;
+                        }
+
+                        startQuiz();
+                    } else {
+                        console.warn("No matching questions found for shared IDs:", qidList);
+                        showToast("⚠️ Could not load the shared quiz.", 4000);
+                    }
+                }
+            });
+        }
     }
 
     // --- Bookmarks Logic ---
@@ -1478,16 +1566,19 @@ document.addEventListener('DOMContentLoaded', () => {
         if (state.upscDrillLevel === 'years') {
             state.upscDrillLevel = 'hub';
             showUpscHub();
-        } else if (state.upscDrillLevel === 'papers') {
+        } else if (state.upscDrillLevel === 'yearchoice') {
             state.upscDrillLevel = 'years';
             selectMode('upscmo', 'UPSC CMS Previous Year Papers', 'Practice with real UPSC Combined Medical Services exam questions.', 'YEAR', 'upscHub');
+        } else if (state.upscDrillLevel === 'papers') {
+            state.upscDrillLevel = 'yearchoice';
+            renderYearChoice(parseInt(state.upscSelectedYear));
         } else if (state.upscDrillLevel === 'subjects') {
             if (state.upscFlow === 'yearwise') {
-                state.upscDrillLevel = 'years';
-                state.upscSelectedYear = 'all';
+                state.upscDrillLevel = 'yearchoice';
+                state.upscSelectedYear = state.upscSelectedYear || 'all';
                 const yf = document.getElementById('upsc-year-filter');
                 if (yf) yf.value = 'all';
-                selectMode('upscmo', 'UPSC CMS Previous Year Papers', 'Practice with real UPSC Combined Medical Services exam questions.', 'YEAR', 'upscHub');
+                renderYearChoice(parseInt(state.upscSelectedYear));
             } else {
                 state.upscDrillLevel = 'hub';
                 showUpscHub();
@@ -2199,6 +2290,458 @@ document.addEventListener('DOMContentLoaded', () => {
         }, speed + (Math.random() * 3000 - 1500));
     }
 
+    // --- Target Session Routing Helper ---
+    function handleTargetSessionRouting() {
+        const targetSession = sessionStorage.getItem('targetSession');
+        const targetSquad = sessionStorage.getItem('targetJoinSquad');
+
+        if (targetSquad) {
+            sessionStorage.removeItem('targetJoinSquad');
+            if (!AuthService.isLoggedIn()) {
+                showToast("👋 Welcome! Please log in to join the study squad.", 4000);
+                return;
+            }
+            showUpscDashboard();
+            setTimeout(async () => {
+                await handleAutoJoinSquad(targetSquad);
+            }, 1500);
+        }
+
+        if (targetSession) {
+            sessionStorage.removeItem('targetSession');
+            if (!AuthService.isLoggedIn()) {
+                showToast("👋 Welcome! Please log in to join the study session.", 4000);
+                return;
+            }
+            showUpscDashboard();
+            setTimeout(() => {
+                if (targetSession === 'mini_test') {
+                    const btn = document.getElementById('btn-start-daily-mini');
+                    if (btn) {
+                        btn.click();
+                        showToast("🚀 Auto-starting Daily Mini Test!", 4000);
+                    }
+                } else if (targetSession === 'morning_kickstart') {
+                    const btn = document.getElementById('btn-kickstart-pomodoro');
+                    if (btn) {
+                        btn.click();
+                        showToast("⏱️ Auto-joining SuperCMS Mornings lobby!", 4000);
+                    }
+                }
+            }, 1200);
+        }
+    }
+
+    async function handleAutoJoinSquad(code) {
+        code = code.trim().toUpperCase();
+        if (!code) return;
+        if (!AuthService.isLoggedIn()) return;
+        try {
+            const doc = await db.collection('squads').doc(code).get();
+            if (!doc.exists) {
+                showToast('⚠️ Invited squad not found.', 5000);
+                return;
+            }
+            const user = AuthService.user;
+            const getUserMasteryLocal = () => {
+                let hist = [];
+                try { hist = JSON.parse(localStorage.getItem('moproprep_solve_history') || '[]'); } catch (e) {}
+                const total = (state.upscAllQuestions && state.upscAllQuestions.length) || 1;
+                const solved = new Set(hist.map(h => h.qId).filter(Boolean));
+                return Math.min(100, Math.round((solved.size / total) * 100));
+            };
+            
+            await db.collection('squads').doc(code).update({
+                [`members.${user.uid}`]: { name: user.displayName || 'Student', mastery: getUserMasteryLocal(), joinedAt: Date.now() }
+            });
+            state.squadId = code;
+            state.squadCode = code;
+            localStorage.setItem('moproprep_squad_id', code);
+            await db.collection('squads').doc(code).collection('messages').add({
+                senderName: 'System', senderId: 'system', text: `👋 ${user.displayName || 'Student'} joined via invite link!`, type: 'system', timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            
+            const savedUnsubM = state.squadUnsubMembers;
+            const savedUnsubMsg = state.squadUnsubMessages;
+            if (savedUnsubM) { savedUnsubM(); state.squadUnsubMembers = null; }
+            if (savedUnsubMsg) { savedUnsubMsg(); state.squadUnsubMessages = null; }
+            
+            const activeCodeEl = document.getElementById('active-squad-code');
+            const sidebarActiveCodeEl = document.getElementById('sidebar-active-squad-code');
+            const membersList = document.getElementById('squad-members-list');
+            const sidebarMembersList = document.getElementById('sidebar-squad-members-list');
+            const sidebarMsgBox = document.getElementById('sidebar-squad-chat-messages');
+
+            function renderMembers(members) {
+                const lists = [membersList, sidebarMembersList];
+                lists.forEach(list => {
+                    if(!list) return;
+                    list.innerHTML='';
+                    Object.entries(members||{}).forEach(([uid,info])=>{
+                        const el=document.createElement('div');
+                        el.style.cssText='display:flex;justify-content:space-between;align-items:center;padding:0.4rem 0.6rem;background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:8px;font-size:0.82rem;';
+                        const you=AuthService.user && uid===AuthService.user.uid;
+                        el.innerHTML=`<span style="font-weight:600;color:var(--text-main);">${uid === user.uid ? (user.displayName || 'Student') + ' (You)' : info.name || 'Student'}</span><span style="font-size:0.75rem;color:var(--secondary);">${info.mastery||0}% mastery</span>`;
+                        list.appendChild(el);
+                    });
+                });
+            }
+
+            state.squadUnsubMembers = db.collection('squads').doc(code).onSnapshot(sDoc => {
+                if(!sDoc.exists) { localStorage.removeItem('moproprep_squad_id'); state.squadId = null; return; }
+                const data = sDoc.data();
+                state.squadCode = data.code || code;
+                if(activeCodeEl) activeCodeEl.textContent = state.squadCode;
+                if(sidebarActiveCodeEl) sidebarActiveCodeEl.textContent = state.squadCode;
+                renderMembers(data.members || {});
+            });
+
+            state.squadUnsubMessages = db.collection('squads').doc(code).collection('messages')
+                .orderBy('timestamp','asc')
+                .limitToLast(50)
+                .onSnapshot(ss => {
+                    if(!sidebarMsgBox) return;
+                    sidebarMsgBox.innerHTML = '';
+                    if(ss.empty) {
+                        sidebarMsgBox.innerHTML = '<div style="text-align:center;color:var(--text-muted);font-style:italic;margin-top:auto;font-size:0.8rem;">No messages yet. Start chatting!</div>';
+                    }
+                    ss.forEach(d => {
+                        const msgData = d.data();
+                        const isSys = msgData.type === 'system';
+                        const m = document.createElement('div');
+                        m.style.cssText=`background:${isSys?'rgba(99,102,241,0.06)':'rgba(255,255,255,0.03)'};border-left:3px solid ${isSys?'var(--primary)':'var(--border)'};padding:0.5rem 0.75rem;border-radius:8px;text-align:left;word-break:break-word;`;
+                        const escapeHtml = (t) => {
+                            const div = document.createElement('div');
+                            div.textContent = t;
+                            return div.innerHTML;
+                        };
+                        const linkify = (t) => {
+                            const e = escapeHtml(t);
+                            return e.replace(/(https?:\/\/[^\s]+)/g,'<a href="$1" target="_blank" rel="noopener" style="color: var(--primary); text-decoration: underline;">$1</a>');
+                        };
+                        m.innerHTML=`<span style="font-weight:700;color:${isSys?'var(--primary)':'var(--text-main)'};display:block;font-size:0.8rem;margin-bottom:0.15rem;">${isSys?'📢 ':'👤 '}${escapeHtml(msgData.senderName||'User')}</span><span style="color:var(--text-main);font-size:0.85rem;">${linkify(msgData.text||'')}</span>`;
+                        sidebarMsgBox.appendChild(m);
+                    });
+                    sidebarMsgBox.scrollTop = sidebarMsgBox.scrollHeight;
+                });
+
+            const setupContainer = document.getElementById('squad-setup-container');
+            const activeContainer = document.getElementById('squad-active-container');
+            const sidebarSetup = document.getElementById('sidebar-squad-setup');
+            const sidebarActive = document.getElementById('sidebar-squad-active');
+            if(setupContainer) setupContainer.style.display = 'none';
+            if(activeContainer) activeContainer.style.display = 'flex';
+            if(sidebarSetup) sidebarSetup.style.display = 'none';
+            if(sidebarActive) sidebarActive.style.display = 'flex';
+
+            showToast(`🎉 Automatically joined squad ${code}!`, 5000);
+        } catch(e) {
+            console.error("Auto join failed", e);
+            showToast('❌ Auto-join failed.', 4000);
+        }
+    }
+
+    // --- Share Session Dynamic Canvas Card Generator ---
+    function openShareSessionModal(sessionType) {
+        const user = AuthService.user;
+        if (!user) {
+            alert("Please log in to share study sessions!");
+            return;
+        }
+
+        const modal = document.getElementById('share-session-modal');
+        const loader = document.getElementById('share-loader');
+        const imgPreview = document.getElementById('share-image-preview');
+        const linkDisplay = document.getElementById('share-session-link-display');
+
+        if (!modal) return;
+
+        const titleEl = document.getElementById('share-session-title');
+        let sessionTitle = "Study Session";
+        if (sessionType === 'mini_test') {
+            sessionTitle = "Daily Mini Test";
+            if (titleEl) titleEl.innerText = "Share Daily Mini Test";
+        } else if (sessionType === 'morning_kickstart') {
+            sessionTitle = "SuperCMS Mornings";
+            if (titleEl) titleEl.innerText = "Share SuperCMS Mornings";
+        }
+
+        // Generate invite link
+        const inviteLink = window.location.origin + window.location.pathname + `?ref=${user.uid}&session=${sessionType}`;
+        if (linkDisplay) linkDisplay.innerText = inviteLink;
+
+        modal.style.display = 'flex';
+        loader.style.display = 'block';
+        imgPreview.style.display = 'none';
+
+        const canvas = document.createElement('canvas');
+        canvas.width = 800;
+        canvas.height = 450;
+        const ctx = canvas.getContext('2d');
+
+        // Draw background gradient (premium dark theme)
+        const grad = ctx.createLinearGradient(0, 0, 800, 450);
+        grad.addColorStop(0, '#1e1b4b'); // Deep indigo
+        grad.addColorStop(1, '#0f172a'); // Slate 900
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, 800, 450);
+
+        // Draw decorative subtle circles
+        ctx.fillStyle = 'rgba(99, 102, 241, 0.08)'; 
+        ctx.beginPath();
+        ctx.arc(100, 100, 150, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.fillStyle = 'rgba(16, 185, 129, 0.06)'; 
+        ctx.beginPath();
+        ctx.arc(700, 350, 200, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Draw border
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+        ctx.lineWidth = 8;
+        ctx.strokeRect(4, 4, 792, 442);
+
+        // Draw App Title
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '700 32px "Plus Jakarta Sans", sans-serif';
+        ctx.fillText('🩺 MoProPrep', 50, 70);
+
+        ctx.fillStyle = '#6366f1';
+        ctx.font = '600 18px "Plus Jakarta Sans", sans-serif';
+        ctx.fillText('UPSC CMS Study Arena', 50, 100);
+
+        // Draw Card Content
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.03)';
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.roundRect(50, 140, 450, 240, 16);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '700 24px "Plus Jakarta Sans", sans-serif';
+        if (sessionType === 'mini_test') {
+            ctx.fillText('🏆 Daily 20-Q Mini Test', 80, 190);
+            ctx.fillStyle = '#e2e8f0';
+            ctx.font = '500 16px "Plus Jakarta Sans", sans-serif';
+            ctx.fillText('Join the daily rank sprint window.', 80, 230);
+            ctx.fillText('Answers reveal synchronously at 8:00 PM.', 80, 255);
+        } else {
+            ctx.fillText('⏱️ SuperCMS Mornings', 80, 190);
+            ctx.fillStyle = '#e2e8f0';
+            ctx.font = '500 16px "Plus Jakarta Sans", sans-serif';
+            ctx.fillText('Synchronized Pomodoro study lobby.', 80, 230);
+            ctx.fillText('Starts daily at 8:30 AM.', 80, 255);
+        }
+
+        ctx.fillStyle = 'rgba(16, 185, 129, 0.12)';
+        ctx.beginPath();
+        ctx.roundRect(80, 285, 140, 32, 8);
+        ctx.fill();
+
+        ctx.fillStyle = '#34d399';
+        ctx.font = '700 13px "Plus Jakarta Sans", sans-serif';
+        ctx.fillText('FREE FOR ALL', 105, 305);
+
+        ctx.fillStyle = '#94a3b8';
+        ctx.font = '500 14px "Plus Jakarta Sans", sans-serif';
+        ctx.fillText(`Invited by: ${user.displayName || 'Medical Student'}`, 80, 350);
+
+        // Draw invite link at the bottom of the canvas card
+        ctx.fillStyle = '#818cf8';
+        ctx.font = '500 12px monospace';
+        ctx.fillText(inviteLink, 50, 420);
+
+        // Scan Instruction
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '700 16px "Plus Jakarta Sans", sans-serif';
+        ctx.fillText('SCAN TO JOIN THE SESSION', 540, 320);
+
+        ctx.fillStyle = '#94a3b8';
+        ctx.font = '500 13px monospace';
+        ctx.fillText('moproprep.in', 580, 345);
+
+        // Fetch QR Code API and draw
+        const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(inviteLink)}&color=255-255-255&bgcolor=30-27-75`;
+        const qrImg = new Image();
+        qrImg.crossOrigin = "anonymous";
+        qrImg.onload = () => {
+            // Draw QR code background
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.roundRect(535, 125, 160, 160, 12);
+            ctx.fill();
+
+            // Draw QR code image
+            ctx.drawImage(qrImg, 540, 130, 150, 150);
+
+            try {
+                const dataUrl = canvas.toDataURL('image/png');
+                imgPreview.src = dataUrl;
+                imgPreview.style.display = 'block';
+                loader.style.display = 'none';
+
+                // Setup Download button
+                const downloadBtn = document.getElementById('btn-download-share-img');
+                if (downloadBtn) {
+                    downloadBtn.onclick = () => {
+                        const a = document.createElement('a');
+                        a.href = dataUrl;
+                        a.download = `moproprep_${sessionType}.png`;
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                    };
+                }
+            } catch (err) {
+                console.error("Canvas export failed:", err);
+                loader.style.display = 'none';
+                imgPreview.alt = "Failed to load preview";
+            }
+        };
+        qrImg.onerror = () => {
+            console.error("QR Code image loading failed.");
+            loader.style.display = 'none';
+            imgPreview.style.display = 'none';
+        };
+        qrImg.src = qrUrl;
+
+        // Setup Copy button
+        const copyBtn = document.getElementById('btn-copy-share-link');
+        if (copyBtn) {
+            copyBtn.onclick = () => {
+                navigator.clipboard.writeText(inviteLink).then(() => {
+                    showToast("📋 Invite link copied!", 2500);
+                }).catch(err => {
+                    alert("Could not copy link automatically: " + inviteLink);
+                });
+            };
+        }
+
+        // Setup Web Share button if available
+        const shareBtn = document.getElementById('btn-web-share');
+        if (shareBtn) {
+            if (navigator.share) {
+                shareBtn.style.display = 'block';
+                shareBtn.onclick = () => {
+                    navigator.share({
+                        title: `Join my UPSC CMS ${sessionTitle} on MoProPrep!`,
+                        text: `Hey, let's study together in the UPSC CMS session. Join here:`,
+                        url: inviteLink
+                    }).catch(e => console.log('Share canceled', e));
+                };
+            } else {
+                shareBtn.style.display = 'none';
+            }
+        }
+    }
+
+    // --- Browse Questions (See Questions) Helpers ---
+    async function openBrowseQuestionsView(year) {
+        switchView('browse-questions-view');
+        const titleEl = document.getElementById('browse-title');
+        if (titleEl) titleEl.innerText = `UPSC CMS ${year} PYQs`;
+
+        const listContainer = document.getElementById('browse-questions-list');
+        if (listContainer) {
+            listContainer.innerHTML = '<div class="loader"></div>';
+        }
+
+        try {
+            const url = `/api/questions/${year}?tags=upscmo`;
+            const res = await fetch(url);
+            const data = await res.json();
+            
+            const hasInfo = (q, t) => q.tags && q.tags.some(x => x.toLowerCase() === t);
+            let filtered = data.filter(q =>
+                hasInfo(q, 'upscmo') &&
+                !hasInfo(q, 'haryanamo') &&
+                !hasInfo(q, 'rajasthanmo')
+            ).sort((a, b) => (a.id || 0) - (b.id || 0));
+
+            if (filtered.length === 0) {
+                listContainer.innerHTML = '<p class="error" style="color: var(--danger); font-weight: 600; text-align: center; padding: 2rem;">No questions found for this year.</p>';
+                return;
+            }
+
+            state.browseQuestions = filtered;
+            renderBrowseQuestionsList(filtered);
+
+            // Search Filter
+            const searchInput = document.getElementById('browse-search-input');
+            if (searchInput) {
+                searchInput.value = '';
+                searchInput.oninput = (e) => {
+                    const query = e.target.value.toLowerCase().trim();
+                    if (!query) {
+                        renderBrowseQuestionsList(state.browseQuestions);
+                    } else {
+                        const matched = state.browseQuestions.filter(q => {
+                            const text = (q.question_text || q.questionText || '').toLowerCase();
+                            const topic = (q.topic || '').toLowerCase();
+                            const chapter = (q.chapter || '').toLowerCase();
+                            const subject = (q.subject || '').toLowerCase();
+                            return text.includes(query) || topic.includes(query) || chapter.includes(query) || subject.includes(query);
+                        });
+                        renderBrowseQuestionsList(matched);
+                    }
+                };
+            }
+
+        } catch (err) {
+            console.error("Failed to load browse questions:", err);
+            if (listContainer) listContainer.innerHTML = '<p class="error" style="text-align: center; padding: 2rem;">Failed to load questions. Please check your internet connection.</p>';
+        }
+    }
+
+    function renderBrowseQuestionsList(questions) {
+        const listContainer = document.getElementById('browse-questions-list');
+        if (!listContainer) return;
+
+        listContainer.innerHTML = '';
+        questions.forEach((q, idx) => {
+            const card = document.createElement('div');
+            card.className = 'glass-card browse-q-card';
+            
+            const optionsHtml = ['A', 'B', 'C', 'D'].map(key => {
+                const optText = q.options[key] || '';
+                const isCorrect = q.correct_answer === key || q.correctAnswer === key;
+                return `
+                    <div class="browse-option ${isCorrect ? 'correct' : ''}">
+                        <strong>${key}.</strong> ${optText}
+                    </div>
+                `;
+            }).join('');
+
+            card.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; flex-wrap: wrap; gap: 0.5rem;">
+                    <span class="badge-pill" style="background: var(--primary-glow); color: var(--primary); margin: 0;">Q# ${idx + 1}</span>
+                    <div style="display: flex; gap: 0.25rem; flex-wrap: wrap;">
+                        <span class="badge-pill success" style="margin: 0;">${q.subject || 'General'}</span>
+                        ${q.chapter ? `<span class="badge-pill warning" style="margin: 0;">${q.chapter}</span>` : ''}
+                    </div>
+                </div>
+                <div style="font-weight: 600; font-size: 1rem; line-height: 1.5; color: var(--text-main); text-align: left;">
+                    ${q.question_text || q.questionText || ''}
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 0.5rem; width: 100%; text-align: left;">
+                    ${optionsHtml}
+                </div>
+                <div class="explanation-box" style="margin-top: 0.5rem; padding: 1rem; background: rgba(99,102,241,0.02); border-radius: 8px; border-left: 3px solid var(--primary); text-align: left;">
+                    <strong style="color: var(--primary); font-size: 0.85rem; display: block; margin-bottom: 0.25rem;">EXPLANATION &amp; CLINICAL KEYS:</strong>
+                    <p style="margin: 0; font-size: 0.88rem; line-height: 1.5; color: var(--text-muted);">${q.explanation || 'No explanation available.'}</p>
+                </div>
+            `;
+            listContainer.appendChild(card);
+        });
+
+        if (questions.length === 0) {
+            listContainer.innerHTML = '<p style="color: var(--text-muted); text-align: center; padding: 2rem;">No matching questions found.</p>';
+        }
+    }
+
     // --- Logic & Rendering ---
     function selectMode(tag, title, desc, mode = 'YEAR', backView = 'home') {
         state.activeTag = tag;
@@ -2269,16 +2812,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else if (state.activeTag === 'upscmo') {
                     state.upscFlow = 'yearwise';
                     state.upscSelectedYear = year.year.toString();
-                    state.upscDrillLevel = 'subjects';
-                    switchView('yearSelection');
-                    els.viewTitle.innerText = 'Select Subject';
-                    els.viewDesc.innerText = `Choose a subject in ${year.year} to practice.`;
-                    els.yearsGrid.innerHTML = '<div class="loader"></div>';
-                    preloadUpscQuestions().then(allQ => {
-                        const yf = document.getElementById('upsc-year-filter');
-                        if (yf) yf.value = year.year.toString();
-                        renderUpscSubjects(allQ);
-                    });
+                    state.upscDrillLevel = 'yearchoice';
+                    renderYearChoice(year.year);
                     return;
                 } else {
                     // Standard Logic for other categories
@@ -2293,6 +2828,77 @@ document.addEventListener('DOMContentLoaded', () => {
             };
             els.yearsGrid.appendChild(card);
         });
+    }
+
+    // --- Year Choice Screen: View Chapters vs Solve Paper ---
+    function renderYearChoice(year) {
+        switchView('yearSelection');
+        els.viewTitle.innerText = `UPSC CMS ${year}`;
+        els.viewDesc.innerText = 'Choose how you want to practice this year\'s questions.';
+        els.yearsGrid.innerHTML = '';
+
+        // Back Card
+        const backCard = document.createElement('div');
+        backCard.className = 'year-card';
+        backCard.style.opacity = '0.8';
+        backCard.innerHTML = `
+            <div class="year-title">⬅️ Back</div>
+            <div class="year-desc">Return to Year Selection</div>
+        `;
+        backCard.onclick = () => {
+            state.upscDrillLevel = 'years';
+            selectMode('upscmo', 'UPSC CMS Previous Year Papers', 'Practice with real UPSC Combined Medical Services exam questions.', 'YEAR', 'upscHub');
+        };
+        els.yearsGrid.appendChild(backCard);
+
+        // See Chapters Card
+        const chaptersCard = document.createElement('div');
+        chaptersCard.className = 'year-card';
+        chaptersCard.style.borderColor = 'rgba(99, 102, 241, 0.3)';
+        chaptersCard.innerHTML = `
+            <div class="year-title">📚 See Chapters</div>
+            <div class="year-desc">Browse by subject and chapter for ${year}</div>
+        `;
+        chaptersCard.onclick = () => {
+            state.upscDrillLevel = 'subjects';
+            state.upscSelectedYear = year.toString();
+            switchView('yearSelection');
+            els.viewTitle.innerText = 'Select Subject';
+            els.viewDesc.innerText = `Choose a subject in ${year} to practice.`;
+            els.yearsGrid.innerHTML = '<div class="loader"></div>';
+            preloadUpscQuestions().then(allQ => {
+                const yf = document.getElementById('upsc-year-filter');
+                if (yf) yf.value = year.toString();
+                renderUpscSubjects(allQ);
+            });
+        };
+        els.yearsGrid.appendChild(chaptersCard);
+
+        // Solve Paper Card
+        const solveAllCard = document.createElement('div');
+        solveAllCard.className = 'year-card';
+        solveAllCard.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+        solveAllCard.innerHTML = `
+            <div class="year-title">📝 Solve Paper</div>
+            <div class="year-desc">Solve all Paper 1 and 2 questions together</div>
+        `;
+        solveAllCard.onclick = () => {
+            loadQuestions(year);
+        };
+        els.yearsGrid.appendChild(solveAllCard);
+
+        // See Questions Card (Browse Mode)
+        const seeQuestionsCard = document.createElement('div');
+        seeQuestionsCard.className = 'year-card';
+        seeQuestionsCard.style.borderColor = 'rgba(245, 158, 11, 0.3)';
+        seeQuestionsCard.innerHTML = `
+            <div class="year-title">👁️ See Questions</div>
+            <div class="year-desc">Read and browse through questions directly</div>
+        `;
+        seeQuestionsCard.onclick = () => {
+            openBrowseQuestionsView(year);
+        };
+        els.yearsGrid.appendChild(seeQuestionsCard);
     }
 
     function renderPapers(year) {
@@ -3361,9 +3967,15 @@ document.addEventListener('DOMContentLoaded', () => {
             el.classList.add('hidden-view');
         });
 
-        const target = els.views[viewName];
-        if (target) {
+        // Hide new browse view explicitly as it's outside els.views
+        const browseView = document.getElementById('browse-questions-view');
+        if (browseView) {
+            browseView.classList.remove('active-view');
+            browseView.classList.add('hidden-view');
+        }
 
+        const target = (viewName === 'browse-questions-view') ? browseView : els.views[viewName];
+        if (target) {
             target.classList.remove('hidden-view');
             target.classList.add('active-view');
 
@@ -3386,6 +3998,20 @@ document.addEventListener('DOMContentLoaded', () => {
             showUpscYearFilter(true);
         } else {
             showUpscYearFilter(false);
+        }
+
+        // Manage Squad Chat toggle and float button visibility (UPSC CMS only)
+        const chatToggle = document.getElementById('btn-toggle-squad-sidebar');
+        const chatFloat = document.getElementById('floating-chat-btn');
+        const sidebarEl = document.getElementById('squad-sidebar');
+        
+        if (state.activeTag === 'upscmo') {
+            if (chatToggle) chatToggle.style.display = 'inline-block';
+            if (chatFloat) chatFloat.style.display = 'flex';
+        } else {
+            if (chatToggle) chatToggle.style.display = 'none';
+            if (chatFloat) chatFloat.style.display = 'none';
+            if (sidebarEl) sidebarEl.classList.remove('open');
         }
     }
 
@@ -3483,6 +4109,39 @@ document.addEventListener('DOMContentLoaded', () => {
         if (btnBackFromSuper) {
             btnBackFromSuper.onclick = () => {
                 showUpscDashboard();
+            };
+        }
+
+        // Back button from Browse Questions view
+        const backFromBrowseBtn = document.getElementById('back-from-browse');
+        if (backFromBrowseBtn) {
+            backFromBrowseBtn.onclick = () => {
+                state.upscDrillLevel = 'yearchoice';
+                renderYearChoice(parseInt(state.upscSelectedYear));
+            };
+        }
+
+        // Session Sharing buttons
+        document.querySelectorAll('.share-session-btn').forEach(btn => {
+            btn.onclick = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const sessionType = btn.getAttribute('data-session');
+                openShareSessionModal(sessionType);
+            };
+        });
+
+        // Share Session modal closing
+        const closeShareModalBtn = document.getElementById('close-share-session-modal');
+        const shareModal = document.getElementById('share-session-modal');
+        if (closeShareModalBtn && shareModal) {
+            closeShareModalBtn.onclick = () => {
+                shareModal.style.display = 'none';
+            };
+            shareModal.onclick = (e) => {
+                if (e.target === shareModal) {
+                    shareModal.style.display = 'none';
+                }
             };
         }
 
@@ -3927,6 +4586,25 @@ document.addEventListener('DOMContentLoaded', () => {
             state.superCmsMode = null;
             switchView('home');
         };
+
+        const shareQuizBtn = document.getElementById('share-quiz-btn');
+        if (shareQuizBtn) {
+            shareQuizBtn.onclick = () => {
+                if (!state.questions || state.questions.length === 0) {
+                    showToast("No active quiz to share.", 3000);
+                    return;
+                }
+                const qids = state.questions.map(q => q.id || q.qId).filter(Boolean).join(',');
+                const baseUrl = window.location.origin + window.location.pathname;
+                const link = `${baseUrl}?share_quiz=true&qids=${qids}`;
+                navigator.clipboard.writeText(link).then(() => {
+                    showToast("🔗 Quiz link copied to clipboard! Share it with anyone without requiring login.", 4000);
+                }).catch(err => {
+                    console.error("Failed to copy link:", err);
+                    alert("Could not copy link automatically. Here it is: " + link);
+                });
+            };
+        }
 
         // Resuscitation Modal Buttons
         const btnResuscitate = document.getElementById('btn-resuscitate');
@@ -4409,7 +5087,46 @@ document.addEventListener('DOMContentLoaded', () => {
         renderVisualRoadmap();
         updateAiCoachUI();
         initSquadsUI();
-        preloadUpscQuestions();
+        preloadUpscQuestions().then(() => {
+            renderVisualRoadmap(); // Re-render roadmap with exact counts once preloaded
+        });
+
+        // Only auto-start the morning session if it is currently between 8:30 AM and 9:00 AM
+        const now = new Date();
+        const hour = now.getHours();
+        const min = now.getMinutes();
+        const isSessionActive = (hour === 8 && min >= 30); // 8:30 AM to 8:59 AM
+        
+        const pomodoroBtn = document.getElementById('btn-kickstart-pomodoro');
+        if (pomodoroBtn) {
+            if (isSessionActive) {
+                if (!pomodoroBtn.disabled) {
+                    pomodoroBtn.click();
+                }
+            } else {
+                updateNextSessionCountdown();
+            }
+        }
+    }
+
+    function updateNextSessionCountdown() {
+        const pomodoroBtn = document.getElementById('btn-kickstart-pomodoro');
+        if (!pomodoroBtn) return;
+        
+        const now = new Date();
+        let target = new Date();
+        target.setHours(8, 30, 0, 0);
+        
+        // If it's already past 8:30 AM today, the next session is tomorrow at 8:30 AM
+        if (now.getTime() >= target.getTime()) {
+            target.setDate(target.getDate() + 1);
+        }
+        
+        const diff = target.getTime() - now.getTime();
+        const hours = Math.floor(diff / (1000 * 60 * 60));
+        const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        
+        pomodoroBtn.innerText = `Join (Next in ${hours}h ${mins}m)`;
     }
 
     function updateExamCountdown() {
@@ -4436,37 +5153,51 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (e) {}
 
         const subjects = {
-            medicine: { correct: 0, total: 0, node: 'milestone-medicine', label: 'Medicine' },
-            pediatrics: { correct: 0, total: 0, node: 'milestone-pediatrics', label: 'Pediatrics' },
-            surgery: { correct: 0, total: 0, node: 'milestone-surgery', label: 'Surgery' },
-            obgy: { correct: 0, total: 0, node: 'milestone-obgy', label: 'OBGY / PSM' }
+            medicine: { solved: new Set(), total: 0, node: 'milestone-medicine', label: 'Medicine', match: q => (q.subject || '').toLowerCase().includes('med') },
+            pediatrics: { solved: new Set(), total: 0, node: 'milestone-pediatrics', label: 'Pediatrics', match: q => (q.subject || '').toLowerCase().includes('paed') || (q.subject || '').toLowerCase().includes('ped') },
+            surgery: { solved: new Set(), total: 0, node: 'milestone-surgery', label: 'Surgery', match: q => (q.subject || '').toLowerCase().includes('surg') },
+            obgy: { solved: new Set(), total: 0, node: 'milestone-obgy', label: 'OBGY', match: q => (q.subject || '').toLowerCase().includes('obg') || (q.subject || '').toLowerCase().includes('gyn') },
+            psm: { solved: new Set(), total: 0, node: 'milestone-psm', label: 'PSM', match: q => (q.subject || '').toLowerCase().includes('prev') || (q.subject || '').toLowerCase().includes('psm') || (q.subject || '').toLowerCase().includes('soc') },
+            
+            // Mini subjects
+            neonat: { solved: new Set(), total: 0, node: 'milestone-neonat', label: 'Neonatology', match: q => ((q.subject || '').toLowerCase().includes('paed') || (q.subject || '').toLowerCase().includes('ped')) && (q.chapter || '').toLowerCase().includes('neonat') },
+            cardio: { solved: new Set(), total: 0, node: 'milestone-cardio', label: 'Cardiology', match: q => (q.subject || '').toLowerCase().includes('med') && (q.chapter || '').toLowerCase().includes('cardio') },
+            absurg: { solved: new Set(), total: 0, node: 'milestone-absurg', label: 'Abdominal', match: q => (q.subject || '').toLowerCase().includes('surg') && (q.chapter || '').toLowerCase().includes('abdomin') },
+            anc: { solved: new Set(), total: 0, node: 'milestone-anc', label: 'Antenatal', match: q => ((q.subject || '').toLowerCase().includes('obg') || (q.subject || '').toLowerCase().includes('gyn')) && (q.chapter || '').toLowerCase().includes('antenat') },
+            epidem: { solved: new Set(), total: 0, node: 'milestone-epidem', label: 'Epidemiology', match: q => ((q.subject || '').toLowerCase().includes('prev') || (q.subject || '').toLowerCase().includes('psm')) && (q.chapter || '').toLowerCase().includes('epidem') }
         };
-        
+
+        // Calculate database totals from preloaded state.upscAllQuestions
+        if (state.upscAllQuestions && state.upscAllQuestions.length > 0) {
+            state.upscAllQuestions.forEach(q => {
+                Object.keys(subjects).forEach(key => {
+                    if (subjects[key].match(q)) {
+                        subjects[key].total++;
+                    }
+                });
+            });
+        }
+
+        // Calculate unique solved questions per subject/chapter from history
         history.forEach(h => {
-            const sub = (h.subject || '').toLowerCase();
-            if (sub.includes('med')) {
-                subjects.medicine.total++;
-                if (h.isCorrect) subjects.medicine.correct++;
-            } else if (sub.includes('paed') || sub.includes('ped')) {
-                subjects.pediatrics.total++;
-                if (h.isCorrect) subjects.pediatrics.correct++;
-            } else if (sub.includes('surg')) {
-                subjects.surgery.total++;
-                if (h.isCorrect) subjects.surgery.correct++;
-            } else if (sub.includes('obg') || sub.includes('gyn') || sub.includes('prev') || sub.includes('psm') || sub.includes('soc')) {
-                subjects.obgy.total++;
-                if (h.isCorrect) subjects.obgy.correct++;
-            }
+            if (!h.qId) return;
+            Object.keys(subjects).forEach(key => {
+                if (subjects[key].match(h)) {
+                    subjects[key].solved.add(h.qId.toString());
+                }
+            });
         });
 
-        const getPercent = (sub) => {
+        const getPercent = (key) => {
+            const sub = subjects[key];
             if (sub.total === 0) return 0;
-            return Math.round((sub.correct / sub.total) * 100);
+            return Math.min(100, Math.round((sub.solved.size / sub.total) * 100));
         };
 
+        // Render Milestones texts and status colors in SVG
         Object.keys(subjects).forEach(key => {
             const sub = subjects[key];
-            const pct = getPercent(sub);
+            const pct = getPercent(key);
             const el = document.getElementById(sub.node);
             if (el) {
                 const txt = el.querySelector('text');
@@ -4477,27 +5208,58 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (pct >= 75) {
                         dot.setAttribute('fill', '#10B981'); // Green (Mastered)
                     } else if (pct > 0) {
-                        dot.setAttribute('fill', '#F59E0B'); // Orange (Needs Review)
+                        dot.setAttribute('fill', '#F59E0B'); // Orange (In Progress)
                     } else {
-                        dot.setAttribute('fill', '#94A3B8'); // Locked / Unseen
+                        dot.setAttribute('fill', '#94A3B8'); // Gray (Unseen)
                     }
                 }
+
+                // Bind Milestone clicks to start targeted quizzes
+                el.onclick = async () => {
+                    const allQ = await preloadUpscQuestions();
+                    if (allQ.length === 0) return;
+                    
+                    const filtered = allQ.filter(q => sub.match(q));
+                    if (filtered.length === 0) {
+                        showToast(`No questions currently available for ${sub.label}.`, 3000);
+                        return;
+                    }
+                    
+                    state.questions = shuffleArray([...filtered]).slice(0, 15);
+                    state.sessionKey = `progress_milestone_${sub.node}`;
+                    state.mode = 'YEAR';
+                    state.testMode = false;
+                    state.userAnswers = {};
+                    state.testSubmitted = false;
+                    state.reviewMode = false;
+                    
+                    startQuiz();
+                    showToast(`🚀 Starting targeted quiz on ${sub.label}! Complete it to boost your mastery.`, 4000);
+                };
             }
         });
 
-        const medPct = getPercent(subjects.medicine);
-        const pedPct = getPercent(subjects.pediatrics);
-        const surgPct = getPercent(subjects.surgery);
-        const obgyPct = getPercent(subjects.obgy);
-        const avgPct = Math.round((medPct + pedPct + surgPct + obgyPct) / 4);
+        // Compute average overall percentage across all 10 milestones
+        let sumPct = 0;
+        Object.keys(subjects).forEach(key => {
+            sumPct += getPercent(key);
+        });
+        const avgPct = Math.round(sumPct / Object.keys(subjects).length);
         
-        // Dynamic mascot path coordinates mapping
+        // 12-point mascot roadmap path coordinates mapping
         const coords = [
             { pct: 0, x: 50, y: 130 },
-            { pct: 25, x: 180, y: 95 },
-            { pct: 50, x: 350, y: 130 },
-            { pct: 75, x: 520, y: 95 },
-            { pct: 100, x: 680, y: 150 }
+            { pct: 10, x: 150, y: 75 },
+            { pct: 20, x: 210, y: 125 },
+            { pct: 30, x: 270, y: 175 },
+            { pct: 40, x: 330, y: 135 },
+            { pct: 50, x: 390, y: 75 },
+            { pct: 60, x: 450, y: 125 },
+            { pct: 70, x: 510, y: 175 },
+            { pct: 80, x: 570, y: 135 },
+            { pct: 90, x: 630, y: 75 },
+            { pct: 95, x: 690, y: 105 },
+            { pct: 100, x: 750, y: 130 }
         ];
         
         let targetX = 50;
@@ -4679,127 +5441,428 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     let squadsInitialized = false;
+    let generalChatSubscribed = false;
+    let generalChatUnsub = null;
     function initSquadsUI() {
-        // 1. Peer Studying Count Fluctuation
+        // Peer Studying Count Fluctuation
         const countEl = document.getElementById('active-peers-count');
         if (!squadsInitialized) {
-            let peerCount = Math.floor(Math.random() * 29) + 2; // 2 to 30
+            let peerCount = Math.floor(Math.random() * 29) + 2;
             if (countEl) countEl.innerText = peerCount;
-            
             setInterval(() => {
-                const change = Math.floor(Math.random() * 5) - 2; // -2, -1, 0, 1, 2
+                const change = Math.floor(Math.random() * 5) - 2;
                 peerCount = Math.max(2, Math.min(30, peerCount + change));
                 if (countEl) countEl.innerText = peerCount;
             }, 10000);
+            initGeneralChat();
         }
 
-        // 2. Chat Send setup
-        const sendBtn = document.getElementById('btn-squad-chat-send');
-        const inputField = document.getElementById('squad-chat-input');
-        const msgBox = document.getElementById('squad-chat-messages');
+        // UI elements (Dashboard)
+        const setupContainer = document.getElementById('squad-setup-container');
+        const activeContainer = document.getElementById('squad-active-container');
+        const formBtn = document.getElementById('btn-form-squad');
+        const joinBtn = document.getElementById('btn-join-squad');
+        const joinInput = document.getElementById('join-squad-code');
+        const leaveBtn = document.getElementById('btn-leave-squad');
+        const activeCodeEl = document.getElementById('active-squad-code');
+        const membersList = document.getElementById('squad-members-list');
+        const openDrawerBtn = document.getElementById('btn-open-squad-chat-drawer');
+
+        // UI elements (Sidebar)
+        const sidebar = document.getElementById('squad-sidebar');
+        const sidebarSetup = document.getElementById('sidebar-squad-setup');
+        const sidebarActive = document.getElementById('sidebar-squad-active');
+        const sidebarFormBtn = document.getElementById('sidebar-btn-form-squad');
+        const sidebarJoinBtn = document.getElementById('sidebar-btn-join-squad');
+        const sidebarJoinInput = document.getElementById('sidebar-join-squad-code');
+        const sidebarLeaveBtn = document.getElementById('sidebar-btn-leave-squad');
+        const sidebarActiveCodeEl = document.getElementById('sidebar-active-squad-code');
+        const sidebarMembersList = document.getElementById('sidebar-squad-members-list');
+        const sidebarMsgBox = document.getElementById('sidebar-squad-chat-messages');
+        const sidebarInputField = document.getElementById('sidebar-squad-chat-input');
+        const sidebarSendBtn = document.getElementById('sidebar-btn-squad-chat-send');
+        const sidebarShareMilestone = document.getElementById('sidebar-btn-squad-share-milestone');
+        const sidebarShareQuiz = document.getElementById('sidebar-btn-squad-share-quiz');
+
+        const headerToggleBtn = document.getElementById('btn-toggle-squad-sidebar');
+        const floatToggleBtn = document.getElementById('floating-chat-btn');
+        const closeSidebarBtn = document.getElementById('close-sidebar-btn');
+
+        // Toggle Drawer logic
+        function toggleSidebar() {
+            if (sidebar) {
+                sidebar.classList.toggle('open');
+            }
+        }
+
+        if (!squadsInitialized) {
+            if (openDrawerBtn) openDrawerBtn.onclick = () => { if (sidebar) sidebar.classList.add('open'); };
+            if (headerToggleBtn) headerToggleBtn.onclick = toggleSidebar;
+            if (floatToggleBtn) floatToggleBtn.onclick = toggleSidebar;
+            if (closeSidebarBtn) closeSidebarBtn.onclick = () => { if (sidebar) sidebar.classList.remove('open'); };
+        }
+
+        // Helper functions
+        function escapeHtml(t){const d=document.createElement('div');d.textContent=t;return d.innerHTML;}
+        function linkify(t){const e=escapeHtml(t);return e.replace(/(https?:\/\/[^\s]+)/g,'<a href="$1" target="_blank" rel="noopener" style="color: var(--primary); text-decoration: underline;">$1</a>');}
+        function renderChatMessage(data){
+            const isSys=data.type==='system';
+            const m=document.createElement('div');
+            m.style.cssText=`background:${isSys?'rgba(99,102,241,0.06)':'rgba(255,255,255,0.03)'};border-left:3px solid ${isSys?'var(--primary)':'var(--border)'};padding:0.5rem 0.75rem;border-radius:8px;text-align:left;word-break:break-word;`;
+            m.innerHTML=`<span style="font-weight:700;color:${isSys?'var(--primary)':'var(--text-main)'};display:block;font-size:0.8rem;margin-bottom:0.15rem;">${isSys?'📢 ':'👤 '}${escapeHtml(data.senderName||'User')}</span><span style="color:var(--text-main);font-size:0.85rem;">${linkify(data.text||'')}</span>`;
+            return m;
+        }
+        function renderMembers(members){
+            const lists = [membersList, sidebarMembersList];
+            lists.forEach(list => {
+                if(!list) return;
+                list.innerHTML='';
+                Object.entries(members||{}).forEach(([uid,info])=>{
+                    const el=document.createElement('div');
+                    el.style.cssText='display:flex;justify-content:space-between;align-items:center;padding:0.4rem 0.6rem;background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:8px;font-size:0.82rem;';
+                    const you=AuthService.user && uid===AuthService.user.uid;
+                    el.innerHTML=`<span style="font-weight:600;color:var(--text-main);">${escapeHtml(info.name||'Student')}${you?' (You)':''}</span><span style="font-size:0.75rem;color:var(--secondary);">${info.mastery||0}% mastery</span>`;
+                    list.appendChild(el);
+                });
+            });
+        }
+        function subscribeToSquad(squadId){
+            if(state.squadUnsubMembers){state.squadUnsubMembers();state.squadUnsubMembers=null;}
+            if(state.squadUnsubMessages){state.squadUnsubMessages();state.squadUnsubMessages=null;}
+            state.squadUnsubMembers=db.collection('squads').doc(squadId).onSnapshot(doc=>{
+                if(!doc.exists){leaveSquadLocally();return;}
+                const data=doc.data();
+                state.squadCode=data.code||squadId;
+                if(activeCodeEl) activeCodeEl.textContent=state.squadCode;
+                if(sidebarActiveCodeEl) sidebarActiveCodeEl.textContent=state.squadCode;
+                renderMembers(data.members||{});
+            },err=>console.error('Squad listener error',err));
+            state.squadUnsubMessages=db.collection('squads').doc(squadId).collection('messages')
+                .orderBy('timestamp','asc')
+                .limitToLast(50)
+                .onSnapshot(ss=>{
+                    if(!sidebarMsgBox) return;
+                    sidebarMsgBox.innerHTML='';
+                    if(ss.empty){
+                        sidebarMsgBox.innerHTML='<div style="text-align:center;color:var(--text-muted);font-style:italic;margin-top:auto;font-size:0.8rem;">No messages yet. Start chatting with your squad!</div>';
+                    }
+                    ss.forEach(d=>{sidebarMsgBox.appendChild(renderChatMessage(d.data()));});
+                    sidebarMsgBox.scrollTop=sidebarMsgBox.scrollHeight;
+                },err=>console.error('Messages listener error',err));
+        }
+        function showActiveSquad(){
+            if(setupContainer) setupContainer.style.display='none';
+            if(activeContainer) activeContainer.style.display='flex';
+            if(sidebarSetup) sidebarSetup.style.display='none';
+            if(sidebarActive) sidebarActive.style.display='flex';
+            const postBtn=document.getElementById('btn-post-squad-chat');
+            if(postBtn) postBtn.style.display='inline-block';
+        }
+        function showSetupSquad(){
+            if(setupContainer) setupContainer.style.display='flex';
+            if(activeContainer) activeContainer.style.display='none';
+            if(sidebarSetup) sidebarSetup.style.display='flex';
+            if(sidebarActive) sidebarActive.style.display='none';
+            const postBtn=document.getElementById('btn-post-squad-chat');
+            if(postBtn) postBtn.style.display='none';
+        }
+        function leaveSquadLocally(){
+            if(state.squadUnsubMembers){state.squadUnsubMembers();state.squadUnsubMembers=null;}
+            if(state.squadUnsubMessages){state.squadUnsubMessages();state.squadUnsubMessages=null;}
+            state.squadId=null;
+            state.squadCode=null;
+            localStorage.removeItem('moproprep_squad_id');
+            showSetupSquad();
+        }
+        function getUserMastery(){
+            let hist=[];
+            try{hist=JSON.parse(localStorage.getItem('moproprep_solve_history')||'[]');}catch(e){}
+            const total=(state.upscAllQuestions&&state.upscAllQuestions.length)||1;
+            const solved=new Set(hist.map(h=>h.qId).filter(Boolean));
+            return Math.min(100,Math.round((solved.size/total)*100));
+        }
         
-        const postMessage = (name, text, isAI = false) => {
-            const msg = document.createElement('div');
-            msg.style.cssText = `
-                background: ${isAI ? 'rgba(99,102,241,0.06)' : 'rgba(255,255,255,0.03)'};
-                border-left: 3px solid ${isAI ? 'var(--primary)' : 'var(--border)'};
-                padding: 0.5rem 0.75rem;
-                border-radius: 8px;
-                text-align: left;
-                word-break: break-word;
-            `;
-            msg.innerHTML = `
-                <span style="font-weight: 700; color: ${isAI ? 'var(--primary)' : 'var(--text-main)'}; display: block; font-size: 0.8rem; margin-bottom: 0.15rem;">
-                    ${isAI ? '🤖 ' : '👤 '}${name}
-                </span>
-                <span style="color: var(--text-main); font-size: 0.85rem;">${text}</span>
-            `;
-            msgBox.appendChild(msg);
-            msgBox.scrollTop = msgBox.scrollHeight;
-        };
-        
-        const handleSend = () => {
-            const val = inputField.value.trim();
-            if (!val) return;
-            
-            postMessage('Dr. Anuj (You)', val);
-            inputField.value = '';
-            
-            if (val.toLowerCase().includes('@coach')) {
-                setTimeout(() => {
-                    const response = getCoachChatResponse(val);
-                    postMessage('AI Coach Moderator', response, true);
-                }, 1200);
+        // Form Squad
+        const handleFormSquad = async () => {
+            if(!AuthService.isLoggedIn()){
+                const u=await AuthService.login();
+                if(!u) return;
+            }
+            if(formBtn) { formBtn.disabled=true; formBtn.innerText='Creating...'; }
+            if(sidebarFormBtn) { sidebarFormBtn.disabled=true; sidebarFormBtn.innerText='Creating...'; }
+            try{
+                const code='SQUAD-'+Math.random().toString(36).substring(2,6).toUpperCase();
+                const user=AuthService.user;
+                const data={code,createdBy:user.uid,createdAt:firebase.firestore.FieldValue.serverTimestamp(),
+                    members:{[user.uid]:{name:user.displayName||'Student',mastery:getUserMastery(),joinedAt:Date.now()}}};
+                await db.collection('squads').doc(code).set(data);
+                state.squadId=code;state.squadCode=code;localStorage.setItem('moproprep_squad_id',code);
+                await db.collection('squads').doc(code).collection('messages').add({
+                    senderName:'System',senderId:'system',text:`🎉 Squad ${code} created! Share this code.`,type:'system',timestamp:firebase.firestore.FieldValue.serverTimestamp()
+                });
+                subscribeToSquad(code);
+                showActiveSquad();
+                showToast(`✅ Squad ${code} created!`,5000);
+            }catch(e){console.error(e);showToast('❌ Failed to create squad.',4000);}
+            finally{
+                if(formBtn) { formBtn.disabled=false; formBtn.innerText='➕ Form New Squad'; }
+                if(sidebarFormBtn) { sidebarFormBtn.disabled=false; sidebarFormBtn.innerText='➕ Form New Squad'; }
             }
         };
-        
-        if (sendBtn && !squadsInitialized) {
-            sendBtn.onclick = handleSend;
-            inputField.onkeydown = (e) => {
-                if (e.key === 'Enter') handleSend();
-            };
+
+        if(!squadsInitialized){
+            if(formBtn) formBtn.onclick = handleFormSquad;
+            if(sidebarFormBtn) sidebarFormBtn.onclick = handleFormSquad;
         }
 
-        // 3. Daily Mini Test binding
-        const startDailyBtn = document.getElementById('btn-start-daily-mini');
-        if (startDailyBtn && !squadsInitialized) {
-            startDailyBtn.onclick = async () => {
-                const allQ = await preloadUpscQuestions();
-                if (allQ.length === 0) return;
-                
-                const shuffled = shuffleArray([...allQ]);
-                state.questions = shuffled.slice(0, 20);
-                state.sessionKey = 'progress_upsc_daily_mini_test';
-                state.mode = 'YEAR';
-                
-                state.testMode = true;
-                state.userAnswers = {};
-                state.testSubmitted = false;
-                state.reviewMode = false;
-                state.timerEndTime = Date.now() + 30 * 60 * 1000;
-                
-                if (state.timerInterval) clearInterval(state.timerInterval);
-                state.timerInterval = setInterval(updateTimer, 1000);
-                
-                document.getElementById('test-timer').style.display = 'flex';
-                document.getElementById('submit-test-btn').style.display = 'block';
-                document.getElementById('score-container').style.display = 'none';
-                document.getElementById('question-navigator').style.display = 'flex';
-                
+        // Join Squad
+        const handleJoinSquad = async (inputEl) => {
+            if(!AuthService.isLoggedIn()){
+                const u=await AuthService.login();
+                if(!u) return;
+            }
+            const code=(inputEl.value||'').trim().toUpperCase();
+            if(!code){showToast('Enter a squad code.',3000);return;}
+            if(joinBtn) { joinBtn.disabled=true; joinBtn.innerText='Joining...'; }
+            if(sidebarJoinBtn) { sidebarJoinBtn.disabled=true; sidebarJoinBtn.innerText='Joining...'; }
+            try{
+                const doc=await db.collection('squads').doc(code).get();
+                if(!doc.exists){showToast('Squad not found.',4000);return;}
+                const user=AuthService.user;
+                await db.collection('squads').doc(code).update({
+                    [`members.${user.uid}`]:{name:user.displayName||'Student',mastery:getUserMastery(),joinedAt:Date.now()}
+                });
+                state.squadId=code;state.squadCode=code;localStorage.setItem('moproprep_squad_id',code);
+                await db.collection('squads').doc(code).collection('messages').add({
+                    senderName:'System',senderId:'system',text:`👋 ${user.displayName||'Student'} joined!`,type:'system',timestamp:firebase.firestore.FieldValue.serverTimestamp()
+                });
+                subscribeToSquad(code);
+                showActiveSquad();
+                showToast(`✅ Joined squad ${code}!`,4000);
+            }catch(e){console.error(e);showToast('❌ Failed to join.',4000);}
+            finally{
+                if(joinBtn) { joinBtn.disabled=false; joinBtn.innerText='Join'; }
+                if(sidebarJoinBtn) { sidebarJoinBtn.disabled=false; sidebarJoinBtn.innerText='Join'; }
+            }
+        };
+
+        if(!squadsInitialized){
+            if(joinBtn) joinBtn.onclick = () => handleJoinSquad(joinInput);
+            if(sidebarJoinBtn) sidebarJoinBtn.onclick = () => handleJoinSquad(sidebarJoinInput);
+        }
+
+        // Leave Squad
+        const handleLeaveSquad = async () => {
+            if(!state.squadId||!AuthService.isLoggedIn()) return;
+            if(!confirm('Leave squad?')) return;
+            try{
+                const user=AuthService.user;
+                await db.collection('squads').doc(state.squadId).update({
+                    [`members.${user.uid}`]:firebase.firestore.FieldValue.delete()
+                });
+                await db.collection('squads').doc(state.squadId).collection('messages').add({
+                    senderName:'System',senderId:'system',text:`🚪 ${user.displayName||'Student'} left.`,type:'system',timestamp:firebase.firestore.FieldValue.serverTimestamp()
+                });
+                leaveSquadLocally();
+            }catch(e){console.error(e);showToast('❌ Error leaving.',3000);}
+        };
+
+        if(!squadsInitialized){
+            if(leaveBtn) leaveBtn.onclick = handleLeaveSquad;
+            if(sidebarLeaveBtn) sidebarLeaveBtn.onclick = handleLeaveSquad;
+        }
+
+        // Chat Send
+        async function handleSend(){
+            const val=sidebarInputField?sidebarInputField.value.trim():'';if(!val||!state.squadId||!AuthService.isLoggedIn()) return;
+            sidebarInputField.value='';
+            try{await db.collection('squads').doc(state.squadId).collection('messages').add({senderName:AuthService.user.displayName||'Student',senderId:AuthService.user.uid,text:val,type:'user',timestamp:firebase.firestore.FieldValue.serverTimestamp()});}
+            catch(e){console.error(e);showToast('❌ Send failed.',3000);}        
+        }
+        if(!squadsInitialized){
+            if(sidebarSendBtn) sidebarSendBtn.onclick=handleSend;
+            if(sidebarInputField) sidebarInputField.onkeydown=e=>{if(e.key==='Enter')handleSend();};
+        }
+
+        // Share Milestone
+        const handleShareMilestone = async () => {
+            if(!state.squadId||!AuthService.isLoggedIn()){showToast('Join a squad first.',3000);return;}
+            const mastery=getUserMastery();
+            const text=`🗺️ My mastery: ${mastery}% of all UPSC CMS questions solved!`;
+            await db.collection('squads').doc(state.squadId).collection('messages').add({senderName:AuthService.user.displayName||'Student',senderId:AuthService.user.uid,text,type:'user',timestamp:firebase.firestore.FieldValue.serverTimestamp()});
+            await db.collection('squads').doc(state.squadId).update({[`members.${AuthService.user.uid}.mastery`]:mastery});
+            showToast('🗺️ Milestone shared.',3000);
+        };
+        if(!squadsInitialized){
+            if(sidebarShareMilestone) sidebarShareMilestone.onclick = handleShareMilestone;
+        }
+
+        // Share Quiz Link
+        const handleShareQuiz = async () => {
+            if(!state.squadId||!AuthService.isLoggedIn()){showToast('Join a squad first.',3000);return;}
+            if(!state.questions||state.questions.length===0){showToast('No active quiz.',3000);return;}
+            const ids=state.questions.map(q=>q.id||q.qId).filter(Boolean).join(',');
+            const base=window.location.origin+window.location.pathname;
+            const url=`${base}?share_quiz=true&qids=${ids}`;
+            const text=`🔗 Try my quiz! ${url}`;
+            await db.collection('squads').doc(state.squadId).collection('messages').add({senderName:AuthService.user.displayName||'Student',senderId:AuthService.user.uid,text,type:'user',timestamp:firebase.firestore.FieldValue.serverTimestamp()});
+            showToast('🔗 Quiz link shared.',3000);
+        };
+        if(!squadsInitialized){
+            if(sidebarShareQuiz) sidebarShareQuiz.onclick = handleShareQuiz;
+        }
+
+        // Copy Squad Code
+        if(!squadsInitialized){
+            if(activeCodeEl) activeCodeEl.onclick=()=>{navigator.clipboard.writeText(state.squadCode||'').then(()=>showToast('📋 Code copied!',2000));};
+            if(sidebarActiveCodeEl) sidebarActiveCodeEl.onclick=()=>{navigator.clipboard.writeText(state.squadCode||'').then(()=>showToast('📋 Code copied!',2000));};
+            
+            const btnCopyLink = document.getElementById('btn-copy-squad-link');
+            const sidebarBtnCopyLink = document.getElementById('sidebar-btn-copy-squad-link');
+            
+            const handleCopySquadLink = () => {
+                if (!state.squadCode) return;
+                const link = window.location.origin + window.location.pathname + `?join_squad=${state.squadCode}`;
+                navigator.clipboard.writeText(link).then(() => {
+                    showToast('📋 Squad invite link copied!', 3000);
+                }).catch(err => {
+                    alert('Could not copy link automatically: ' + link);
+                });
+            };
+
+            if (btnCopyLink) btnCopyLink.onclick = handleCopySquadLink;
+            if (sidebarBtnCopyLink) sidebarBtnCopyLink.onclick = handleCopySquadLink;
+        }
+
+        // Restore squad from storage
+        if(!squadsInitialized && AuthService.isLoggedIn()){
+            const saved=localStorage.getItem('moproprep_squad_id');
+            if(saved){state.squadId=saved;state.squadCode=saved;subscribeToSquad(saved);showActiveSquad();}
+        }
+
+        // Daily Mini Test binding (unchanged)
+        const startDailyBtn=document.getElementById('btn-start-daily-mini');
+        if(startDailyBtn && !squadsInitialized){
+            startDailyBtn.onclick=async()=>{
+                const allQ=await preloadUpscQuestions();
+                if(allQ.length===0) return;
+                const shuffled=shuffleArray([...allQ]);
+                state.questions=shuffled.slice(0,20);
+                state.sessionKey='progress_upsc_daily_mini_test';
+                state.mode='YEAR';
+                state.testMode=true;state.userAnswers={};state.testSubmitted=false;state.reviewMode=false;
+                state.timerEndTime=Date.now()+30*60*1000;
+                if(state.timerInterval) clearInterval(state.timerInterval);
+                state.timerInterval=setInterval(updateTimer,1000);
+                document.getElementById('test-timer').style.display='flex';
+                document.getElementById('submit-test-btn').style.display='block';
+                document.getElementById('score-container').style.display='none';
+                document.getElementById('question-navigator').style.display='flex';
                 startQuiz();
             };
         }
-        
-        // 4. Pomodoro Kickstart Timer logic
-        const pomodoroBtn = document.getElementById('btn-kickstart-pomodoro');
-        if (pomodoroBtn && !squadsInitialized) {
-            pomodoroBtn.onclick = () => {
-                showToast("🍅 Morning Kickstart study clock started! Focus for 25 minutes with 30 active peers.", 5000);
-                
-                let minutes = 25;
-                let seconds = 0;
-                pomodoroBtn.disabled = true;
-                
-                const timer = setInterval(() => {
-                    if (seconds === 0) {
-                        if (minutes === 0) {
-                            clearInterval(timer);
-                            pomodoroBtn.disabled = false;
-                            pomodoroBtn.innerText = "Join (8:30 AM)";
-                            showToast("🎉 Pomodoro complete! Take a 5-minute break.", 5000);
-                            return;
-                        }
-                        minutes--;
-                        seconds = 59;
-                    } else {
-                        seconds--;
-                    }
-                    pomodoroBtn.innerText = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-                }, 1000);
-            };
+        squadsInitialized = true;
+    }
+
+    function initGeneralChat() {
+        const header = document.getElementById('general-chat-header');
+        const body = document.getElementById('general-chat-body');
+        const toggleIcon = document.getElementById('general-chat-toggle-icon');
+        const input = document.getElementById('general-chat-input');
+        const sendBtn = document.getElementById('btn-general-chat-send');
+
+        if (!header || !body) return;
+
+        header.onclick = () => {
+            const isHidden = body.style.display === 'none' || body.style.display === '';
+            if (isHidden) {
+                body.style.display = 'flex';
+                toggleIcon.style.transform = 'rotate(180deg)';
+                if (!generalChatSubscribed) {
+                    subscribeToGeneralChat();
+                }
+            } else {
+                body.style.display = 'none';
+                toggleIcon.style.transform = 'rotate(0deg)';
+            }
+        };
+
+        async function handleGeneralSend() {
+            const val = input.value.trim();
+            if (!val) return;
+            if (!AuthService.isLoggedIn()) {
+                const u = await AuthService.login();
+                if (!u) return;
+            }
+            input.value = '';
+            try {
+                await db.collection('squads').doc('GENERAL').collection('messages').add({
+                    senderName: AuthService.user.displayName || 'Student',
+                    senderId: AuthService.user.uid,
+                    text: val,
+                    type: 'user',
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                });
+            } catch(e) {
+                console.error("General chat send failed", e);
+                showToast('❌ Send failed.', 3000);
+            }
         }
 
-        squadsInitialized = true;
+        if (sendBtn) sendBtn.onclick = handleGeneralSend;
+        if (input) input.onkeydown = (e) => { if (e.key === 'Enter') handleGeneralSend(); };
+    }
+
+    function subscribeToGeneralChat() {
+        const msgBox = document.getElementById('general-chat-messages');
+        if (!msgBox) return;
+
+        msgBox.innerHTML = '<div class="loader" style="margin: 1rem auto;"></div>';
+        generalChatSubscribed = true;
+
+        // Ensure GENERAL document exists so security rules allow write operations
+        db.collection('squads').doc('GENERAL').set({
+            code: 'GENERAL',
+            name: 'General Public Lobby',
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        }, { merge: true }).catch(err => console.warn("Failed to merge general doc:", err));
+
+        generalChatUnsub = db.collection('squads').doc('GENERAL').collection('messages')
+            .orderBy('timestamp', 'asc')
+            .limitToLast(50)
+            .onSnapshot(ss => {
+                msgBox.innerHTML = '';
+                if (ss.empty) {
+                    msgBox.innerHTML = '<div style="text-align:center;color:var(--text-muted);font-style:italic;margin-top:auto;font-size:0.8rem;padding: 1rem 0;">No public messages yet. Start the conversation!</div>';
+                    return;
+                }
+                ss.forEach(d => {
+                    msgBox.appendChild(renderGeneralChatMessage(d.data()));
+                });
+                msgBox.scrollTop = msgBox.scrollHeight;
+            }, err => {
+                console.error("General chat listener error", err);
+                msgBox.innerHTML = '<div style="color:var(--danger);text-align:center;font-size:0.8rem;padding:1rem;">Failed to load messages.</div>';
+            });
+    }
+
+    function renderGeneralChatMessage(data) {
+        const isSys = data.type === 'system';
+        const m = document.createElement('div');
+        m.style.cssText = `background:${isSys?'rgba(99,102,241,0.06)':'rgba(255,255,255,0.03)'};border-left:3px solid ${isSys?'var(--primary)':'var(--border)'};padding:0.4rem 0.6rem;border-radius:8px;text-align:left;word-break:break-word;margin-bottom:0.25rem;`;
+        
+        const escapeHtml = (t) => {
+            const d = document.createElement('div');
+            d.textContent = t;
+            return d.innerHTML;
+        };
+        const linkify = (t) => {
+            const e = escapeHtml(t);
+            return e.replace(/(https?:\/\/[^\s]+)/g,'<a href="$1" target="_blank" rel="noopener" style="color: var(--primary); text-decoration: underline;">$1</a>');
+        };
+
+        m.innerHTML = `<span style="font-weight:700;color:${isSys?'var(--primary)':'var(--text-main)'};display:block;font-size:0.78rem;margin-bottom:0.1rem;">${isSys?'📢 ':'👤 '}${escapeHtml(data.senderName||'User')}</span><span style="color:var(--text-main);font-size:0.82rem;">${linkify(data.text||'')}</span>`;
+        return m;
     }
 
     function getCoachChatResponse(text) {

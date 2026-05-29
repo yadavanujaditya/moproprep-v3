@@ -602,35 +602,8 @@ app.post('/api/ai-coach', async (req, res) => {
         });
     }
 
-    const geminiKey = process.env.GEMINI_API_KEY;
-    let coachPlan = "";
-
-    if (geminiKey) {
-        try {
-            const promptText = `
-You are the MoProPrep AI Study Coach, an expert medical preparation mentor for the UPSC Combined Medical Services (CMS) exam which is scheduled for August 2, 2026.
-Analyze the student's study history below and provide a concise, encouraging revision plan on individual basis.
-History: ${JSON.stringify(history || [])}
-Focus on high-weightage subjects: Medicine (Cardiology, Pulmonology), Surgery (General & Abdominal), OBGY (Antenatal Care, Labor), Pediatrics (Neonatology, Immunization), PSM (Epidemiology, Health Programs).
-Suggest the exact top 1-2 topics they got wrong or have not solved that have high weightage and suggest they revise these first. Tell them to start a custom quiz for those topics.
-Keep the response engaging, professional, and clear. Format in markdown.
-`;
-            const response = await axios.post(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`, {
-                contents: [{ parts: [{ text: promptText }] }]
-            }, { headers: { 'Content-Type': 'application/json' }, timeout: 10000 });
-
-            if (response.data && response.data.candidates && response.data.candidates[0].content.parts[0].text) {
-                coachPlan = response.data.candidates[0].content.parts[0].text;
-            } else {
-                throw new Error("Invalid response structure from Gemini API");
-            }
-        } catch (geminiErr) {
-            console.error("Gemini API error, falling back to local advisor logic:", geminiErr.message);
-            coachPlan = getHeuristicPlan(history);
-        }
-    } else {
-        coachPlan = getHeuristicPlan(history);
-    }
+    // Gemini API calls disabled by user request, using local heuristic planner
+    const coachPlan = getHeuristicPlan(history);
 
     res.json({
         limitReached: false,

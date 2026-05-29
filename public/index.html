@@ -105,6 +105,8 @@
                     PRO Member</span>
             </div>
             <div class="header-actions">
+                <button id="btn-toggle-squad-sidebar" class="icon-btn" title="Study Squad Chat"
+                    style="font-size: 1.2rem; color: var(--primary); display: none; margin-right: -0.25rem;">👥</button>
                 <button id="btn-profile-header" class="icon-btn" title="View Profile & Referrals"
                     style="font-size: 1.2rem; color: var(--primary); display: none; margin-right: -0.25rem;">👤</button>
                 <button id="btn-bookmarks-header" class="icon-btn" title="View Bookmarks"
@@ -225,6 +227,24 @@
                     <p>Track your milestones, get custom AI guidance, and study with your squad.</p>
                 </div>
 
+                <!-- Navigation shortcuts to Hub & Super CMS (Moved to Top) -->
+                <div class="menu-grid" style="grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); display: grid; gap: 1rem; margin-top: 0.5rem; margin-bottom: 1.5rem;">
+                    <div class="menu-card" id="btn-dashboard-learning-hub" style="padding: 1.5rem; gap: 1rem; cursor: pointer; min-height: 80px; border-radius: 16px;">
+                        <div class="menu-icon" style="font-size: 1.8rem; width: 50px; height: 50px; border-radius: 10px;">🏥</div>
+                        <div class="menu-content">
+                            <h3 style="font-size: 1.1rem; margin-bottom: 0.2rem;">CMS Learning Hub</h3>
+                            <p style="font-size: 0.82rem;">Select subject-wise, difficulty, or year-wise PYQs.</p>
+                        </div>
+                    </div>
+                    <div class="menu-card" id="btn-dashboard-super-cms" style="padding: 1.5rem; gap: 1rem; cursor: pointer; min-height: 80px; border-radius: 16px; background: linear-gradient(135deg, rgba(165, 49, 115, 0.03), rgba(76, 85, 182, 0.03));">
+                        <div class="menu-icon" style="font-size: 1.8rem; width: 50px; height: 50px; border-radius: 10px;">⚡</div>
+                        <div class="menu-content">
+                            <h3 style="font-size: 1.1rem; margin-bottom: 0.2rem;">Super CMS (Gamified)</h3>
+                            <p style="font-size: 0.82rem;">Case File stability duels, streaks, and AI speed duels.</p>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- 🗺️ Journey Roadmap Section -->
                 <div class="glass-card" style="margin-bottom: 1.5rem; padding: 1.5rem; position: relative; overflow: hidden; background: linear-gradient(180deg, var(--surface), rgba(99, 102, 241, 0.02));">
                     <h3 style="font-size: 1.15rem; font-weight: 700; color: var(--text-main); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
@@ -252,30 +272,66 @@
                             <path id="road-path" d="M 50 130 C 150 30, 250 230, 350 130 C 450 30, 550 230, 650 130 C 700 80, 720 100, 750 130" fill="none" stroke="url(#road-grad)" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" />
                             <path id="road-path-inner" d="M 50 130 C 150 30, 250 230, 350 130 C 450 30, 550 230, 650 130 C 700 80, 720 100, 750 130" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="2" stroke-dasharray="8 6" stroke-linecap="round" />
 
-                            <!-- Milestones -->
-                            <!-- Milestone 1: Medicine -->
-                            <g class="milestone-node" id="milestone-medicine" transform="translate(180, 95)" style="cursor: pointer;">
+                            <!-- Milestones (5 Main Subjects, 5 Mini Chapters) -->
+                            <!-- Milestone 1: Medicine (Main) -->
+                            <g class="milestone-node" id="milestone-medicine" transform="translate(150, 75)" style="cursor: pointer;">
                                 <circle r="14" fill="var(--surface)" stroke="var(--border)" stroke-width="3" />
                                 <circle r="7" fill="var(--text-muted)" class="milestone-status-dot" />
                                 <text y="-20" text-anchor="middle" fill="var(--text-main)" font-size="11" font-weight="700" font-family="var(--font-headings)">Medicine (0%)</text>
                             </g>
-                            <!-- Milestone 2: Pediatrics -->
-                            <g class="milestone-node" id="milestone-pediatrics" transform="translate(350, 130)" style="cursor: pointer;">
+                            <!-- Milestone 2: Neonatology (Mini) -->
+                            <g class="milestone-node" id="milestone-neonat" transform="translate(210, 125)" style="cursor: pointer;">
+                                <circle r="9" fill="var(--surface)" stroke="var(--border)" stroke-width="2" />
+                                <circle r="4.5" fill="var(--text-muted)" class="milestone-status-dot" />
+                                <text y="22" text-anchor="middle" fill="var(--text-muted)" font-size="9" font-weight="600" font-family="var(--font-headings)">Neonatology (0%)</text>
+                            </g>
+                            <!-- Milestone 3: Pediatrics (Main) -->
+                            <g class="milestone-node" id="milestone-pediatrics" transform="translate(270, 175)" style="cursor: pointer;">
                                 <circle r="14" fill="var(--surface)" stroke="var(--border)" stroke-width="3" />
                                 <circle r="7" fill="var(--text-muted)" class="milestone-status-dot" />
                                 <text y="30" text-anchor="middle" fill="var(--text-main)" font-size="11" font-weight="700" font-family="var(--font-headings)">Pediatrics (0%)</text>
                             </g>
-                            <!-- Milestone 3: Surgery -->
-                            <g class="milestone-node" id="milestone-surgery" transform="translate(520, 95)" style="cursor: pointer;">
+                            <!-- Milestone 4: Cardiology (Mini) -->
+                            <g class="milestone-node" id="milestone-cardio" transform="translate(330, 135)" style="cursor: pointer;">
+                                <circle r="9" fill="var(--surface)" stroke="var(--border)" stroke-width="2" />
+                                <circle r="4.5" fill="var(--text-muted)" class="milestone-status-dot" />
+                                <text y="-15" text-anchor="middle" fill="var(--text-muted)" font-size="9" font-weight="600" font-family="var(--font-headings)">Cardiology (0%)</text>
+                            </g>
+                            <!-- Milestone 5: Surgery (Main) -->
+                            <g class="milestone-node" id="milestone-surgery" transform="translate(390, 75)" style="cursor: pointer;">
                                 <circle r="14" fill="var(--surface)" stroke="var(--border)" stroke-width="3" />
                                 <circle r="7" fill="var(--text-muted)" class="milestone-status-dot" />
                                 <text y="-20" text-anchor="middle" fill="var(--text-main)" font-size="11" font-weight="700" font-family="var(--font-headings)">Surgery (0%)</text>
                             </g>
-                            <!-- Milestone 4: OBGY & PSM -->
-                            <g class="milestone-node" id="milestone-obgy" transform="translate(680, 150)" style="cursor: pointer;">
+                            <!-- Milestone 6: Abdominal Surgery (Mini) -->
+                            <g class="milestone-node" id="milestone-absurg" transform="translate(450, 125)" style="cursor: pointer;">
+                                <circle r="9" fill="var(--surface)" stroke="var(--border)" stroke-width="2" />
+                                <circle r="4.5" fill="var(--text-muted)" class="milestone-status-dot" />
+                                <text y="22" text-anchor="middle" fill="var(--text-muted)" font-size="9" font-weight="600" font-family="var(--font-headings)">Abdominal (0%)</text>
+                            </g>
+                            <!-- Milestone 7: OBGY (Main) -->
+                            <g class="milestone-node" id="milestone-obgy" transform="translate(510, 175)" style="cursor: pointer;">
                                 <circle r="14" fill="var(--surface)" stroke="var(--border)" stroke-width="3" />
                                 <circle r="7" fill="var(--text-muted)" class="milestone-status-dot" />
-                                <text y="30" text-anchor="middle" fill="var(--text-main)" font-size="11" font-weight="700" font-family="var(--font-headings)">OBGY / PSM (0%)</text>
+                                <text y="30" text-anchor="middle" fill="var(--text-main)" font-size="11" font-weight="700" font-family="var(--font-headings)">OBGY (0%)</text>
+                            </g>
+                            <!-- Milestone 8: Antenatal Care (Mini) -->
+                            <g class="milestone-node" id="milestone-anc" transform="translate(570, 135)" style="cursor: pointer;">
+                                <circle r="9" fill="var(--surface)" stroke="var(--border)" stroke-width="2" />
+                                <circle r="4.5" fill="var(--text-muted)" class="milestone-status-dot" />
+                                <text y="-15" text-anchor="middle" fill="var(--text-muted)" font-size="9" font-weight="600" font-family="var(--font-headings)">Antenatal (0%)</text>
+                            </g>
+                            <!-- Milestone 9: PSM (Main) -->
+                            <g class="milestone-node" id="milestone-psm" transform="translate(630, 75)" style="cursor: pointer;">
+                                <circle r="14" fill="var(--surface)" stroke="var(--border)" stroke-width="3" />
+                                <circle r="7" fill="var(--text-muted)" class="milestone-status-dot" />
+                                <text y="-20" text-anchor="middle" fill="var(--text-main)" font-size="11" font-weight="700" font-family="var(--font-headings)">PSM (0%)</text>
+                            </g>
+                            <!-- Milestone 10: Epidemiology (Mini) -->
+                            <g class="milestone-node" id="milestone-epidem" transform="translate(690, 105)" style="cursor: pointer;">
+                                <circle r="9" fill="var(--surface)" stroke="var(--border)" stroke-width="2" />
+                                <circle r="4.5" fill="var(--text-muted)" class="milestone-status-dot" />
+                                <text y="22" text-anchor="middle" fill="var(--text-muted)" font-size="9" font-weight="600" font-family="var(--font-headings)">Epidemiology (0%)</text>
                             </g>
 
                             <!-- End Flag: August 2, 2026 -->
@@ -297,8 +353,8 @@
                 <!-- Split Grid for AI Coach, Daily Test & Squads -->
                 <div class="menu-grid" style="grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); display: grid; gap: 1.5rem; margin-top: 0;">
                     
-                    <!-- 🤖 Gemini AI Personal Study Coach -->
-                    <div class="glass-card" style="display: flex; flex-direction: column; gap: 1rem; border-color: rgba(99, 102, 241, 0.15); background: linear-gradient(135deg, var(--surface-card), rgba(99, 102, 241, 0.01));">
+                    <!-- 🤖 Gemini AI Personal Study Coach (DISABLED) -->
+                    <div class="glass-card" style="display: none !important; flex-direction: column; gap: 1rem; border-color: rgba(99, 102, 241, 0.15); background: linear-gradient(135deg, var(--surface-card), rgba(99, 102, 241, 0.01));">
                         <div style="display: flex; justify-content: space-between; align-items: center;">
                             <h3 style="font-size: 1.15rem; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 0.5rem;">
                                 <span>🤖</span> Gemini AI Study Coach
@@ -306,43 +362,43 @@
                             <span id="ai-coach-caps" style="font-size: 0.75rem; font-weight: 700; padding: 4px 10px; border-radius: var(--radius-pill); background: rgba(99,102,241,0.12); color: var(--primary);">2 Free Requests Left</span>
                         </div>
                         
-                        <div id="ai-coach-response-box" class="explanation" style="margin: 0; min-height: 120px; max-height: 180px; overflow-y: auto; background: rgba(99,102,241,0.02); border-radius: 12px; font-size: 0.9rem; line-height: 1.5; border-left-color: var(--primary);">
-                            <p style="color: var(--text-muted); font-style: italic;">Tap below to generate your personalized study plan. I'll inspect your previous incorrect answers to recommend weightage-guided targets.</p>
-                        </div>
-
+                        <div id="ai-coach-response-box" class="explanation" style="margin: 0; min-height: 120px; max-height: 180px; overflow-y: auto; background: rgba(99,102,241,0.02); border-radius: 12px; font-size: 0.9rem; line-height: 1.5; border-left-color: var(--primary);"></div>
                         <div style="display: flex; gap: 0.5rem;">
                             <button id="btn-ai-coach-advice" class="primary-btn" style="padding: 0.7rem 1.2rem; font-size: 0.9rem; border-radius: 10px; flex: 1;">Ask Coach</button>
                             <button id="btn-ai-coach-unlock" class="secondary-btn" style="padding: 0.7rem 1.2rem; font-size: 0.9rem; border-radius: 10px; display: none; width: auto; color: var(--warning); border-color: rgba(245, 158, 11, 0.2); background: rgba(245, 158, 11, 0.03);">Unlock (+₹10)</button>
                         </div>
                     </div>
 
-                    <!-- 🏆 Daily Mini-Test & Kickstart Pomodoro -->
-                    <div class="glass-card" style="display: flex; flex-direction: column; gap: 1rem; border-color: rgba(16, 185, 129, 0.15);">
-                        <h3 style="font-size: 1.15rem; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 0.5rem;">
-                            <span>🏆</span> Daily Mini-Test &amp; Kickstart
-                        </h3>
-
-                        <div style="background: rgba(16,185,129,0.02); border-radius: 12px; padding: 0.85rem; border-left: 3px solid var(--secondary); display: flex; flex-direction: column; gap: 0.4rem;">
-                            <div style="font-size: 0.9rem; font-weight: 600; display: flex; justify-content: space-between;">
-                                <span>⚡ Daily 20-Q Mini Test</span>
-                                <span class="badge-pill success" style="margin: 0; padding: 2px 8px; font-size: 0.7rem;">FREE FOR ALL</span>
-                            </div>
-                            <p style="font-size: 0.82rem; color: var(--text-muted); line-height: 1.45;">
-                                Window: **5:00 PM to 8:00 PM** daily. Ranks/Answers lock &amp; reveal synchronously at **8:00 PM**.
-                            </p>
-                            <button id="btn-start-daily-mini" class="secondary-btn" style="padding: 0.5rem 1rem; font-size: 0.85rem; border-radius: 8px; width: 100%; border-color: var(--secondary); color: var(--secondary); background: rgba(16,185,129,0.03); margin-top: 0.25rem;">Solve Today's Test</button>
+                    <!-- 🏆 Daily Mini-Test Card -->
+                    <div class="glass-card" style="display: flex; flex-direction: column; gap: 1rem; border-color: rgba(16, 185, 129, 0.15); background: linear-gradient(135deg, var(--surface-card), rgba(16, 185, 129, 0.015)); padding: 1.5rem; border-radius: 20px; position: relative;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                            <h3 style="font-size: 1.15rem; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 0.5rem; margin: 0;">
+                                <span>⚡</span> Daily 20-Q Mini Test
+                            </h3>
+                            <button class="share-session-btn" data-session="mini_test" title="Share Daily Mini Test" style="background: rgba(99, 102, 241, 0.08); border: 1px solid rgba(99, 102, 241, 0.15); width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--primary); transition: all 0.2s; padding: 0;"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg></button>
                         </div>
+                        <span class="badge-pill success" style="width: fit-content; margin: 0; padding: 2px 8px; font-size: 0.7rem; font-weight: 600;">FREE FOR ALL</span>
+                        <p style="font-size: 0.82rem; color: var(--text-muted); line-height: 1.5; margin: 0;">
+                            Window opens from **5:00 PM to 8:00 PM** daily. Ranks/Answers lock &amp; reveal synchronously at **8:00 PM**.
+                        </p>
+                        <button id="btn-start-daily-mini" class="secondary-btn" style="padding: 0.65rem 1rem; font-size: 0.85rem; border-radius: 10px; width: 100%; border-color: var(--secondary); color: var(--secondary); background: rgba(16,185,129,0.03); margin-top: auto;">Solve Today's Test</button>
+                    </div>
 
-                        <!-- Pomodoro Kickstart -->
-                        <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 0.85rem; display: flex; align-items: center; justify-content: space-between;">
-                            <div>
-                                <span style="font-size: 0.88rem; font-weight: 700; display: block; color: var(--text-main);">⏱️ Morning Kickstart</span>
-                                <span style="font-size: 0.78rem; color: var(--text-muted);">Synchronized Study Lobby at **8:30 AM**</span>
-                            </div>
-                            <button id="btn-kickstart-pomodoro" class="icon-btn" style="background: var(--primary-glow); color: var(--primary); padding: 0.5rem 1rem; font-size: 0.85rem; border-radius: 8px;">
-                                Join (8:30 AM)
-                            </button>
+                    <!-- ⏱️ SuperCMS Mornings Card -->
+                    <div class="glass-card" style="display: flex; flex-direction: column; gap: 1rem; border-color: rgba(99, 102, 241, 0.15); background: linear-gradient(135deg, var(--surface-card), rgba(99, 102, 241, 0.015)); padding: 1.5rem; border-radius: 20px; position: relative;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                            <h3 style="font-size: 1.15rem; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 0.5rem; margin: 0;">
+                                <span>⏱️</span> SuperCMS Mornings
+                            </h3>
+                            <button class="share-session-btn" data-session="morning_kickstart" title="Share SuperCMS Mornings" style="background: rgba(99, 102, 241, 0.08); border: 1px solid rgba(99, 102, 241, 0.15); width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--primary); transition: all 0.2s; padding: 0;"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg></button>
                         </div>
+                        <span class="badge-pill" style="width: fit-content; margin: 0; padding: 2px 8px; font-size: 0.7rem; background: rgba(99, 102, 241, 0.12); color: var(--primary); font-weight: 600;">POMODORO LOBBY</span>
+                        <p style="font-size: 0.82rem; color: var(--text-muted); line-height: 1.5; margin: 0;">
+                            Synchronized study clock and peer library starts daily at **8:30 AM**. Join to focus together.
+                        </p>
+                        <button id="btn-kickstart-pomodoro" class="icon-btn" style="background: var(--primary-glow); color: var(--primary); padding: 0.65rem 1rem; font-size: 0.85rem; border-radius: 10px; text-align: center; justify-content: center; width: 100%; margin-top: auto;">
+                            Join (8:30 AM)
+                        </button>
                     </div>
 
                     <!-- 👥 Study Squads & real-time chat -->
@@ -358,65 +414,79 @@
                             </div>
                         </div>
 
-                        <div style="display: flex; gap: 1.5rem; flex-wrap: wrap; width: 100%;">
-                            <!-- Squad Members Panel -->
-                            <div style="flex: 1; min-width: 200px; display: flex; flex-direction: column; gap: 0.6rem;">
-                                <span style="font-size: 0.85rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Your Squad Members</span>
-                                <div id="squad-members-list" style="display: flex; flex-direction: column; gap: 0.5rem; max-height: 200px; overflow-y: auto;">
-                                    <!-- Populated dynamically -->
-                                    <div style="display: flex; align-items: center; justify-content: space-between; background: var(--surface); padding: 0.6rem 0.8rem; border-radius: 8px; font-size: 0.85rem; border: 1px solid var(--border);">
-                                        <span style="font-weight: 600;">Dr. Anuj (You)</span>
-                                        <span style="color: var(--secondary); font-weight: 700;">🟢 Active</span>
-                                    </div>
-                                    <div style="display: flex; align-items: center; justify-content: space-between; background: var(--surface); padding: 0.6rem 0.8rem; border-radius: 8px; font-size: 0.85rem; border: 1px solid var(--border);">
-                                        <span>Dr. Sneha</span>
-                                        <span style="color: var(--secondary); font-weight: 700;">🟢 Active</span>
-                                    </div>
-                                    <div style="display: flex; align-items: center; justify-content: space-between; background: var(--surface); padding: 0.6rem 0.8rem; border-radius: 8px; font-size: 0.85rem; border: 1px solid var(--border);">
-                                        <span>Dr. Rohan</span>
-                                        <span style="color: var(--text-muted);">🔴 Idle</span>
-                                    </div>
+                        <!-- Setup State: Form or Join Squad (Initially visible) -->
+                        <div id="squad-setup-container" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1rem; width: 100%; padding: 2rem 1rem; text-align: center;">
+                            <div style="font-size: 3rem;">👥</div>
+                            <h4 style="font-weight: 700; font-size: 1.1rem; color: var(--text-main); margin: 0;">Collaborative Study Squad</h4>
+                            <p style="color: var(--text-muted); font-size: 0.88rem; max-width: 450px; margin: 0; line-height: 1.5;">
+                                You are not in a study squad yet. Form a new squad to invite your friends, or enter a squad code to join one and track each other's progress in real-time.
+                            </p>
+                            <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; justify-content: center; margin-top: 0.5rem; width: 100%; max-width: 450px;">
+                                <button id="btn-form-squad" class="primary-btn" style="flex: 1; padding: 0.75rem 1.25rem; font-size: 0.88rem; border-radius: 10px; min-width: 160px;">➕ Form New Squad</button>
+                                <div style="display: flex; gap: 0.5rem; flex: 1.2; min-width: 220px; align-items: center; width: 100%;">
+                                    <input type="text" id="join-squad-code" placeholder="Enter Squad Code" style="flex: 1; padding: 0.75rem 1rem !important; border-radius: 10px !important; font-size: 0.88rem !important; text-transform: uppercase;">
+                                    <button id="btn-join-squad" class="secondary-btn" style="padding: 0.75rem 1.25rem; font-size: 0.88rem; border-radius: 10px; border-color: var(--primary); color: var(--primary); background: transparent; width: auto; margin: 0;">Join</button>
                                 </div>
                             </div>
+                        </div>
 
-                            <!-- Squad Chat Panel -->
-                            <div style="flex: 2; min-width: 300px; display: flex; flex-direction: column; gap: 0.6rem; border-left: 1px solid var(--border); padding-left: 1.5rem;" id="squad-chat-container">
-                                <span style="font-size: 0.85rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; display: flex; justify-content: space-between;">
-                                    <span>💬 Squad Discussion</span>
-                                    <span style="font-size: 0.75rem; text-transform: none; color: var(--primary);">Tag @coach for AI explanations</span>
+                        <!-- Active State: Squad Members & Live Chat (Initially hidden) -->
+                        <div id="squad-active-container" style="display: none; flex-direction: column; gap: 1rem; width: 100%;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(99, 102, 241, 0.05); padding: 0.5rem 1rem; border-radius: 10px; border: 1px dashed rgba(99, 102, 241, 0.2); flex-wrap: wrap; gap: 0.5rem;">
+                                <span style="font-size: 0.88rem; color: var(--text-main); font-weight: 600;">
+                                    🏫 Active Squad: <span id="active-squad-code" style="color: var(--primary); font-weight: 700; cursor: pointer; text-decoration: underline;" title="Click to copy code">SQUAD-XXXX</span>
                                 </span>
-
-                                <div id="squad-chat-messages" style="height: 140px; background: rgba(0,0,0,0.1); border: 1px solid var(--border); border-radius: 12px; padding: 0.75rem; overflow-y: auto; display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.85rem;">
-                                    <!-- Chat Messages dynamic list -->
-                                    <div style="text-align: center; color: var(--text-muted); font-style: italic; margin-top: auto; font-size: 0.8rem;">Beginning of Squad Chat. Messages are synchronized locally.</div>
+                                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                                    <button id="btn-copy-squad-link" class="secondary-btn" style="padding: 0.3rem 0.8rem; font-size: 0.75rem; border-radius: 6px; width: auto; height: auto; border-color: var(--primary); color: var(--primary); background: transparent; margin: 0;">🔗 Copy Join Link</button>
+                                    <button id="btn-leave-squad" class="secondary-btn" style="padding: 0.3rem 0.8rem; font-size: 0.75rem; border-radius: 6px; width: auto; height: auto; border-color: #EF4444; color: #EF4444; background: rgba(239, 68, 68, 0.03); margin: 0;">🚪 Leave Squad</button>
+                                </div>
+                            </div>
+                            <div style="display: flex; gap: 1.5rem; flex-wrap: wrap; width: 100%; align-items: center;">
+                                <!-- Squad Members Panel -->
+                                <div style="flex: 1.2; min-width: 240px; display: flex; flex-direction: column; gap: 0.6rem;">
+                                    <span style="font-size: 0.85rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Your Squad Members</span>
+                                    <div id="squad-members-list" style="display: flex; flex-direction: column; gap: 0.5rem; max-height: 180px; overflow-y: auto;">
+                                        <!-- Populated dynamically -->
+                                    </div>
                                 </div>
 
-                                <div style="display: flex; gap: 0.5rem; align-items: center; width: 100%;">
-                                    <input type="text" id="squad-chat-input" placeholder="Type a message or ask @coach..." style="flex: 1; padding: 0.6rem 0.85rem !important; border-radius: 10px !important; font-size: 0.85rem !important;">
-                                    <button id="btn-squad-chat-send" class="primary-btn" style="width: auto; padding: 0.6rem 1.2rem; border-radius: 10px; font-size: 0.85rem;">Send</button>
+                                <!-- Redirect to sidebar chat -->
+                                <div style="flex: 1; min-width: 200px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.75rem; border-left: 1px solid var(--border); padding-left: 1.5rem; text-align: center;">
+                                    <div style="font-size: 2rem;">💬</div>
+                                    <h4 style="margin: 0; font-weight: 700; font-size: 0.95rem;">Squad Discussion Room</h4>
+                                    <p style="font-size: 0.78rem; color: var(--text-muted); margin: 0; max-width: 200px; line-height: 1.45;">
+                                        Chat with your squad, ask doubts, and share your milestones live.
+                                    </p>
+                                    <button id="btn-open-squad-chat-drawer" class="primary-btn" style="padding: 0.6rem 1.2rem; border-radius: 8px; font-size: 0.8rem; margin-top: 0.25rem;">💬 Open Chat Drawer</button>
                                 </div>
+                            </div>
+                    </div>
+
+                    <!-- 💬 General Chat (Open for all) -->
+                    <div class="glass-card" style="display: flex; flex-direction: column; gap: 0.5rem; grid-column: 1 / -1; margin-top: -0.5rem; border-color: rgba(99, 102, 241, 0.15); background: linear-gradient(135deg, var(--surface-card), rgba(99, 102, 241, 0.02));">
+                        <div id="general-chat-header" style="display: flex; justify-content: space-between; align-items: center; cursor: pointer; padding: 0.25rem 0;">
+                            <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 0.5rem; margin: 0;">
+                                <span>💬</span> General Public Chat (Open for All)
+                            </h3>
+                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                <span style="font-size: 0.75rem; background: rgba(99, 102, 241, 0.12); color: var(--primary); padding: 2px 8px; border-radius: var(--radius-pill); font-weight: 600;">Public Lobby</span>
+                                <span id="general-chat-toggle-icon" style="font-size: 0.85rem; color: var(--text-muted); transition: transform 0.2s;">▼</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Collapsible Body -->
+                        <div id="general-chat-body" style="display: none; flex-direction: column; gap: 0.75rem; width: 100%; border-top: 1px solid var(--border); padding-top: 0.75rem;">
+                            <div id="general-chat-messages" style="display: flex; flex-direction: column; gap: 0.5rem; max-height: 200px; overflow-y: auto; padding: 0.5rem; background: rgba(0,0,0,0.02); border-radius: 10px; border: 1px solid var(--border); min-height: 100px;">
+                                <div style="text-align: center; color: var(--text-muted); font-style: italic; font-size: 0.8rem; padding: 1rem 0;">Click below to load public discussion...</div>
+                            </div>
+                            <div style="display: flex; gap: 0.5rem; width: 100%;">
+                                <input type="text" id="general-chat-input" placeholder="Type a message to everyone..." style="flex: 1; padding: 0.6rem 0.8rem !important; border-radius: 8px !important; font-size: 0.85rem !important; background: var(--surface) !important; color: var(--text-main) !important; border: 1px solid var(--border) !important;">
+                                <button id="btn-general-chat-send" class="primary-btn" style="padding: 0.6rem 1.25rem; font-size: 0.85rem; border-radius: 8px; width: auto; margin: 0;">Send</button>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Navigation shortcuts to Hub & Super CMS -->
-                <div class="menu-grid" style="grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); display: grid; gap: 1rem; margin-top: 1.5rem;">
-                    <div class="menu-card" id="btn-dashboard-learning-hub" style="padding: 1.5rem; gap: 1rem; cursor: pointer; min-height: 80px; border-radius: 16px;">
-                        <div class="menu-icon" style="font-size: 1.8rem; width: 50px; height: 50px; border-radius: 10px;">🏥</div>
-                        <div class="menu-content">
-                            <h3 style="font-size: 1.1rem; margin-bottom: 0.2rem;">CMS Learning Hub</h3>
-                            <p style="font-size: 0.82rem;">Select subject-wise, difficulty, or year-wise PYQs.</p>
-                        </div>
-                    </div>
-                    <div class="menu-card" id="btn-dashboard-super-cms" style="padding: 1.5rem; gap: 1rem; cursor: pointer; min-height: 80px; border-radius: 16px; background: linear-gradient(135deg, rgba(165, 49, 115, 0.03), rgba(76, 85, 182, 0.03));">
-                        <div class="menu-icon" style="font-size: 1.8rem; width: 50px; height: 50px; border-radius: 10px;">⚡</div>
-                        <div class="menu-content">
-                            <h3 style="font-size: 1.1rem; margin-bottom: 0.2rem;">Super CMS (Gamified)</h3>
-                            <p style="font-size: 0.82rem;">Case File stability duels, streaks, and AI speed duels.</p>
-                        </div>
-                    </div>
-                </div>
             </section>
 
             <!-- VIEW: UPSC Super CMS Selection -->
@@ -954,6 +1024,11 @@
                     </button>
                 </div>
 
+                <!-- Challenge Banner (hidden by default) -->
+                <div id="challenge-banner" style="display: none; background: linear-gradient(135deg, rgba(245, 158, 11, 0.08), rgba(239, 68, 68, 0.06)); border: 1px solid rgba(245, 158, 11, 0.25); border-radius: 12px; padding: 0.75rem 1.25rem; margin-bottom: 1rem; text-align: center; font-size: 0.9rem; font-weight: 600; color: var(--text-main);">
+                    ⚔️ <span id="challenge-banner-text">Challenge Active</span>
+                </div>
+
                 <!-- Question Navigator for Test Mode -->
                 <div id="question-navigator" class="question-navigator" style="display: none;">
                     <!-- Question number buttons injected here -->
@@ -1104,10 +1179,48 @@
                         </div>
                     </div>
 
+                    <!-- Challenge Result Card (hidden by default) -->
+                    <div id="results-challenge-card" class="glass-card" style="display: none; padding: 1.5rem; text-align: center; background: rgba(245, 158, 11, 0.04); margin-bottom: 1rem; width: 100%;">
+                        <div style="font-size: 2.5rem; margin-bottom: 0.5rem;" id="challenge-outcome-icon">⚔️</div>
+                        <h4 id="challenge-outcome-title" style="font-size: 1.2rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.5rem;">Challenge Result</h4>
+                        <p style="font-size: 0.95rem; color: var(--text-muted); line-height: 1.5; margin: 0;">
+                            Your Score: <strong id="challenge-your-score" style="color: var(--primary);">0</strong><br>
+                            <span id="challenge-creator-name">Challenger</span>'s Score: <strong id="challenge-creator-score" style="color: var(--text-main);">0</strong>
+                        </p>
+                    </div>
+
                     <div class="action-buttons">
+                        <button id="share-quiz-btn" class="secondary-btn" style="background: rgba(16, 185, 129, 0.1); border-color: var(--secondary); color: var(--secondary);">🔗 Share Quiz</button>
+                        <button id="btn-create-challenge" class="secondary-btn" style="background: rgba(245, 158, 11, 0.08); border-color: rgba(245, 158, 11, 0.4); color: #F59E0B;">⚔️ Challenge a Friend</button>
+                        <button id="btn-post-squad-chat" class="secondary-btn" style="background: rgba(99, 102, 241, 0.08); border-color: rgba(99, 102, 241, 0.3); color: var(--primary); display: none;">💬 Post to Squad</button>
                         <button id="retry-btn" class="secondary-btn">Try Again</button>
                         <button id="home-btn" class="primary-btn">Back to Home</button>
                     </div>
+
+                    <!-- Social Share Popup (hidden by default) -->
+                    <div id="challenge-share-popup" style="display: none; margin-top: 1rem; padding: 1rem; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; text-align: center; width: 100%;">
+                        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.75rem;">Share this challenge link:</p>
+                        <input type="text" id="challenge-link-display" readonly style="width: 100%; padding: 0.6rem; border-radius: 8px; border: 1px solid var(--border); background: rgba(0,0,0,0.15); color: var(--text-main); font-size: 0.8rem; margin-bottom: 0.75rem; text-align: center;">
+                        <div style="display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap;">
+                            <button id="btn-copy-challenge" class="secondary-btn" style="width: auto; padding: 0.5rem 1rem; font-size: 0.85rem; border-radius: 8px; margin: 0;">📋 Copy Link</button>
+                            <button id="btn-share-whatsapp" class="secondary-btn" style="width: auto; padding: 0.5rem 1rem; font-size: 0.85rem; border-radius: 8px; margin: 0; border-color: #25D366; color: #25D366;">WhatsApp</button>
+                            <button id="btn-share-telegram" class="secondary-btn" style="width: auto; padding: 0.5rem 1rem; font-size: 0.85rem; border-radius: 8px; margin: 0; border-color: #0088cc; color: #0088cc;">Telegram</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- VIEW: Browse Questions (See Questions list view) -->
+            <section id="browse-questions-view" class="view hidden-view" style="padding: 1rem 0;">
+                <div class="quiz-header" style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center;">
+                    <button id="back-from-browse" class="icon-btn">← Back</button>
+                    <h2 id="browse-title" style="margin: 0; font-size: 1.25rem; font-weight: 700; color: var(--text-main);">UPSC CMS PYQ Browser</h2>
+                </div>
+                <div class="search-bar-container" style="margin-bottom: 1.5rem; display: flex; gap: 0.5rem; width: 100%;">
+                    <input type="text" id="browse-search-input" placeholder="🔍 Search questions, topics, chapters..." style="flex: 1; padding: 0.75rem 1rem !important; border-radius: 12px !important; border: 1px solid var(--border) !important; background: var(--surface) !important; color: var(--text-main) !important; font-size: 0.9rem !important;">
+                </div>
+                <div id="browse-questions-list" style="display: flex; flex-direction: column; gap: 1.2rem; max-height: 70vh; overflow-y: auto; padding-right: 0.25rem;">
+                    <!-- Question cards populated dynamically -->
                 </div>
             </section>
         </main>
@@ -1161,6 +1274,97 @@
                 <button id="btn-exit-resuscitate" class="secondary-btn" style="width: 100%; padding: 1rem; border-radius: var(--radius-pill); cursor: pointer;">
                     🚪 Exit Session
                 </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar Drawer: Study Squad Chat -->
+    <div id="squad-sidebar" class="squad-sidebar">
+        <div class="sidebar-header">
+            <h3>👥 Study Squad</h3>
+            <button id="close-sidebar-btn" class="icon-btn" style="font-size: 1.2rem; cursor: pointer; background: none; border: none; color: var(--text-main);">✕</button>
+        </div>
+        <div class="sidebar-body" style="flex: 1; display: flex; flex-direction: column; overflow-y: auto; padding: 1rem 1.25rem; gap: 1rem;">
+            <!-- Setup State (form/join) -->
+            <div id="sidebar-squad-setup" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1rem; width: 100%; padding: 1.5rem 0.5rem; text-align: center;">
+                <div style="font-size: 2.5rem;">👥</div>
+                <h4 style="font-weight: 700; font-size: 1.05rem; color: var(--text-main); margin: 0;">Collaborative Study Squad</h4>
+                <p style="color: var(--text-muted); font-size: 0.82rem; max-width: 250px; margin: 0; line-height: 1.45;">
+                    Form a new squad to invite friends, or enter a squad code to join one and track progress in real-time.
+                </p>
+                <div style="display: flex; flex-direction: column; gap: 0.75rem; width: 100%; max-width: 280px; margin-top: 0.5rem;">
+                    <button id="sidebar-btn-form-squad" class="primary-btn" style="padding: 0.7rem; font-size: 0.85rem; border-radius: 10px; width: 100%;">➕ Form New Squad</button>
+                    <div style="display: flex; gap: 0.4rem; width: 100%; align-items: center;">
+                        <input type="text" id="sidebar-join-squad-code" placeholder="SQUAD CODE" style="flex: 1; padding: 0.7rem !important; border-radius: 10px !important; font-size: 0.85rem !important; text-transform: uppercase;">
+                        <button id="sidebar-btn-join-squad" class="secondary-btn" style="padding: 0.7rem 1rem; font-size: 0.85rem; border-radius: 10px; border-color: var(--primary); color: var(--primary); background: transparent; width: auto; margin: 0;">Join</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Active State -->
+            <div id="sidebar-squad-active" style="display: none; flex-direction: column; gap: 1rem; width: 100%; height: 100%;">
+                <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(99, 102, 241, 0.05); padding: 0.4rem 0.8rem; border-radius: 8px; border: 1px dashed rgba(99, 102, 241, 0.2);">
+                    <span style="font-size: 0.8rem; color: var(--text-main); font-weight: 600;">
+                        🏫 Squad: <span id="sidebar-active-squad-code" style="color: var(--primary); font-weight: 700; cursor: pointer; text-decoration: underline;" title="Click to copy code">SQUAD-XXXX</span>
+                    </span>
+                    <div style="display: flex; gap: 0.3rem; align-items: center;">
+                        <button id="sidebar-btn-copy-squad-link" class="secondary-btn" style="padding: 0.25rem 0.6rem; font-size: 0.7rem; border-radius: 6px; width: auto; height: auto; border-color: var(--primary); color: var(--primary); background: transparent; margin: 0;">Link</button>
+                        <button id="sidebar-btn-leave-squad" class="secondary-btn" style="padding: 0.25rem 0.6rem; font-size: 0.7rem; border-radius: 6px; width: auto; height: auto; border-color: #EF4444; color: #EF4444; background: rgba(239, 68, 68, 0.03); margin: 0;">Leave</button>
+                    </div>
+                </div>
+                
+                <div style="display: flex; flex-direction: column; gap: 0.4rem;">
+                    <span style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Squad Members</span>
+                    <div id="sidebar-squad-members-list" style="display: flex; flex-direction: column; gap: 0.4rem; max-height: 120px; overflow-y: auto;">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+                
+                <div style="display: flex; flex-direction: column; gap: 0.5rem; flex: 1; min-height: 250px;">
+                    <span style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">💬 Squad Discussion</span>
+                    <div id="sidebar-squad-chat-messages" style="flex: 1; min-height: 120px; max-height: 240px; background: rgba(0,0,0,0.1); border: 1px solid var(--border); border-radius: 12px; padding: 0.75rem; overflow-y: auto; display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.8rem;">
+                        <!-- Chat messages -->
+                    </div>
+                    <div style="display: flex; gap: 0.4rem; align-items: center; width: 100%; margin-top: 0.25rem;">
+                        <input type="text" id="sidebar-squad-chat-input" placeholder="Type a message..." style="flex: 1; padding: 0.55rem 0.75rem !important; border-radius: 8px !important; font-size: 0.8rem !important;">
+                        <button id="sidebar-btn-squad-chat-send" class="primary-btn" style="width: auto; padding: 0.55rem 1rem; border-radius: 8px; font-size: 0.8rem;">Send</button>
+                    </div>
+                    <div style="display: flex; gap: 0.4rem; flex-wrap: wrap; margin-top: 0.25rem;">
+                        <button id="sidebar-btn-squad-share-milestone" class="secondary-btn" style="flex: 1; padding: 0.35rem; font-size: 0.75rem; border-radius: 6px; margin: 0; border-color: var(--secondary); color: var(--secondary); background: transparent;">🗺️ Share Milestone</button>
+                        <button id="sidebar-btn-squad-share-quiz" class="secondary-btn" style="flex: 1; padding: 0.35rem; font-size: 0.75rem; border-radius: 6px; margin: 0; border-color: var(--primary); color: var(--primary); background: transparent;">🔗 Share Quiz Link</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Chat Button (Only visible in UPSC CMS) -->
+    <div id="floating-chat-btn" class="floating-chat-btn" title="Open Squad Chat" style="display: none;">
+        <span>💬</span>
+    </div>
+
+    <!-- Modal: Share Session -->
+    <div id="share-session-modal" class="modal" style="display: none; align-items: center; justify-content: center; z-index: 1100;">
+        <div class="modal-content glass-card" style="max-width: 450px; width: 90%; padding: 2rem; position: relative; border-radius: 20px; border: 1px solid var(--border); box-shadow: 0 20px 50px rgba(0,0,0,0.3);">
+            <button id="close-share-session-modal" class="close-btn" style="position: absolute; top: 1rem; right: 1rem; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-muted); padding: 0;">✕</button>
+            <h3 style="font-size: 1.2rem; font-weight: 700; color: var(--text-main); margin-bottom: 1rem; text-align: center;" id="share-session-title">Share Study Session</h3>
+            
+            <!-- Image Preview -->
+            <div id="share-image-preview-container" style="width: 100%; border-radius: 12px; overflow: hidden; border: 1px solid var(--border); margin-bottom: 1rem; background: rgba(0,0,0,0.05); aspect-ratio: 16/9; display: flex; align-items: center; justify-content: center; position: relative;">
+                <div class="loader" id="share-loader"></div>
+                <img id="share-image-preview" style="width: 100%; display: none; object-fit: contain;" alt="Share Card">
+            </div>
+
+            <!-- Link Below Image -->
+            <div style="margin-bottom: 1.2rem; text-align: center;">
+                <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700; margin-bottom: 0.25rem; letter-spacing: 0.05em;">Referral Invite Link</div>
+                <div id="share-session-link-display" style="font-size: 0.82rem; font-weight: 600; color: var(--primary); background: rgba(99, 102, 241, 0.04); padding: 0.5rem; border-radius: 8px; border: 1px solid rgba(99, 102, 241, 0.12); word-break: break-all; font-family: monospace;">moproprep.in/?ref=xyz&amp;session=mini_test</div>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 0.6rem;">
+                <button id="btn-download-share-img" class="primary-btn" style="width: 100%; padding: 0.75rem; border-radius: 10px; font-size: 0.9rem;">💾 Download Invite Card</button>
+                <button id="btn-copy-share-link" class="secondary-btn" style="width: 100%; padding: 0.75rem; border-radius: 10px; border-color: var(--primary); color: var(--primary); background: transparent; font-size: 0.9rem;">🔗 Copy Invite Link</button>
+                <button id="btn-web-share" class="secondary-btn" style="width: 100%; padding: 0.75rem; border-radius: 10px; display: none; border-color: var(--secondary); color: var(--secondary); background: transparent; font-size: 0.9rem;">📤 Share Directly</button>
             </div>
         </div>
     </div>

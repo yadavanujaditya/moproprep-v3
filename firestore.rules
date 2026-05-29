@@ -71,5 +71,23 @@ service cloud.firestore {
       // Locked down to Admin only for security
       allow read, write: if isAdmin();
     }
+
+    // Squads Collection (Study Squads)
+    match /squads/{squadId} {
+      // Any authenticated user can read squad info
+      allow read: if request.auth != null;
+      // Any authenticated user can create or update a squad
+      allow create, update: if request.auth != null;
+      // Only admin can delete squads
+      allow delete: if isAdmin();
+
+      // Messages Subcollection (Squad Chat)
+      match /messages/{messageId} {
+        allow read: if request.auth != null;
+        allow create: if request.auth != null;
+        // No editing or deleting messages
+        allow update, delete: if isAdmin();
+      }
+    }
   }
 }
