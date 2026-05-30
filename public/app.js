@@ -2322,10 +2322,22 @@ document.addEventListener('DOMContentLoaded', () => {
                         showToast("🚀 Auto-starting Daily Mini Test!", 4000);
                     }
                 } else if (targetSession === 'morning_kickstart') {
-                    const btn = document.getElementById('btn-kickstart-pomodoro');
+                    const btn = document.getElementById('btn-morning-pomodoro');
                     if (btn) {
                         btn.click();
-                        showToast("⏱️ Auto-joining SuperCMS Mornings lobby!", 4000);
+                        showToast("⏱️ Auto-starting SuperCMS Mornings session!", 4000);
+                    }
+                } else if (targetSession === 'afternoon_kickstart') {
+                    const btn = document.getElementById('btn-afternoon-pomodoro');
+                    if (btn) {
+                        btn.click();
+                        showToast("⚡ Auto-starting SuperCMS Afternoon session!", 4000);
+                    }
+                } else if (targetSession === 'evening_kickstart') {
+                    const btn = document.getElementById('btn-evening-pomodoro');
+                    if (btn) {
+                        btn.click();
+                        showToast("🔥 Auto-starting SuperCMS Evening session!", 4000);
                     }
                 }
             }, 1200);
@@ -2464,6 +2476,12 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (sessionType === 'morning_kickstart') {
             sessionTitle = "SuperCMS Mornings";
             if (titleEl) titleEl.innerText = "Share SuperCMS Mornings";
+        } else if (sessionType === 'afternoon_kickstart') {
+            sessionTitle = "SuperCMS Afternoon";
+            if (titleEl) titleEl.innerText = "Share SuperCMS Afternoon";
+        } else if (sessionType === 'evening_kickstart') {
+            sessionTitle = "SuperCMS Evening";
+            if (titleEl) titleEl.innerText = "Share SuperCMS Evening";
         }
 
         // Generate invite link
@@ -2528,12 +2546,24 @@ document.addEventListener('DOMContentLoaded', () => {
             ctx.font = '500 16px "Plus Jakarta Sans", sans-serif';
             ctx.fillText('Join the daily rank sprint window.', 80, 230);
             ctx.fillText('Answers reveal synchronously at 8:00 PM.', 80, 255);
-        } else {
+        } else if (sessionType === 'morning_kickstart') {
             ctx.fillText('⏱️ SuperCMS Mornings', 80, 190);
             ctx.fillStyle = '#e2e8f0';
             ctx.font = '500 16px "Plus Jakarta Sans", sans-serif';
-            ctx.fillText('Synchronized Pomodoro study lobby.', 80, 230);
+            ctx.fillText('30 High-Yield Questions Free session.', 80, 230);
             ctx.fillText('Starts daily at 8:30 AM.', 80, 255);
+        } else if (sessionType === 'afternoon_kickstart') {
+            ctx.fillText('⚡ SuperCMS Afternoon', 80, 190);
+            ctx.fillStyle = '#e2e8f0';
+            ctx.font = '500 16px "Plus Jakarta Sans", sans-serif';
+            ctx.fillText('30 High-Yield Questions Free session.', 80, 230);
+            ctx.fillText('Starts daily at 2:00 PM.', 80, 255);
+        } else if (sessionType === 'evening_kickstart') {
+            ctx.fillText('🔥 SuperCMS Evening', 80, 190);
+            ctx.fillStyle = '#e2e8f0';
+            ctx.font = '500 16px "Plus Jakarta Sans", sans-serif';
+            ctx.fillText('30 High-Yield Questions Free session.', 80, 230);
+            ctx.fillText('Starts daily at 6:00 PM.', 80, 255);
         }
 
         ctx.fillStyle = 'rgba(16, 185, 129, 0.12)';
@@ -3252,6 +3282,40 @@ document.addEventListener('DOMContentLoaded', () => {
             AuthService.saveProgress('moproprep_solve_history', { history: history });
         }
 
+        // Check if it is the Daily Mini Test
+        if (state.sessionKey && state.sessionKey.startsWith('progress_upsc_daily_mini_test_')) {
+            const dateStr = state.sessionKey.replace('progress_upsc_daily_mini_test_', '');
+            const timeLimit = 20 * 60; // 20 minutes
+            const remaining = Math.max(0, Math.round((state.timerEndTime - Date.now()) / 1000));
+            const timeSpent = timeLimit - remaining;
+
+            localStorage.setItem('moproprep_mini_test_submitted_' + dateStr, 'true');
+            localStorage.setItem('moproprep_mini_test_score_' + dateStr, state.score);
+            localStorage.setItem('moproprep_mini_test_time_' + dateStr, timeSpent);
+            localStorage.setItem('moproprep_mini_test_answers_' + dateStr, JSON.stringify(state.userAnswers));
+
+            if (AuthService.isLoggedIn() && db) {
+                const user = AuthService.user;
+                db.collection('daily_mini_test_submissions').doc(`${dateStr}_${user.uid}`).set({
+                    dateStr: dateStr,
+                    userId: user.uid,
+                    displayName: user.displayName || 'Student',
+                    email: user.email || '',
+                    score: state.score,
+                    timeSpent: timeSpent,
+                    submittedAt: firebase.firestore.FieldValue.serverTimestamp()
+                }).catch(err => console.warn("Daily Mini Test submission failed:", err.message));
+            }
+
+            if (typeof showDailyMiniSubmitConfirmation === 'function') {
+                showDailyMiniSubmitConfirmation(dateStr);
+            } else {
+                switchView('upscDashboard');
+                alert("🎉 Daily Mini Test Submitted successfully!");
+            }
+            return;
+        }
+
         showResults();
     }
 
@@ -3476,6 +3540,12 @@ document.addEventListener('DOMContentLoaded', () => {
         els.explanationText.innerHTML = '';
         els.optionsContainer.innerHTML = '';
         els.nextBtn.onclick = nextQuestion;
+
+        // Expand the question card body for the new question
+        const qBody = document.getElementById('question-card-body');
+        if (qBody) qBody.style.display = 'flex';
+        const qIcon = document.getElementById('question-card-toggle-icon');
+        if (qIcon) qIcon.style.transform = 'rotate(0deg)';
 
         // Remove old 'Save & Next' if exists (cleaning up dynamic buttons)
         const oldSaveBtn = document.getElementById('save-next-btn');
@@ -4587,6 +4657,64 @@ document.addEventListener('DOMContentLoaded', () => {
             switchView('home');
         };
 
+        function openChallengeSharePopup(title, link) {
+            const popup = document.getElementById('challenge-share-popup');
+            const titleEl = document.getElementById('challenge-share-title');
+            const linkDisplay = document.getElementById('challenge-link-display');
+            
+            if (!popup || !linkDisplay) return;
+            
+            if (titleEl) titleEl.innerHTML = title;
+            linkDisplay.value = link;
+            popup.style.display = 'flex';
+            
+            // Copy button
+            const btnCopy = document.getElementById('btn-copy-challenge');
+            if (btnCopy) {
+                btnCopy.onclick = () => {
+                    navigator.clipboard.writeText(link).then(() => {
+                        showToast("📋 Link copied to clipboard!", 3000);
+                    }).catch(err => {
+                        linkDisplay.select();
+                        document.execCommand('copy');
+                        showToast("📋 Link copied to clipboard!", 3000);
+                    });
+                };
+            }
+            
+            // Social buttons
+            const shareText = title.includes("Challenge") ? `⚔️ Challenge active! Try to beat my score of ${state.score} on this UPSC CMS quiz:` : `🔗 Try this UPSC CMS prep quiz:`;
+            
+            const btnWhatsapp = document.getElementById('btn-share-whatsapp');
+            if (btnWhatsapp) {
+                btnWhatsapp.onclick = () => {
+                    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(shareText + ' ' + link)}`, '_blank');
+                };
+            }
+            
+            const btnTelegram = document.getElementById('btn-share-telegram');
+            if (btnTelegram) {
+                btnTelegram.onclick = () => {
+                    window.open(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(shareText)}`, '_blank');
+                };
+            }
+            
+            // Close button
+            const btnClose = document.getElementById('close-challenge-share-popup');
+            if (btnClose) {
+                btnClose.onclick = () => {
+                    popup.style.display = 'none';
+                };
+            }
+            
+            // Click outside content to close
+            popup.onclick = (e) => {
+                if (e.target === popup) {
+                    popup.style.display = 'none';
+                }
+            };
+        }
+
         const shareQuizBtn = document.getElementById('share-quiz-btn');
         if (shareQuizBtn) {
             shareQuizBtn.onclick = () => {
@@ -4597,12 +4725,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 const qids = state.questions.map(q => q.id || q.qId).filter(Boolean).join(',');
                 const baseUrl = window.location.origin + window.location.pathname;
                 const link = `${baseUrl}?share_quiz=true&qids=${qids}`;
-                navigator.clipboard.writeText(link).then(() => {
-                    showToast("🔗 Quiz link copied to clipboard! Share it with anyone without requiring login.", 4000);
-                }).catch(err => {
-                    console.error("Failed to copy link:", err);
-                    alert("Could not copy link automatically. Here it is: " + link);
-                });
+                openChallengeSharePopup('<span>🔗</span> Share Quiz', link);
+            };
+        }
+
+        const btnCreateChallenge = document.getElementById('btn-create-challenge');
+        if (btnCreateChallenge) {
+            btnCreateChallenge.onclick = () => {
+                if (!state.questions || state.questions.length === 0) {
+                    showToast("No active quiz to challenge.", 3000);
+                    return;
+                }
+                const qids = state.questions.map(q => q.id || q.qId).filter(Boolean).join(',');
+                const baseUrl = window.location.origin + window.location.pathname;
+                const creator = encodeURIComponent(AuthService.user?.displayName || 'Medical Student');
+                const link = `${baseUrl}?challenge=true&creator=${creator}&creatorScore=${state.score}&qids=${qids}`;
+                openChallengeSharePopup('<span>⚔️</span> Challenge a Friend', link);
             };
         }
 
@@ -5091,42 +5229,109 @@ document.addEventListener('DOMContentLoaded', () => {
             renderVisualRoadmap(); // Re-render roadmap with exact counts once preloaded
         });
 
-        // Only auto-start the morning session if it is currently between 8:30 AM and 9:00 AM
+        // Update session buttons immediately
+        updateSessionButtons();
+
+        // Clear and set session update interval (every 10 seconds)
+        if (window._sessionUpdateInterval) clearInterval(window._sessionUpdateInterval);
+        window._sessionUpdateInterval = setInterval(updateSessionButtons, 10000);
+
+        // --- Start Presence Heartbeat & Real-time Counter ---
+        startPresenceSystem();
+    }
+
+    function getIstDateTime() {
         const now = new Date();
-        const hour = now.getHours();
-        const min = now.getMinutes();
-        const isSessionActive = (hour === 8 && min >= 30); // 8:30 AM to 8:59 AM
-        
-        const pomodoroBtn = document.getElementById('btn-kickstart-pomodoro');
-        if (pomodoroBtn) {
-            if (isSessionActive) {
-                if (!pomodoroBtn.disabled) {
-                    pomodoroBtn.click();
-                }
+        const utcTimestamp = now.getTime() + (now.getTimezoneOffset() * 60000);
+        const ist = new Date(utcTimestamp + (3600000 * 5.5));
+        const yyyy = ist.getFullYear();
+        const mm = String(ist.getMonth() + 1).padStart(2, '0');
+        const dd = String(ist.getDate()).padStart(2, '0');
+        const dateStr = `${yyyy}-${mm}-${dd}`;
+        const hour = ist.getHours();
+        const min = ist.getMinutes();
+        const timeInMinutes = hour * 60 + min;
+        return { dateStr, hour, min, timeInMinutes, timestamp: utcTimestamp + (3600000 * 5.5) };
+    }
+
+    function getIstTimeInMinutes() {
+        return getIstDateTime().timeInMinutes;
+    }
+
+    function updateSessionButtons() {
+        const timeInMinutes = getIstTimeInMinutes();
+
+        const isMorningActive = (timeInMinutes >= 510 && timeInMinutes < 840);    // 8:30 (510) to 14:00 (840)
+        const isAfternoonActive = (timeInMinutes >= 840 && timeInMinutes < 1080);  // 14:00 (840) to 18:00 (1080)
+        const isEveningActive = (timeInMinutes >= 1080 || timeInMinutes < 510);    // 18:00 (1080) to 8:30 (510)
+
+        const morningBtn = document.getElementById('btn-morning-pomodoro');
+        if (morningBtn) {
+            if (isMorningActive) {
+                morningBtn.innerText = '🟢 Session Active — Join Now';
+                morningBtn.style.background = 'var(--primary)';
+                morningBtn.style.color = '#fff';
+                morningBtn.style.cursor = 'pointer';
             } else {
-                updateNextSessionCountdown();
+                updateSessionCountdown('btn-morning-pomodoro', 8, 30);
+                morningBtn.style.background = 'rgba(99, 102, 241, 0.12)';
+                morningBtn.style.color = 'var(--primary)';
+                morningBtn.style.cursor = 'pointer';
             }
+        }
+
+        const afternoonBtn = document.getElementById('btn-afternoon-pomodoro');
+        if (afternoonBtn) {
+            if (isAfternoonActive) {
+                afternoonBtn.innerText = '🟢 Session Active — Join Now';
+                afternoonBtn.style.background = 'var(--secondary)';
+                afternoonBtn.style.color = '#fff';
+                afternoonBtn.style.cursor = 'pointer';
+            } else {
+                updateSessionCountdown('btn-afternoon-pomodoro', 14, 0);
+                afternoonBtn.style.background = 'rgba(16, 185, 129, 0.12)';
+                afternoonBtn.style.color = 'var(--secondary)';
+                afternoonBtn.style.cursor = 'pointer';
+            }
+        }
+
+        const eveningBtn = document.getElementById('btn-evening-pomodoro');
+        if (eveningBtn) {
+            if (isEveningActive) {
+                eveningBtn.innerText = '🟢 Session Active — Join Now';
+                eveningBtn.style.background = '#F59E0B';
+                eveningBtn.style.color = '#000';
+                eveningBtn.style.cursor = 'pointer';
+            } else {
+                updateSessionCountdown('btn-evening-pomodoro', 18, 0);
+                eveningBtn.style.background = 'rgba(245, 158, 11, 0.12)';
+                eveningBtn.style.color = '#F59E0B';
+                eveningBtn.style.cursor = 'pointer';
+            }
+        }
+        
+        // Update Daily Mini Test button/UI status
+        if (typeof updateDailyMiniTestUI === 'function') {
+            updateDailyMiniTestUI();
         }
     }
 
-    function updateNextSessionCountdown() {
-        const pomodoroBtn = document.getElementById('btn-kickstart-pomodoro');
-        if (!pomodoroBtn) return;
+    function updateSessionCountdown(btnId, targetHour, targetMin) {
+        const btn = document.getElementById(btnId);
+        if (!btn) return;
         
-        const now = new Date();
-        let target = new Date();
-        target.setHours(8, 30, 0, 0);
+        const istMinutes = getIstTimeInMinutes();
+        const targetMinutes = targetHour * 60 + targetMin;
         
-        // If it's already past 8:30 AM today, the next session is tomorrow at 8:30 AM
-        if (now.getTime() >= target.getTime()) {
-            target.setDate(target.getDate() + 1);
+        let diffMinutes = targetMinutes - istMinutes;
+        if (diffMinutes <= 0) {
+            diffMinutes += 1440;
         }
         
-        const diff = target.getTime() - now.getTime();
-        const hours = Math.floor(diff / (1000 * 60 * 60));
-        const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const hours = Math.floor(diffMinutes / 60);
+        const mins = diffMinutes % 60;
         
-        pomodoroBtn.innerText = `Join (Next in ${hours}h ${mins}m)`;
+        btn.innerText = `Join (Next in ${hours}h ${mins}m)`;
     }
 
     function updateExamCountdown() {
@@ -5144,6 +5349,103 @@ document.addEventListener('DOMContentLoaded', () => {
                 countdownEl.innerText = `Exam was on August 2, 2026`;
             }
         }
+    }
+
+    // --- Presence System for Real-time Active User Counter ---
+    let presenceHeartbeatInterval = null;
+    let presenceUnsubscribe = null;
+
+    function startPresenceSystem() {
+        // Setup local simulated base counters (20-30 active, 10-20 solving)
+        if (!window._simulatedActiveBase) {
+            window._simulatedActiveBase = Math.floor(Math.random() * 6) + 22; // 22 to 27 initial
+            window._simulatedSolvingBase = Math.floor(Math.random() * 5) + 12; // 12 to 16 initial
+        }
+        
+        const updateUI = () => {
+            const activeEl = document.getElementById('presence-active-count');
+            const solvingEl = document.getElementById('presence-solving-count');
+            const realActive = window._realActiveCount || 0;
+            const realSolving = window._realSolvingCount || 0;
+            if (activeEl) activeEl.innerText = window._simulatedActiveBase + realActive;
+            if (solvingEl) solvingEl.innerText = window._simulatedSolvingBase + realSolving;
+        };
+
+        // Render initially
+        updateUI();
+
+        if (!window._simulatedPresenceInterval) {
+            window._simulatedPresenceInterval = setInterval(() => {
+                const activeChange = Math.floor(Math.random() * 3) - 1; // -1, 0, 1
+                window._simulatedActiveBase = Math.max(20, Math.min(30, window._simulatedActiveBase + activeChange));
+
+                const solvingChange = Math.floor(Math.random() * 3) - 1; // -1, 0, 1
+                window._simulatedSolvingBase = Math.max(10, Math.min(20, window._simulatedSolvingBase + solvingChange));
+
+                if (window._simulatedSolvingBase >= window._simulatedActiveBase) {
+                    window._simulatedSolvingBase = window._simulatedActiveBase - 5;
+                }
+                updateUI();
+            }, 8000);
+        }
+
+        if (!AuthService.isLoggedIn() || !db) return;
+
+        const user = AuthService.user;
+        const presenceRef = db.collection('presence').doc(user.uid);
+
+        // Write presence heartbeat
+        function writePresence() {
+            const currentView = (window.AnalyticsTracker && typeof window.AnalyticsTracker._getCurrentView === 'function')
+                ? window.AnalyticsTracker._getCurrentView()
+                : 'Dashboard';
+            presenceRef.set({
+                uid: user.uid,
+                displayName: user.displayName || 'Student',
+                lastSeen: firebase.firestore.FieldValue.serverTimestamp(),
+                view: currentView,
+                online: true
+            }).catch(err => console.warn('Presence write failed:', err.message));
+        }
+
+        writePresence();
+        if (presenceHeartbeatInterval) clearInterval(presenceHeartbeatInterval);
+        presenceHeartbeatInterval = setInterval(writePresence, 60000); // Every 60s
+
+        // On tab close, mark offline
+        window.addEventListener('beforeunload', () => {
+            presenceRef.update({ online: false }).catch(() => {});
+        });
+
+        // Subscribe to real-time presence count
+        if (presenceUnsubscribe) presenceUnsubscribe();
+
+        // Count users whose lastSeen is within last 2 minutes
+        const twoMinAgo = new Date(Date.now() - 2 * 60 * 1000);
+        presenceUnsubscribe = db.collection('presence')
+            .where('lastSeen', '>=', twoMinAgo)
+            .onSnapshot(snap => {
+                let activeCount = 0;
+                let solvingCount = 0;
+                snap.forEach(doc => {
+                    const d = doc.data();
+                    if (d.online !== false) {
+                        activeCount++;
+                        const v = (d.view || '').toLowerCase();
+                        if (v.includes('quiz') || v.includes('pyq') || v.includes('question') || v.includes('solve') || v.includes('custom') || v.includes('duel')) {
+                            solvingCount++;
+                        }
+                    }
+                });
+                window._realActiveCount = activeCount;
+                window._realSolvingCount = solvingCount;
+                updateUI();
+            }, err => {
+                console.warn('Presence snapshot error:', err.message);
+                window._realActiveCount = 0;
+                window._realSolvingCount = 0;
+                updateUI();
+            });
     }
 
     function renderVisualRoadmap() {
@@ -5740,27 +6042,511 @@ document.addEventListener('DOMContentLoaded', () => {
             if(saved){state.squadId=saved;state.squadCode=saved;subscribeToSquad(saved);showActiveSquad();}
         }
 
-        // Daily Mini Test binding (unchanged)
-        const startDailyBtn=document.getElementById('btn-start-daily-mini');
-        if(startDailyBtn && !squadsInitialized){
-            startDailyBtn.onclick=async()=>{
-                const allQ=await preloadUpscQuestions();
-                if(allQ.length===0) return;
-                const shuffled=shuffleArray([...allQ]);
-                state.questions=shuffled.slice(0,20);
-                state.sessionKey='progress_upsc_daily_mini_test';
-                state.mode='YEAR';
-                state.testMode=true;state.userAnswers={};state.testSubmitted=false;state.reviewMode=false;
-                state.timerEndTime=Date.now()+30*60*1000;
-                if(state.timerInterval) clearInterval(state.timerInterval);
-                state.timerInterval=setInterval(updateTimer,1000);
-                document.getElementById('test-timer').style.display='flex';
-                document.getElementById('submit-test-btn').style.display='block';
-                document.getElementById('score-container').style.display='none';
-                document.getElementById('question-navigator').style.display='flex';
+        // --- Daily Mini Test Results Modal & Logic ---
+        
+        function getDailyMiniTestQuestions(allQ, dateStr) {
+            let hash = 0;
+            for (let i = 0; i < dateStr.length; i++) {
+                hash = dateStr.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            let pool = allQ.filter(q => q.exam_weightage && q.exam_weightage.toLowerCase() === 'high');
+            if (pool.length === 0) pool = allQ;
+            
+            const selected = [];
+            const poolCopy = [...pool];
+            for (let i = 0; i < 20 && poolCopy.length > 0; i++) {
+                const seed = Math.abs(Math.sin(hash + i * 31));
+                const index = Math.floor(seed * poolCopy.length);
+                selected.push(poolCopy.splice(index, 1)[0]);
+            }
+            return selected;
+        }
+
+        function getFakeLeaderboardUsers(countNeeded, dateStr) {
+            let hash = 0;
+            for (let i = 0; i < dateStr.length; i++) {
+                hash = dateStr.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            
+            const firstNames = ["Dr. Amit", "Dr. Sarah", "Dr. Rohan", "Dr. Pooja", "Dr. Vikram", "Dr. Ananya", "Dr. Kabir", "Dr. Priya", "Dr. Arjun", "Dr. Meera", "Dr. Siddharth", "Dr. Neha", "Dr. Aditya", "Dr. Shreya", "Dr. Alok", "Dr. Divya", "Dr. Harsh", "Dr. Sneha", "Dr. Rahul", "Dr. Tanvi"];
+            const lastNames = ["Sharma", "Verma", "Gupta", "Mehta", "Patel", "Reddy", "Joshi", "Singhal", "Kumar", "Iyer", "Deshmukh", "Nair", "Kapoor", "Choudhary", "Sen", "Bose", "Rao", "Mishra"];
+            
+            const fakeUsers = [];
+            for (let i = 0; i < countNeeded; i++) {
+                const nameSeed = Math.abs(Math.sin(hash + i * 13));
+                const nameIndex = Math.floor(nameSeed * firstNames.length);
+                const lastSeed = Math.abs(Math.cos(hash + i * 17));
+                const lastIndex = Math.floor(lastSeed * lastNames.length);
+                
+                const fullName = `${firstNames[nameIndex]} ${lastNames[lastIndex]}`;
+                
+                const scoreSeed = Math.abs(Math.sin(hash + i * 31));
+                const score = Math.floor(scoreSeed * 8) + 12; // 12 to 19
+                
+                const timeSeed = Math.abs(Math.cos(hash + i * 43));
+                const timeSpent = Math.floor(timeSeed * 780) + 300; // 5 min to 18 min
+                
+                fakeUsers.push({
+                    displayName: fullName,
+                    score: score,
+                    timeSpent: timeSpent,
+                    isFake: true
+                });
+            }
+            return fakeUsers;
+        }
+
+        function getPastRevealedDates() {
+            const dates = [];
+            const { dateStr, timeInMinutes } = getIstDateTime();
+            
+            // Yesterday's results reveal today at 7:00 AM (420 minutes)
+            const isYesterdayRevealed = (timeInMinutes >= 420);
+            const startIndex = isYesterdayRevealed ? 1 : 2;
+            
+            for (let i = startIndex; i < startIndex + 7; i++) {
+                dates.push(getIstDateStringOffset(-i));
+            }
+            return dates;
+        }
+
+        function getIstDateStringOffset(offsetDays) {
+            const now = new Date();
+            const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+            const ist = new Date(utc + (3600000 * 5.5) + (offsetDays * 24 * 3600000));
+            const yyyy = ist.getFullYear();
+            const mm = String(ist.getMonth() + 1).padStart(2, '0');
+            const dd = String(ist.getDate()).padStart(2, '0');
+            return `${yyyy}-${mm}-${dd}`;
+        }
+
+        function updateDailyMiniTestUI() {
+            const { dateStr, timeInMinutes } = getIstDateTime();
+            
+            // Active window: 8:00 AM (480) to 8:10 PM (1210) IST
+            const isActive = (timeInMinutes >= 480 && timeInMinutes < 1210);
+            
+            const startBtn = document.getElementById('btn-start-daily-mini');
+            const viewBtn = document.getElementById('btn-view-mini-results');
+            
+            const submittedToday = localStorage.getItem('moproprep_mini_test_submitted_' + dateStr) === 'true';
+            
+            if (startBtn) {
+                if (isActive) {
+                    if (submittedToday) {
+                        startBtn.innerText = '⏳ Submitted (Results Tomorrow 7 AM)';
+                        startBtn.disabled = true;
+                        startBtn.style.background = 'rgba(16, 185, 129, 0.05)';
+                        startBtn.style.color = 'var(--text-muted)';
+                        startBtn.style.borderColor = 'rgba(255,255,255,0.05)';
+                        startBtn.style.cursor = 'not-allowed';
+                    } else {
+                        startBtn.innerText = '⚡ Solve Today\'s Test';
+                        startBtn.disabled = false;
+                        startBtn.style.background = 'rgba(16, 185, 129, 0.12)';
+                        startBtn.style.color = 'var(--secondary)';
+                        startBtn.style.borderColor = 'var(--secondary)';
+                        startBtn.style.cursor = 'pointer';
+                    }
+                } else {
+                    startBtn.disabled = true;
+                    startBtn.style.background = 'rgba(239, 68, 68, 0.05)';
+                    startBtn.style.color = 'rgba(239, 68, 68, 0.6)';
+                    startBtn.style.borderColor = 'rgba(239, 68, 68, 0.15)';
+                    startBtn.style.cursor = 'not-allowed';
+                    if (timeInMinutes < 480) {
+                        startBtn.innerText = '🔒 Today\'s Test opens at 8:00 AM';
+                    } else {
+                        startBtn.innerText = '🔒 Today\'s Test is Closed';
+                    }
+                }
+            }
+
+            if (viewBtn) {
+                viewBtn.style.display = 'block';
+            }
+        }
+
+        function showDailyMiniSubmitConfirmation(dateStr) {
+            switchView('upscDashboard');
+            state.testMode = false;
+            state.testSubmitted = false;
+            state.userAnswers = {};
+            state.reviewMode = false;
+            if (state.timerInterval) clearInterval(state.timerInterval);
+            document.getElementById('test-timer').style.display = 'none';
+            
+            alert("🎉 Daily Mini Test Submitted successfully!\n\nYour score, answers, explanations, and rankings will reveal tomorrow at 7:00 AM IST.\n\nGreat job today! 👍");
+            
+            updateDailyMiniTestUI();
+        }
+
+        // Daily Mini Test Start Click
+        const startDailyBtn = document.getElementById('btn-start-daily-mini');
+        if (startDailyBtn && !squadsInitialized) {
+            startDailyBtn.onclick = async () => {
+                const { dateStr, timeInMinutes } = getIstDateTime();
+                const isActive = (timeInMinutes >= 480 && timeInMinutes < 1210);
+                if (!isActive) {
+                    showToast("🔒 The Daily Mini Test is only active from 8:00 AM to 8:10 PM IST daily.", 5000);
+                    return;
+                }
+                const submittedToday = localStorage.getItem('moproprep_mini_test_submitted_' + dateStr) === 'true';
+                if (submittedToday) {
+                    showToast("🔒 You have already submitted today's test. Results reveal tomorrow at 7:00 AM IST.", 5000);
+                    return;
+                }
+
+                const allQ = await preloadUpscQuestions();
+                if (allQ.length === 0) return;
+
+                // Load deterministic test questions for today
+                state.questions = getDailyMiniTestQuestions(allQ, dateStr);
+                state.sessionKey = 'progress_upsc_daily_mini_test_' + dateStr;
+                state.mode = 'YEAR';
+                
+                state.testMode = true;
+                state.userAnswers = {};
+                state.testSubmitted = false;
+                state.reviewMode = false;
+                
+                // 20 minutes countdown
+                state.timerEndTime = Date.now() + 20 * 60 * 1000;
+                if (state.timerInterval) clearInterval(state.timerInterval);
+                state.timerInterval = setInterval(updateTimer, 1000);
+                
+                document.getElementById('test-timer').style.display = 'flex';
+                document.getElementById('submit-test-btn').style.display = 'block';
+                document.getElementById('score-container').style.display = 'none';
+                document.getElementById('question-navigator').style.display = 'flex';
+                
                 startQuiz();
+                showToast("⚡ Daily Mini Test Started!", 3000);
             };
         }
+
+        // Results Modal Bindings & Logic
+        const viewMiniResultsBtn = document.getElementById('btn-view-mini-results');
+        const miniResultsModal = document.getElementById('mini-test-results-modal');
+        const closeMiniResultsModal = document.getElementById('close-mini-test-results-modal');
+        const dateSelect = document.getElementById('mini-test-date-select');
+        const leaderboardBody = document.getElementById('mini-test-leaderboard-body');
+        const userPerfEl = document.getElementById('mini-test-user-performance');
+        const reviewBtn = document.getElementById('btn-mini-test-review');
+
+        async function loadLeaderboardForDate(selectedDate) {
+            if (!leaderboardBody) return;
+            leaderboardBody.innerHTML = '<tr><td colspan="4" style="padding: 1.5rem; text-align: center; color: var(--text-muted);">Loading results...</td></tr>';
+            
+            let submissions = [];
+            
+            // Try fetching from Firestore
+            if (db) {
+                try {
+                    const snap = await db.collection('daily_mini_test_submissions')
+                        .where('dateStr', '==', selectedDate)
+                        .get();
+                    snap.forEach(doc => {
+                        submissions.push(doc.data());
+                    });
+                } catch (err) {
+                    console.warn("Error fetching submissions:", err.message);
+                }
+            }
+
+            // Fill up with fake users if total < 10
+            if (submissions.length < 10) {
+                const fakes = getFakeLeaderboardUsers(10 - submissions.length, selectedDate);
+                submissions = [...submissions, ...fakes];
+            }
+
+            // Sort: score desc, timeSpent asc
+            submissions.sort((a, b) => {
+                if (b.score !== a.score) return b.score - a.score;
+                return (a.timeSpent || 1200) - (b.timeSpent || 1200);
+            });
+
+            // Render
+            leaderboardBody.innerHTML = '';
+            submissions.slice(0, 10).forEach((sub, idx) => {
+                const tr = document.createElement('tr');
+                tr.style.borderBottom = '1px solid var(--border)';
+                if (sub.userId === (AuthService.user?.uid)) {
+                    tr.style.background = 'rgba(99, 102, 241, 0.08)';
+                    tr.style.fontWeight = '700';
+                }
+                
+                const timeStr = sub.timeSpent 
+                    ? `${Math.floor(sub.timeSpent / 60)}m ${sub.timeSpent % 60}s`
+                    : '—';
+                
+                tr.innerHTML = `
+                    <td style="padding: 0.6rem 0.8rem; font-weight: 700; text-align: left;">#${idx + 1}</td>
+                    <td style="padding: 0.6rem 0.8rem;">${sub.displayName || 'Anonymous Student'} ${sub.isFake ? '🟢' : '⚡'}</td>
+                    <td style="padding: 0.6rem 0.8rem; text-align: center; font-weight: 700; color: var(--secondary);">${sub.score} / 20</td>
+                    <td style="padding: 0.6rem 0.8rem; text-align: center; color: var(--text-muted);">${timeStr}</td>
+                `;
+                leaderboardBody.appendChild(tr);
+            });
+
+            // Update user summary
+            const tookTest = localStorage.getItem('moproprep_mini_test_submitted_' + selectedDate) === 'true';
+            const userScore = localStorage.getItem('moproprep_mini_test_score_' + selectedDate);
+            const userTime = localStorage.getItem('moproprep_mini_test_time_' + selectedDate);
+
+            if (userPerfEl) {
+                if (tookTest) {
+                    const minutes = Math.floor(userTime / 60);
+                    const seconds = userTime % 60;
+                    userPerfEl.innerHTML = `
+                        <div style="font-weight: 700; color: var(--secondary);">✓ You took this test</div>
+                        <div>Score: <strong>${userScore} / 20</strong></div>
+                        <div>Time Spent: <strong>${minutes}m ${seconds}s</strong></div>
+                    `;
+                } else {
+                    userPerfEl.innerHTML = `
+                        <div style="font-weight: 700; color: var(--warning);">⚠️ You did not take this test.</div>
+                        <div style="font-size: 0.78rem; color: var(--text-muted);">You can still review the questions, correct answers, and explanations.</div>
+                    `;
+                }
+            }
+
+            if (reviewBtn) {
+                reviewBtn.disabled = false;
+                reviewBtn.innerText = tookTest ? '📖 Review Your Answers' : '📖 Review Questions & Explanations';
+                reviewBtn.onclick = async () => {
+                    const allQ = await preloadUpscQuestions();
+                    if (allQ.length === 0) return;
+                    
+                    state.questions = getDailyMiniTestQuestions(allQ, selectedDate);
+                    state.userAnswers = JSON.parse(localStorage.getItem('moproprep_mini_test_answers_' + selectedDate) || '{}');
+                    state.sessionKey = 'progress_upsc_daily_mini_test_' + selectedDate;
+                    state.mode = 'YEAR';
+                    state.testMode = true;
+                    state.testSubmitted = true;
+                    state.reviewMode = true;
+                    
+                    if (miniResultsModal) miniResultsModal.style.display = 'none';
+                    switchView('quiz');
+                    renderQuestion();
+                    renderQuestionNavigator();
+                };
+            }
+        }
+
+        if (viewMiniResultsBtn && miniResultsModal) {
+            viewMiniResultsBtn.onclick = () => {
+                miniResultsModal.style.display = 'flex';
+                
+                // Populate select dates
+                if (dateSelect) {
+                    dateSelect.innerHTML = '';
+                    const pastDates = getPastRevealedDates();
+                    if (pastDates.length === 0) {
+                        const opt = document.createElement('option');
+                        opt.value = '';
+                        opt.innerText = 'No tests revealed yet';
+                        dateSelect.appendChild(opt);
+                    } else {
+                        pastDates.forEach(d => {
+                            const opt = document.createElement('option');
+                            opt.value = d;
+                            const dateObj = new Date(d);
+                            const options = { month: 'short', day: 'numeric', year: 'numeric' };
+                            opt.innerText = dateObj.toLocaleDateString('en-US', options) + ` (${d})`;
+                            dateSelect.appendChild(opt);
+                        });
+                    }
+                    
+                    // Load first date
+                    if (pastDates.length > 0) {
+                        loadLeaderboardForDate(pastDates[0]);
+                    }
+                }
+            };
+        }
+
+        if (dateSelect) {
+            dateSelect.onchange = (e) => {
+                if (e.target.value) {
+                    loadLeaderboardForDate(e.target.value);
+                }
+            };
+        }
+
+        if (closeMiniResultsModal) {
+            closeMiniResultsModal.onclick = () => {
+                miniResultsModal.style.display = 'none';
+            };
+        }
+
+        // Special Sessions logic and bindings
+        async function startSpecialSession(sessionKey, sessionName) {
+            // Time gate validation to ensure sessions only start during their active hours (IST)
+            const now = new Date();
+            const utcMinutes = now.getUTCHours() * 60 + now.getUTCMinutes();
+            const timeInMinutes = (utcMinutes + 330) % 1440; // UTC+5:30 in minutes
+
+            let isActive = false;
+            let rangeStr = '';
+            if (sessionKey === 'morning_kickstart') {
+                isActive = (timeInMinutes >= 510 && timeInMinutes < 840);
+                rangeStr = '8:30 AM to 2:00 PM';
+            } else if (sessionKey === 'afternoon_kickstart') {
+                isActive = (timeInMinutes >= 840 && timeInMinutes < 1080);
+                rangeStr = '2:00 PM to 6:00 PM';
+            } else if (sessionKey === 'evening_kickstart') {
+                isActive = (timeInMinutes >= 1080 || timeInMinutes < 510);
+                rangeStr = '6:00 PM to 8:30 AM';
+            }
+
+            if (!isActive) {
+                showToast(`⏳ The ${sessionName} is not active right now. Please join during its active window (${rangeStr}).`, 5000);
+                return;
+            }
+
+            const allQ = await preloadUpscQuestions();
+            if (allQ.length === 0) return;
+            
+            // Filter high yield questions
+            let targetQs = allQ.filter(q => q.exam_weightage && q.exam_weightage.toLowerCase() === 'high');
+            if (targetQs.length === 0) {
+                targetQs = allQ;
+            }
+            
+            // Shuffle and select 30 questions
+            const shuffled = shuffleArray([...targetQs]);
+            state.questions = shuffled.slice(0, 30);
+            
+            state.sessionKey = sessionKey;
+            state.mode = 'YEAR';
+            
+            // Test mode configurations (45 minutes)
+            state.testMode = true;
+            state.userAnswers = {};
+            state.testSubmitted = false;
+            state.reviewMode = false;
+            
+            state.timerEndTime = Date.now() + 45 * 60 * 1000;
+            if (state.timerInterval) clearInterval(state.timerInterval);
+            state.timerInterval = setInterval(updateTimer, 1000);
+            
+            // UI setups
+            const timerEl = document.getElementById('test-timer');
+            if (timerEl) timerEl.style.display = 'flex';
+            
+            const submitBtn = document.getElementById('submit-test-btn');
+            if (submitBtn) submitBtn.style.display = 'block';
+            
+            const scoreCont = document.getElementById('score-container');
+            if (scoreCont) scoreCont.style.display = 'none';
+            
+            const qNav = document.getElementById('question-navigator');
+            if (qNav) qNav.style.display = 'flex';
+            
+            startQuiz();
+            showToast(`🚀 Started ${sessionName}!`, 3000);
+        }
+
+        const btnMornings = document.getElementById('btn-morning-pomodoro');
+        if (btnMornings && !squadsInitialized) {
+            btnMornings.onclick = () => startSpecialSession('morning_kickstart', 'SuperCMS Mornings');
+        }
+        const btnAfternoon = document.getElementById('btn-afternoon-pomodoro');
+        if (btnAfternoon && !squadsInitialized) {
+            btnAfternoon.onclick = () => startSpecialSession('afternoon_kickstart', 'SuperCMS Afternoon');
+        }
+        const btnEvening = document.getElementById('btn-evening-pomodoro');
+        if (btnEvening && !squadsInitialized) {
+            btnEvening.onclick = () => startSpecialSession('evening_kickstart', 'SuperCMS Evening');
+        }
+
+        // Collapsible quiz custom builder filters & AI duel filters & question card
+        function initCollapsibleFilters() {
+            const customHeader = document.getElementById('custom-builder-filters-header');
+            const customBody = document.getElementById('custom-builder-filters-body');
+            const customIcon = document.getElementById('custom-builder-filters-toggle-icon');
+            
+            if (customHeader && customBody) {
+                // Collapse by default on mobile screens (< 600px)
+                if (window.innerWidth < 600) {
+                    customBody.style.display = 'none';
+                    if (customIcon) customIcon.style.transform = 'rotate(0deg)';
+                } else {
+                    customBody.style.display = 'flex';
+                    if (customIcon) customIcon.style.transform = 'rotate(180deg)';
+                }
+                
+                customHeader.onclick = () => {
+                    const isHidden = customBody.style.display === 'none';
+                    if (isHidden) {
+                        customBody.style.display = 'flex';
+                        if (customIcon) customIcon.style.transform = 'rotate(180deg)';
+                    } else {
+                        customBody.style.display = 'none';
+                        if (customIcon) customIcon.style.transform = 'rotate(0deg)';
+                    }
+                };
+            }
+            
+            const duelHeader = document.getElementById('ai-duel-filters-header');
+            const duelBody = document.getElementById('ai-duel-filters-body');
+            const duelIcon = document.getElementById('ai-duel-filters-toggle-icon');
+            
+            if (duelHeader && duelBody) {
+                // Collapse by default on mobile screens (< 600px)
+                if (window.innerWidth < 600) {
+                    duelBody.style.display = 'none';
+                    if (duelIcon) duelIcon.style.transform = 'rotate(0deg)';
+                } else {
+                    duelBody.style.display = 'flex';
+                    if (duelIcon) duelIcon.style.transform = 'rotate(180deg)';
+                }
+                
+                duelHeader.onclick = () => {
+                    const isHidden = duelBody.style.display === 'none';
+                    if (isHidden) {
+                        duelBody.style.display = 'flex';
+                        if (duelIcon) duelIcon.style.transform = 'rotate(180deg)';
+                    } else {
+                        duelBody.style.display = 'none';
+                        if (duelIcon) duelIcon.style.transform = 'rotate(0deg)';
+                    }
+                };
+            }
+        }
+
+        function initCollapsibleQuestionCard() {
+            const qHeader = document.getElementById('question-card-header');
+            const qBody = document.getElementById('question-card-body');
+            const qIcon = document.getElementById('question-card-toggle-icon');
+            const bookmarkBtn = document.getElementById('bookmark-btn');
+            
+            if (qHeader && qBody) {
+                qHeader.onclick = () => {
+                    const isHidden = qBody.style.display === 'none';
+                    if (isHidden) {
+                        qBody.style.display = 'flex';
+                        if (qIcon) qIcon.style.transform = 'rotate(0deg)';
+                    } else {
+                        qBody.style.display = 'none';
+                        if (qIcon) qIcon.style.transform = 'rotate(-90deg)';
+                    }
+                };
+                
+                if (bookmarkBtn) {
+                    bookmarkBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                    });
+                }
+            }
+        }
+
+        if (!squadsInitialized) {
+            initCollapsibleFilters();
+            initCollapsibleQuestionCard();
+        }
+
         squadsInitialized = true;
     }
 

@@ -10,13 +10,23 @@
 
     async function sendHeartbeat(isNew = false) {
         try {
+            // Grab authenticated user info if available
+            let email = null, displayName = null;
+            if (typeof firebase !== 'undefined' && firebase.auth && firebase.auth().currentUser) {
+                const u = firebase.auth().currentUser;
+                email = u.email || null;
+                displayName = u.displayName || null;
+            }
+
             await fetch('/api/analytics/heartbeat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     sessionId,
                     view: currentView,
-                    isNew
+                    isNew,
+                    email,
+                    displayName
                 })
             });
         } catch (e) {

@@ -1325,7 +1325,10 @@ select:focus, input[type="text"]:focus, input[type="number"]:focus, textarea:foc
 
 @media (max-width: 600px) {
     .header-actions {
-        gap: 0.8rem;
+        gap: 0.5rem;
+    }
+    .header-actions .icon-btn {
+        padding: 6px 6px !important;
     }
 }
 
@@ -1895,5 +1898,45 @@ select:focus, input[type="text"]:focus, input[type="number"]:focus, textarea:foc
     }
 }
 
+/* Progress & Analytics Responsive Grids */
+.analytics-grid-3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+}
+.analytics-grid-2 {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+}
+@media (max-width: 600px) {
+    .analytics-grid-3 {
+        grid-template-columns: 1fr;
+    }
+    .analytics-grid-2 {
+        grid-template-columns: 1fr;
+    }
+}
 
+/* Modal Overlay styled for share popup modal */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1200;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    animation: modalFadeIn 0.2s ease-out;
+}
+
+@keyframes modalFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
 

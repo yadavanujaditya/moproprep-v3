@@ -114,6 +114,55 @@
             font-size: 0.8rem;
             color: var(--text-muted);
         }
+
+        .leaderboard-filter {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .leaderboard-filter button {
+            padding: 0.4rem 0.9rem;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .leaderboard-filter button.active {
+            background: var(--primary);
+            color: #fff;
+            border-color: var(--primary);
+        }
+
+        .view-breakdown-row {
+            display: none;
+            background: rgba(0,0,0,0.15);
+        }
+
+        .view-breakdown-row.show {
+            display: table-row;
+        }
+
+        .breakdown-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            padding: 0.5rem 0;
+        }
+
+        .breakdown-chip {
+            background: rgba(99, 102, 241, 0.1);
+            color: var(--primary);
+            padding: 3px 10px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
     </style>
 </head>
 
@@ -160,7 +209,7 @@
                     <div id="val-avg-time" class="stat-value">...</div>
                 </div>
                 <div class="glass-card stat-card">
-                    <div class="stat-label">24h Visits</div>
+                    <div class="stat-label">24 Hours New Visit</div>
                     <div id="val-visits" class="stat-value">...</div>
                 </div>
 
@@ -213,13 +262,20 @@
 
             <div class="glass-card" style="margin-top: 2rem;">
                 <h2>Top Users</h2>
+                <div class="leaderboard-filter" id="leaderboard-filter">
+                    <button class="active" data-period="day">Today</button>
+                    <button data-period="week">This Week</button>
+                    <button data-period="month">This Month</button>
+                </div>
                 <div class="table-container">
                     <table>
                         <thead>
                             <tr>
                                 <th>User</th>
                                 <th>Email</th>
+                                <th>Time Spent</th>
                                 <th>Tier</th>
+                                <th></th>
                             </tr>
                         </thead>
                         <tbody id="user-table-body">

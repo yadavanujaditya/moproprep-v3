@@ -40,7 +40,7 @@ service cloud.firestore {
 
       // Progress Subcollection (User managed)
       match /progress/{progressId} {
-        allow read, write: if isOwner(userId);
+        allow read, write: if isOwner(userId) || isAdmin();
       }
 
       // Referrals Subcollection
@@ -88,6 +88,18 @@ service cloud.firestore {
         // No editing or deleting messages
         allow update, delete: if isAdmin();
       }
+    }
+
+    // Presence Collection (Active users count)
+    match /presence/{userId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Daily Mini Test Submissions (Synchronized Leaderboard)
+    match /daily_mini_test_submissions/{submissionId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.resource.data.userId == request.auth.uid;
     }
   }
 }

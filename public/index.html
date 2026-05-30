@@ -105,8 +105,6 @@
                     PRO Member</span>
             </div>
             <div class="header-actions">
-                <button id="btn-toggle-squad-sidebar" class="icon-btn" title="Study Squad Chat"
-                    style="font-size: 1.2rem; color: var(--primary); display: none; margin-right: -0.25rem;">👥</button>
                 <button id="btn-profile-header" class="icon-btn" title="View Profile & Referrals"
                     style="font-size: 1.2rem; color: var(--primary); display: none; margin-right: -0.25rem;">👤</button>
                 <button id="btn-bookmarks-header" class="icon-btn" title="View Bookmarks"
@@ -245,15 +243,33 @@
                     </div>
                 </div>
 
+                <!-- 📊 Real-time Presence Counter -->
+                <div id="presence-counter-container" style="display: flex; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap;">
+                    <div class="glass-card" style="flex: 1; min-width: 140px; display: flex; align-items: center; gap: 0.75rem; padding: 0.85rem 1.1rem; border-color: rgba(16, 185, 129, 0.2); background: linear-gradient(135deg, var(--surface-card), rgba(16, 185, 129, 0.03));">
+                        <span style="font-size: 1.4rem;">🟢</span>
+                        <div>
+                            <div id="presence-active-count" style="font-size: 1.3rem; font-weight: 800; color: var(--secondary); line-height: 1;">0</div>
+                            <div style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">Students Active</div>
+                        </div>
+                    </div>
+                    <div class="glass-card" style="flex: 1; min-width: 140px; display: flex; align-items: center; gap: 0.75rem; padding: 0.85rem 1.1rem; border-color: rgba(99, 102, 241, 0.2); background: linear-gradient(135deg, var(--surface-card), rgba(99, 102, 241, 0.03));">
+                        <span style="font-size: 1.4rem;">📝</span>
+                        <div>
+                            <div id="presence-solving-count" style="font-size: 1.3rem; font-weight: 800; color: var(--primary); line-height: 1;">0</div>
+                            <div style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">Solving PYQs</div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- 🗺️ Journey Roadmap Section -->
                 <div class="glass-card" style="margin-bottom: 1.5rem; padding: 1.5rem; position: relative; overflow: hidden; background: linear-gradient(180deg, var(--surface), rgba(99, 102, 241, 0.02));">
                     <h3 style="font-size: 1.15rem; font-weight: 700; color: var(--text-main); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
                         <span>🗺️</span> UPSC CMS Mastery Road
                     </h3>
                     
-                    <div class="roadmap-container" style="position: relative; width: 100%; height: 260px; background: rgba(0,0,0,0.1); border-radius: 16px; overflow: hidden; border: 1px solid var(--border);">
+                    <div class="roadmap-container" style="position: relative; width: 100%; height: 260px; background: rgba(0,0,0,0.1); border-radius: 16px; overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; border: 1px solid var(--border);">
                         <!-- SVG Road Path -->
-                        <svg id="roadmap-svg" width="100%" height="100%" viewBox="0 0 800 260" style="display: block;">
+                        <svg id="roadmap-svg" width="800" height="260" viewBox="0 0 800 260" style="display: block; min-width: 800px;">
                             <defs>
                                 <linearGradient id="road-grad" x1="0%" y1="0%" x2="100%" y2="0%">
                                     <stop offset="0%" stop-color="#4F46E5" />
@@ -379,9 +395,10 @@
                         </div>
                         <span class="badge-pill success" style="width: fit-content; margin: 0; padding: 2px 8px; font-size: 0.7rem; font-weight: 600;">FREE FOR ALL</span>
                         <p style="font-size: 0.82rem; color: var(--text-muted); line-height: 1.5; margin: 0;">
-                            Window opens from **5:00 PM to 8:00 PM** daily. Ranks/Answers lock &amp; reveal synchronously at **8:00 PM**.
+                            20-Q daily mini test — active from <strong>8:00 AM to 8:10 PM</strong> daily. Results &amp; ranks reveal next day at <strong>7:00 AM</strong>.
                         </p>
                         <button id="btn-start-daily-mini" class="secondary-btn" style="padding: 0.65rem 1rem; font-size: 0.85rem; border-radius: 10px; width: 100%; border-color: var(--secondary); color: var(--secondary); background: rgba(16,185,129,0.03); margin-top: auto;">Solve Today's Test</button>
+                        <button id="btn-view-mini-results" class="secondary-btn" style="padding: 0.65rem 1rem; font-size: 0.85rem; border-radius: 10px; width: 100%; border-color: var(--primary); color: var(--primary); background: transparent; margin-top: 0.5rem; display: none;">View Test Results</button>
                     </div>
 
                     <!-- ⏱️ SuperCMS Mornings Card -->
@@ -392,74 +409,47 @@
                             </h3>
                             <button class="share-session-btn" data-session="morning_kickstart" title="Share SuperCMS Mornings" style="background: rgba(99, 102, 241, 0.08); border: 1px solid rgba(99, 102, 241, 0.15); width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--primary); transition: all 0.2s; padding: 0;"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg></button>
                         </div>
-                        <span class="badge-pill" style="width: fit-content; margin: 0; padding: 2px 8px; font-size: 0.7rem; background: rgba(99, 102, 241, 0.12); color: var(--primary); font-weight: 600;">POMODORO LOBBY</span>
+                        <span class="badge-pill success" style="width: fit-content; margin: 0; padding: 2px 8px; font-size: 0.7rem; font-weight: 600;">FREE FOR ALL</span>
                         <p style="font-size: 0.82rem; color: var(--text-muted); line-height: 1.5; margin: 0;">
-                            Synchronized study clock and peer library starts daily at **8:30 AM**. Join to focus together.
+                            30 high-yield PYQ quiz — active from <strong>8:30 AM to 2:00 PM</strong> daily.
                         </p>
-                        <button id="btn-kickstart-pomodoro" class="icon-btn" style="background: var(--primary-glow); color: var(--primary); padding: 0.65rem 1rem; font-size: 0.85rem; border-radius: 10px; text-align: center; justify-content: center; width: 100%; margin-top: auto;">
-                            Join (8:30 AM)
+                        <button id="btn-morning-pomodoro" class="icon-btn" style="background: rgba(99, 102, 241, 0.12); color: var(--primary); padding: 0.65rem 1rem; font-size: 0.85rem; border-radius: 10px; text-align: center; justify-content: center; width: 100%; margin-top: auto; border: none; cursor: pointer;">
+                            Join (8:30 AM – 2:00 PM)
                         </button>
                     </div>
 
-                    <!-- 👥 Study Squads & real-time chat -->
-                    <div class="glass-card" style="display: flex; flex-direction: column; gap: 1rem; grid-column: 1 / -1; min-height: 300px;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem;">
-                            <h3 style="font-size: 1.15rem; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 0.5rem;">
-                                <span>👥</span> Study Squad &amp; Library
+                    <!-- ⏱️ SuperCMS Afternoon Card -->
+                    <div class="glass-card" style="display: flex; flex-direction: column; gap: 1rem; border-color: rgba(16, 185, 129, 0.15); background: linear-gradient(135deg, var(--surface-card), rgba(16, 185, 129, 0.015)); padding: 1.5rem; border-radius: 20px; position: relative;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                            <h3 style="font-size: 1.15rem; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 0.5rem; margin: 0;">
+                                <span>⚡</span> SuperCMS Afternoon
                             </h3>
-                            <!-- Simulated active peers count -->
-                            <div style="font-size: 0.82rem; font-weight: 700; color: var(--secondary); display: flex; align-items: center; gap: 0.25rem;">
-                                <span style="width: 8px; height: 8px; border-radius: 50%; background: var(--secondary); display: inline-block; animation: rotation 2s linear infinite;"></span>
-                                <span id="active-peers-count">24</span> Medical Students Study-Active Now
-                            </div>
+                            <button class="share-session-btn" data-session="afternoon_kickstart" title="Share SuperCMS Afternoon" style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.15); width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--secondary); transition: all 0.2s; padding: 0;"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg></button>
                         </div>
+                        <span class="badge-pill success" style="width: fit-content; margin: 0; padding: 2px 8px; font-size: 0.7rem; font-weight: 600;">FREE FOR ALL</span>
+                        <p style="font-size: 0.82rem; color: var(--text-muted); line-height: 1.5; margin: 0;">
+                            30 high-yield PYQ quiz — active from <strong>2:00 PM to 6:00 PM</strong> daily.
+                        </p>
+                        <button id="btn-afternoon-pomodoro" class="icon-btn" style="background: rgba(16, 185, 129, 0.12); color: var(--secondary); padding: 0.65rem 1rem; font-size: 0.85rem; border-radius: 10px; text-align: center; justify-content: center; width: 100%; margin-top: auto; border: none; cursor: pointer;">
+                            Join (2:00 PM – 6:00 PM)
+                        </button>
+                    </div>
 
-                        <!-- Setup State: Form or Join Squad (Initially visible) -->
-                        <div id="squad-setup-container" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1rem; width: 100%; padding: 2rem 1rem; text-align: center;">
-                            <div style="font-size: 3rem;">👥</div>
-                            <h4 style="font-weight: 700; font-size: 1.1rem; color: var(--text-main); margin: 0;">Collaborative Study Squad</h4>
-                            <p style="color: var(--text-muted); font-size: 0.88rem; max-width: 450px; margin: 0; line-height: 1.5;">
-                                You are not in a study squad yet. Form a new squad to invite your friends, or enter a squad code to join one and track each other's progress in real-time.
-                            </p>
-                            <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; justify-content: center; margin-top: 0.5rem; width: 100%; max-width: 450px;">
-                                <button id="btn-form-squad" class="primary-btn" style="flex: 1; padding: 0.75rem 1.25rem; font-size: 0.88rem; border-radius: 10px; min-width: 160px;">➕ Form New Squad</button>
-                                <div style="display: flex; gap: 0.5rem; flex: 1.2; min-width: 220px; align-items: center; width: 100%;">
-                                    <input type="text" id="join-squad-code" placeholder="Enter Squad Code" style="flex: 1; padding: 0.75rem 1rem !important; border-radius: 10px !important; font-size: 0.88rem !important; text-transform: uppercase;">
-                                    <button id="btn-join-squad" class="secondary-btn" style="padding: 0.75rem 1.25rem; font-size: 0.88rem; border-radius: 10px; border-color: var(--primary); color: var(--primary); background: transparent; width: auto; margin: 0;">Join</button>
-                                </div>
-                            </div>
+                    <!-- ⏱️ SuperCMS Evening Card -->
+                    <div class="glass-card" style="display: flex; flex-direction: column; gap: 1rem; border-color: rgba(245, 158, 11, 0.15); background: linear-gradient(135deg, var(--surface-card), rgba(245, 158, 11, 0.015)); padding: 1.5rem; border-radius: 20px; position: relative;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                            <h3 style="font-size: 1.15rem; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 0.5rem; margin: 0;">
+                                <span>🔥</span> SuperCMS Evening
+                            </h3>
+                            <button class="share-session-btn" data-session="evening_kickstart" title="Share SuperCMS Evening" style="background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.15); width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #F59E0B; transition: all 0.2s; padding: 0;"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg></button>
                         </div>
-
-                        <!-- Active State: Squad Members & Live Chat (Initially hidden) -->
-                        <div id="squad-active-container" style="display: none; flex-direction: column; gap: 1rem; width: 100%;">
-                            <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(99, 102, 241, 0.05); padding: 0.5rem 1rem; border-radius: 10px; border: 1px dashed rgba(99, 102, 241, 0.2); flex-wrap: wrap; gap: 0.5rem;">
-                                <span style="font-size: 0.88rem; color: var(--text-main); font-weight: 600;">
-                                    🏫 Active Squad: <span id="active-squad-code" style="color: var(--primary); font-weight: 700; cursor: pointer; text-decoration: underline;" title="Click to copy code">SQUAD-XXXX</span>
-                                </span>
-                                <div style="display: flex; gap: 0.5rem; align-items: center;">
-                                    <button id="btn-copy-squad-link" class="secondary-btn" style="padding: 0.3rem 0.8rem; font-size: 0.75rem; border-radius: 6px; width: auto; height: auto; border-color: var(--primary); color: var(--primary); background: transparent; margin: 0;">🔗 Copy Join Link</button>
-                                    <button id="btn-leave-squad" class="secondary-btn" style="padding: 0.3rem 0.8rem; font-size: 0.75rem; border-radius: 6px; width: auto; height: auto; border-color: #EF4444; color: #EF4444; background: rgba(239, 68, 68, 0.03); margin: 0;">🚪 Leave Squad</button>
-                                </div>
-                            </div>
-                            <div style="display: flex; gap: 1.5rem; flex-wrap: wrap; width: 100%; align-items: center;">
-                                <!-- Squad Members Panel -->
-                                <div style="flex: 1.2; min-width: 240px; display: flex; flex-direction: column; gap: 0.6rem;">
-                                    <span style="font-size: 0.85rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Your Squad Members</span>
-                                    <div id="squad-members-list" style="display: flex; flex-direction: column; gap: 0.5rem; max-height: 180px; overflow-y: auto;">
-                                        <!-- Populated dynamically -->
-                                    </div>
-                                </div>
-
-                                <!-- Redirect to sidebar chat -->
-                                <div style="flex: 1; min-width: 200px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.75rem; border-left: 1px solid var(--border); padding-left: 1.5rem; text-align: center;">
-                                    <div style="font-size: 2rem;">💬</div>
-                                    <h4 style="margin: 0; font-weight: 700; font-size: 0.95rem;">Squad Discussion Room</h4>
-                                    <p style="font-size: 0.78rem; color: var(--text-muted); margin: 0; max-width: 200px; line-height: 1.45;">
-                                        Chat with your squad, ask doubts, and share your milestones live.
-                                    </p>
-                                    <button id="btn-open-squad-chat-drawer" class="primary-btn" style="padding: 0.6rem 1.2rem; border-radius: 8px; font-size: 0.8rem; margin-top: 0.25rem;">💬 Open Chat Drawer</button>
-                                </div>
-                            </div>
+                        <span class="badge-pill" style="width: fit-content; margin: 0; padding: 2px 8px; font-size: 0.7rem; background: rgba(245, 158, 11, 0.12); color: #F59E0B; font-weight: 600;">FREE FOR ALL</span>
+                        <p style="font-size: 0.82rem; color: var(--text-muted); line-height: 1.5; margin: 0;">
+                            30 high-yield PYQ quiz — active from <strong>6:00 PM to 8:30 AM</strong> daily.
+                        </p>
+                        <button id="btn-evening-pomodoro" class="icon-btn" style="background: rgba(245, 158, 11, 0.12); color: #F59E0B; padding: 0.65rem 1rem; font-size: 0.85rem; border-radius: 10px; text-align: center; justify-content: center; width: 100%; margin-top: auto; border: none; cursor: pointer;">
+                            Join (6:00 PM – 8:30 AM)
+                        </button>
                     </div>
 
                     <!-- 💬 General Chat (Open for all) -->
@@ -554,51 +544,56 @@
 
                 <!-- Custom Selection Filter for AI Duel -->
                 <div id="ai-duel-filters-card" class="glass-card filters-card">
-                    <h3 style="font-size: 1.2rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.5rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
-                        <span>🎯</span> Customize Duel Questions (Optional)
-                    </h3>
+                    <div id="ai-duel-filters-header" style="display: flex; justify-content: space-between; align-items: center; cursor: pointer; padding: 0.25rem 0;">
+                        <h3 style="font-size: 1.15rem; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 0.5rem; margin: 0;">
+                            <span>🎯</span> Customize Duel Questions (Optional)
+                        </h3>
+                        <span id="ai-duel-filters-toggle-icon" style="font-size: 0.85rem; color: var(--text-muted); transition: transform 0.2s;">▼</span>
+                    </div>
                     
-                    <!-- Subject Selector -->
-                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-                        <label style="font-weight: 600; font-size: 0.95rem; color: var(--text-main);">Subject</label>
-                        <select id="ai-duel-subject" style="background: var(--surface); color: var(--text-main); border: 1px solid var(--border); padding: 0.8rem 1.2rem; border-radius: 12px; font-family: var(--font-family); font-size: 0.95rem; outline: none; cursor: pointer; width: 100%;">
-                            <option value="all">All Subjects</option>
-                        </select>
-                    </div>
+                    <div id="ai-duel-filters-body" style="display: flex; flex-direction: column; gap: 1rem; width: 100%; border-top: 1px solid var(--border); padding-top: 1rem; margin-top: 0.5rem;">
+                        <!-- Subject Selector -->
+                        <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                            <label style="font-weight: 600; font-size: 0.95rem; color: var(--text-main);">Subject</label>
+                            <select id="ai-duel-subject" style="background: var(--surface); color: var(--text-main); border: 1px solid var(--border); padding: 0.8rem 1.2rem; border-radius: 12px; font-family: var(--font-family); font-size: 0.95rem; outline: none; cursor: pointer; width: 100%;">
+                                <option value="all">All Subjects</option>
+                            </select>
+                        </div>
 
-                    <!-- Chapter Selector -->
-                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-                        <label style="font-weight: 600; font-size: 0.95rem; color: var(--text-main);">Chapter</label>
-                        <select id="ai-duel-chapter" style="background: var(--surface); color: var(--text-main); border: 1px solid var(--border); padding: 0.8rem 1.2rem; border-radius: 12px; font-family: var(--font-family); font-size: 0.95rem; outline: none; cursor: pointer; width: 100%;">
-                            <option value="all">All Chapters</option>
-                        </select>
-                    </div>
+                        <!-- Chapter Selector -->
+                        <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                            <label style="font-weight: 600; font-size: 0.95rem; color: var(--text-main);">Chapter</label>
+                            <select id="ai-duel-chapter" style="background: var(--surface); color: var(--text-main); border: 1px solid var(--border); padding: 0.8rem 1.2rem; border-radius: 12px; font-family: var(--font-family); font-size: 0.95rem; outline: none; cursor: pointer; width: 100%;">
+                                <option value="all">All Chapters</option>
+                            </select>
+                        </div>
 
-                    <!-- Topic Selector -->
-                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-                        <label style="font-weight: 600; font-size: 0.95rem; color: var(--text-main);">Topic</label>
-                        <select id="ai-duel-topic" style="background: var(--surface); color: var(--text-main); border: 1px solid var(--border); padding: 0.8rem 1.2rem; border-radius: 12px; font-family: var(--font-family); font-size: 0.95rem; outline: none; cursor: pointer; width: 100%;">
-                            <option value="all">All Topics</option>
-                        </select>
-                    </div>
+                        <!-- Topic Selector -->
+                        <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                            <label style="font-weight: 600; font-size: 0.95rem; color: var(--text-main);">Topic</label>
+                            <select id="ai-duel-topic" style="background: var(--surface); color: var(--text-main); border: 1px solid var(--border); padding: 0.8rem 1.2rem; border-radius: 12px; font-family: var(--font-family); font-size: 0.95rem; outline: none; cursor: pointer; width: 100%;">
+                                <option value="all">All Topics</option>
+                            </select>
+                        </div>
 
-                    <!-- Years selector panel -->
-                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <label style="font-weight: 600; font-size: 0.95rem; color: var(--text-main);">Select Years</label>
-                            <div style="display: flex; gap: 0.5rem;">
-                                <button id="ai-duel-years-select-all" class="secondary-btn" style="padding: 0.25rem 0.5rem; font-size: 0.75rem; border-radius: 6px; width: auto; height: auto; margin: 0;">All</button>
-                                <button id="ai-duel-years-clear-all" class="secondary-btn" style="padding: 0.25rem 0.5rem; font-size: 0.75rem; border-radius: 6px; width: auto; height: auto; margin: 0;">Clear</button>
+                        <!-- Years selector panel -->
+                        <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <label style="font-weight: 600; font-size: 0.95rem; color: var(--text-main);">Select Years</label>
+                                <div style="display: flex; gap: 0.5rem;">
+                                    <button id="ai-duel-years-select-all" class="secondary-btn" style="padding: 0.25rem 0.5rem; font-size: 0.75rem; border-radius: 6px; width: auto; height: auto; margin: 0;">All</button>
+                                    <button id="ai-duel-years-clear-all" class="secondary-btn" style="padding: 0.25rem 0.5rem; font-size: 0.75rem; border-radius: 6px; width: auto; height: auto; margin: 0;">Clear</button>
+                                </div>
+                            </div>
+                            <div id="ai-duel-years-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; background: var(--surface); padding: 1rem; border-radius: 12px; border: 1px solid var(--border);">
+                                <!-- Year checkboxes built dynamically -->
                             </div>
                         </div>
-                        <div id="ai-duel-years-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; background: var(--surface); padding: 1rem; border-radius: 12px; border: 1px solid var(--border);">
-                            <!-- Year checkboxes built dynamically -->
-                        </div>
-                    </div>
 
-                    <!-- Available questions counter -->
-                    <div style="font-size: 0.95rem; font-weight: 600; color: var(--text-muted); text-align: right;">
-                        Available Questions for Duel: <span id="ai-duel-q-count" style="color: var(--secondary); font-weight: 700;">0</span>
+                        <!-- Available questions counter -->
+                        <div style="font-size: 0.95rem; font-weight: 600; color: var(--text-muted); text-align: right;">
+                            Available Questions for Duel: <span id="ai-duel-q-count" style="color: var(--secondary); font-weight: 700;">0</span>
+                        </div>
                     </div>
                 </div>
 
@@ -734,76 +729,85 @@
                     <h2>Custom Quiz Builder</h2>
                     <p>Build your personalized practice session with specific filters.</p>
                 </div>
-                <div class="glass-card filters-card">
-                    <!-- Subject Selector -->
-                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-                        <label style="font-weight: 600; font-size: 0.95rem; color: var(--text-main);">Subject</label>
-                        <select id="builder-subject" style="background: var(--surface); color: var(--text-main); border: 1px solid var(--border); padding: 0.8rem 1.2rem; border-radius: 12px; font-family: var(--font-family); font-size: 0.95rem; outline: none; cursor: pointer; width: 100%;">
-                            <option value="all">All Subjects</option>
-                        </select>
+                <div class="glass-card filters-card" id="custom-builder-filters-card">
+                    <div id="custom-builder-filters-header" style="display: flex; justify-content: space-between; align-items: center; cursor: pointer; padding: 0.25rem 0;">
+                        <h3 style="font-size: 1.15rem; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 0.5rem; margin: 0;">
+                            <span>🛠️</span> Customize Quiz Filters
+                        </h3>
+                        <span id="custom-builder-filters-toggle-icon" style="font-size: 0.85rem; color: var(--text-muted); transition: transform 0.2s;">▼</span>
                     </div>
-
-                    <!-- Chapter Selector -->
-                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-                        <label style="font-weight: 600; font-size: 0.95rem; color: var(--text-main);">Chapter</label>
-                        <select id="builder-chapter" style="background: var(--surface); color: var(--text-main); border: 1px solid var(--border); padding: 0.8rem 1.2rem; border-radius: 12px; font-family: var(--font-family); font-size: 0.95rem; outline: none; cursor: pointer; width: 100%;">
-                            <option value="all">All Chapters</option>
-                        </select>
-                    </div>
-
-                    <!-- Topic Selector -->
-                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-                        <label style="font-weight: 600; font-size: 0.95rem; color: var(--text-main);">Topic</label>
-                        <select id="builder-topic" style="background: var(--surface); color: var(--text-main); border: 1px solid var(--border); padding: 0.8rem 1.2rem; border-radius: 12px; font-family: var(--font-family); font-size: 0.95rem; outline: none; cursor: pointer; width: 100%;">
-                            <option value="all">All Topics</option>
-                        </select>
-                    </div>
-
-                    <!-- Weightage filter -->
-                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-                        <label style="font-weight: 600; font-size: 0.95rem; color: var(--text-main);">Exam Weightage</label>
-                        <div style="display: flex; gap: 1.5rem; flex-wrap: wrap;">
-                            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; color: var(--text-main);">
-                                <input type="radio" name="builder-weightage" value="all" checked style="width: 18px; height: 18px; cursor: pointer;"> All Weightages
-                            </label>
-                            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; color: var(--text-main);">
-                                <input type="radio" name="builder-weightage" value="high" style="width: 18px; height: 18px; cursor: pointer;"> High Priority Only
-                            </label>
+                    
+                    <div id="custom-builder-filters-body" style="display: flex; flex-direction: column; gap: 1rem; width: 100%; border-top: 1px solid var(--border); padding-top: 1rem; margin-top: 0.5rem;">
+                        <!-- Subject Selector -->
+                        <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                            <label style="font-weight: 600; font-size: 0.95rem; color: var(--text-main);">Subject</label>
+                            <select id="builder-subject" style="background: var(--surface); color: var(--text-main); border: 1px solid var(--border); padding: 0.8rem 1.2rem; border-radius: 12px; font-family: var(--font-family); font-size: 0.95rem; outline: none; cursor: pointer; width: 100%;">
+                                <option value="all">All Subjects</option>
+                            </select>
                         </div>
-                    </div>
 
-                    <!-- Status filter -->
-                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-                        <label style="font-weight: 600; font-size: 0.95rem; color: var(--text-main);">Question Status</label>
-                        <div style="display: flex; gap: 1.5rem; flex-wrap: wrap;">
-                            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; color: var(--text-main);">
-                                <input type="radio" name="builder-status" value="all" checked style="width: 18px; height: 18px; cursor: pointer;"> All Questions
-                            </label>
-                            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; color: var(--text-main);">
-                                <input type="radio" name="builder-status" value="unseen" style="width: 18px; height: 18px; cursor: pointer;"> Unseen Only
-                            </label>
-                            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; color: var(--text-main);">
-                                <input type="radio" name="builder-status" value="incorrect" style="width: 18px; height: 18px; cursor: pointer;"> Incorrectly Answered Only
-                            </label>
+                        <!-- Chapter Selector -->
+                        <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                            <label style="font-weight: 600; font-size: 0.95rem; color: var(--text-main);">Chapter</label>
+                            <select id="builder-chapter" style="background: var(--surface); color: var(--text-main); border: 1px solid var(--border); padding: 0.8rem 1.2rem; border-radius: 12px; font-family: var(--font-family); font-size: 0.95rem; outline: none; cursor: pointer; width: 100%;">
+                                <option value="all">All Chapters</option>
+                            </select>
                         </div>
-                    </div>
 
-                    <!-- Years selector panel inside builder -->
-                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <label style="font-weight: 600; font-size: 0.95rem; color: var(--text-main);">Select Years</label>
-                            <div style="display: flex; gap: 0.5rem;">
-                                <button id="builder-years-select-all" class="secondary-btn" style="padding: 0.25rem 0.5rem; font-size: 0.75rem; border-radius: 6px; width: auto; height: auto; margin: 0;">All</button>
-                                <button id="builder-years-clear-all" class="secondary-btn" style="padding: 0.25rem 0.5rem; font-size: 0.75rem; border-radius: 6px; width: auto; height: auto; margin: 0;">Clear</button>
+                        <!-- Topic Selector -->
+                        <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                            <label style="font-weight: 600; font-size: 0.95rem; color: var(--text-main);">Topic</label>
+                            <select id="builder-topic" style="background: var(--surface); color: var(--text-main); border: 1px solid var(--border); padding: 0.8rem 1.2rem; border-radius: 12px; font-family: var(--font-family); font-size: 0.95rem; outline: none; cursor: pointer; width: 100%;">
+                                <option value="all">All Topics</option>
+                            </select>
+                        </div>
+
+                        <!-- Weightage filter -->
+                        <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                            <label style="font-weight: 600; font-size: 0.95rem; color: var(--text-main);">Exam Weightage</label>
+                            <div style="display: flex; gap: 1.5rem; flex-wrap: wrap;">
+                                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; color: var(--text-main);">
+                                    <input type="radio" name="builder-weightage" value="all" checked style="width: 18px; height: 18px; cursor: pointer;"> All Weightages
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; color: var(--text-main);">
+                                    <input type="radio" name="builder-weightage" value="high" style="width: 18px; height: 18px; cursor: pointer;"> High Priority Only
+                                </label>
                             </div>
                         </div>
-                        <div id="builder-years-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; background: var(--surface); padding: 1rem; border-radius: 12px; border: 1px solid var(--border);">
-                            <!-- Year checkboxes built dynamically -->
+
+                        <!-- Status filter -->
+                        <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                            <label style="font-weight: 600; font-size: 0.95rem; color: var(--text-main);">Question Status</label>
+                            <div style="display: flex; gap: 1.5rem; flex-wrap: wrap;">
+                                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; color: var(--text-main);">
+                                    <input type="radio" name="builder-status" value="all" checked style="width: 18px; height: 18px; cursor: pointer;"> All Questions
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; color: var(--text-main);">
+                                    <input type="radio" name="builder-status" value="unseen" style="width: 18px; height: 18px; cursor: pointer;"> Unseen Only
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; color: var(--text-main);">
+                                    <input type="radio" name="builder-status" value="incorrect" style="width: 18px; height: 18px; cursor: pointer;"> Incorrectly Answered Only
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Years selector panel inside builder -->
+                        <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <label style="font-weight: 600; font-size: 0.95rem; color: var(--text-main);">Select Years</label>
+                                <div style="display: flex; gap: 0.5rem;">
+                                    <button id="builder-years-select-all" class="secondary-btn" style="padding: 0.25rem 0.5rem; font-size: 0.75rem; border-radius: 6px; width: auto; height: auto; margin: 0;">All</button>
+                                    <button id="builder-years-clear-all" class="secondary-btn" style="padding: 0.25rem 0.5rem; font-size: 0.75rem; border-radius: 6px; width: auto; height: auto; margin: 0;">Clear</button>
+                                </div>
+                            </div>
+                            <div id="builder-years-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; background: var(--surface); padding: 1rem; border-radius: 12px; border: 1px solid var(--border);">
+                                <!-- Year checkboxes built dynamically -->
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Start Button -->
-                    <div style="margin-top: 1.5rem; display: flex; justify-content: center;">
+                    <!-- Start Button (Always Visible) -->
+                    <div style="margin-top: 1.5rem; display: flex; justify-content: center; width: 100%; border-top: 1px dashed var(--border); padding-top: 1rem;">
                         <button id="builder-start-btn" class="primary-btn" style="padding: 1rem 2.5rem; font-size: 1.1rem; border-radius: 14px; box-shadow: 0 8px 30px var(--primary-glow); transform: translateY(0); transition: all 0.2s;">
                             Start Quiz (<span id="builder-q-count">0</span> Questions)
                         </button>
@@ -943,7 +947,7 @@
                 </div>
 
                 <!-- Core Summary Metrics -->
-                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 2rem; width: 100%;">
+                <div class="analytics-grid-3" style="margin-bottom: 2rem; width: 100%;">
                     <div class="glass-card" style="padding: 1.5rem; text-align: center; background: rgba(194, 24, 91, 0.03);">
                         <div style="font-size: 2rem; margin-bottom: 0.25rem;">📚</div>
                         <div style="font-size: 2.2rem; font-weight: 800; color: var(--primary);" id="stat-total-solved">0</div>
@@ -972,7 +976,7 @@
                 </div>
 
                 <!-- Pending Mastery Areas -->
-                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; width: 100%;">
+                <div class="analytics-grid-2" style="width: 100%;">
                     <!-- Pending Topics -->
                     <div class="glass-card" style="padding: 2rem;">
                         <h3 style="font-size: 1.15rem; font-weight: 700; color: var(--text-main); margin-bottom: 1rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
@@ -1102,26 +1106,33 @@
                 </div>
 
                 <div class="question-card glass-card">
-                    <div class="question-meta">
-                        <span class="year-tag" id="q-year">2020</span>
-                        <span class="category-tag" id="q-category">Anatomy</span>
-                        <button id="bookmark-btn" class="bookmark-btn" title="Bookmark this question">
-                            <span class="star-outline">☆</span>
-                            <span class="star-filled">★</span>
-                        </button>
-                    </div>
-                    <h3 id="question-text">Loading question...</h3>
-                    <div id="options-container" class="options-list">
-                        <!-- Options injected here -->
-                    </div>
-
-                    <div id="feedback-area" class="feedback" style="display: none;">
-                        <div class="feedback-content">
-                            <span id="feedback-icon"></span>
-                            <p id="feedback-text"></p>
+                    <div class="question-meta" id="question-card-header" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                        <div style="display: flex; gap: 0.5rem; align-items: center;">
+                            <span class="year-tag" id="q-year">2020</span>
+                            <span class="category-tag" id="q-category">Anatomy</span>
                         </div>
-                        <div class="explanation" id="explanation-text"></div>
-                        <button id="next-btn" class="primary-btn">Next Question →</button>
+                        <div style="display: flex; gap: 0.5rem; align-items: center;">
+                            <button id="bookmark-btn" class="bookmark-btn" title="Bookmark this question" style="margin-right: 0.5rem;">
+                                <span class="star-outline">☆</span>
+                                <span class="star-filled">★</span>
+                            </button>
+                            <span id="question-card-toggle-icon" style="font-size: 0.85rem; color: var(--text-muted); transition: transform 0.2s; margin-left: 0.25rem;">▼</span>
+                        </div>
+                    </div>
+                    <div id="question-card-body" style="display: flex; flex-direction: column; width: 100%;">
+                        <h3 id="question-text" style="margin-top: 1rem;">Loading question...</h3>
+                        <div id="options-container" class="options-list">
+                            <!-- Options injected here -->
+                        </div>
+
+                        <div id="feedback-area" class="feedback" style="display: none;">
+                            <div class="feedback-content">
+                                <span id="feedback-icon"></span>
+                                <p id="feedback-text"></p>
+                            </div>
+                            <div class="explanation" id="explanation-text"></div>
+                            <button id="next-btn" class="primary-btn">Next Question →</button>
+                        </div>
                     </div>
                 </div>
             </section>
@@ -1192,20 +1203,8 @@
                     <div class="action-buttons">
                         <button id="share-quiz-btn" class="secondary-btn" style="background: rgba(16, 185, 129, 0.1); border-color: var(--secondary); color: var(--secondary);">🔗 Share Quiz</button>
                         <button id="btn-create-challenge" class="secondary-btn" style="background: rgba(245, 158, 11, 0.08); border-color: rgba(245, 158, 11, 0.4); color: #F59E0B;">⚔️ Challenge a Friend</button>
-                        <button id="btn-post-squad-chat" class="secondary-btn" style="background: rgba(99, 102, 241, 0.08); border-color: rgba(99, 102, 241, 0.3); color: var(--primary); display: none;">💬 Post to Squad</button>
                         <button id="retry-btn" class="secondary-btn">Try Again</button>
                         <button id="home-btn" class="primary-btn">Back to Home</button>
-                    </div>
-
-                    <!-- Social Share Popup (hidden by default) -->
-                    <div id="challenge-share-popup" style="display: none; margin-top: 1rem; padding: 1rem; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; text-align: center; width: 100%;">
-                        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.75rem;">Share this challenge link:</p>
-                        <input type="text" id="challenge-link-display" readonly style="width: 100%; padding: 0.6rem; border-radius: 8px; border: 1px solid var(--border); background: rgba(0,0,0,0.15); color: var(--text-main); font-size: 0.8rem; margin-bottom: 0.75rem; text-align: center;">
-                        <div style="display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap;">
-                            <button id="btn-copy-challenge" class="secondary-btn" style="width: auto; padding: 0.5rem 1rem; font-size: 0.85rem; border-radius: 8px; margin: 0;">📋 Copy Link</button>
-                            <button id="btn-share-whatsapp" class="secondary-btn" style="width: auto; padding: 0.5rem 1rem; font-size: 0.85rem; border-radius: 8px; margin: 0; border-color: #25D366; color: #25D366;">WhatsApp</button>
-                            <button id="btn-share-telegram" class="secondary-btn" style="width: auto; padding: 0.5rem 1rem; font-size: 0.85rem; border-radius: 8px; margin: 0; border-color: #0088cc; color: #0088cc;">Telegram</button>
-                        </div>
                     </div>
                 </div>
             </section>
@@ -1228,11 +1227,11 @@
         <footer>
             <p>&copy; 2026 MoProPrep. Designed for Excellence.</p>
             <p style="margin-top: 0.5rem; font-size: 0.9rem;">
-                <a href="https://t.me/yadavanujaditya" target="_blank" rel="noopener noreferrer"
+                <a href="https://t.me/yourIstantDoc" target="_blank" rel="noopener noreferrer"
                     style="color: var(--secondary); text-decoration: none; margin-right: 1rem;">
                     📱 Contact Owner/Moderator
                 </a> |
-                <a href="https://t.me/HarayanaMo" target="_blank" rel="noopener noreferrer"
+                <a href="https://t.me/SuperCms" target="_blank" rel="noopener noreferrer"
                     style="color: var(--secondary); text-decoration: none; margin-left: 1rem;">
                     📢 Follow on Telegram
                 </a>
@@ -1278,70 +1277,7 @@
         </div>
     </div>
 
-    <!-- Sidebar Drawer: Study Squad Chat -->
-    <div id="squad-sidebar" class="squad-sidebar">
-        <div class="sidebar-header">
-            <h3>👥 Study Squad</h3>
-            <button id="close-sidebar-btn" class="icon-btn" style="font-size: 1.2rem; cursor: pointer; background: none; border: none; color: var(--text-main);">✕</button>
-        </div>
-        <div class="sidebar-body" style="flex: 1; display: flex; flex-direction: column; overflow-y: auto; padding: 1rem 1.25rem; gap: 1rem;">
-            <!-- Setup State (form/join) -->
-            <div id="sidebar-squad-setup" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1rem; width: 100%; padding: 1.5rem 0.5rem; text-align: center;">
-                <div style="font-size: 2.5rem;">👥</div>
-                <h4 style="font-weight: 700; font-size: 1.05rem; color: var(--text-main); margin: 0;">Collaborative Study Squad</h4>
-                <p style="color: var(--text-muted); font-size: 0.82rem; max-width: 250px; margin: 0; line-height: 1.45;">
-                    Form a new squad to invite friends, or enter a squad code to join one and track progress in real-time.
-                </p>
-                <div style="display: flex; flex-direction: column; gap: 0.75rem; width: 100%; max-width: 280px; margin-top: 0.5rem;">
-                    <button id="sidebar-btn-form-squad" class="primary-btn" style="padding: 0.7rem; font-size: 0.85rem; border-radius: 10px; width: 100%;">➕ Form New Squad</button>
-                    <div style="display: flex; gap: 0.4rem; width: 100%; align-items: center;">
-                        <input type="text" id="sidebar-join-squad-code" placeholder="SQUAD CODE" style="flex: 1; padding: 0.7rem !important; border-radius: 10px !important; font-size: 0.85rem !important; text-transform: uppercase;">
-                        <button id="sidebar-btn-join-squad" class="secondary-btn" style="padding: 0.7rem 1rem; font-size: 0.85rem; border-radius: 10px; border-color: var(--primary); color: var(--primary); background: transparent; width: auto; margin: 0;">Join</button>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Active State -->
-            <div id="sidebar-squad-active" style="display: none; flex-direction: column; gap: 1rem; width: 100%; height: 100%;">
-                <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(99, 102, 241, 0.05); padding: 0.4rem 0.8rem; border-radius: 8px; border: 1px dashed rgba(99, 102, 241, 0.2);">
-                    <span style="font-size: 0.8rem; color: var(--text-main); font-weight: 600;">
-                        🏫 Squad: <span id="sidebar-active-squad-code" style="color: var(--primary); font-weight: 700; cursor: pointer; text-decoration: underline;" title="Click to copy code">SQUAD-XXXX</span>
-                    </span>
-                    <div style="display: flex; gap: 0.3rem; align-items: center;">
-                        <button id="sidebar-btn-copy-squad-link" class="secondary-btn" style="padding: 0.25rem 0.6rem; font-size: 0.7rem; border-radius: 6px; width: auto; height: auto; border-color: var(--primary); color: var(--primary); background: transparent; margin: 0;">Link</button>
-                        <button id="sidebar-btn-leave-squad" class="secondary-btn" style="padding: 0.25rem 0.6rem; font-size: 0.7rem; border-radius: 6px; width: auto; height: auto; border-color: #EF4444; color: #EF4444; background: rgba(239, 68, 68, 0.03); margin: 0;">Leave</button>
-                    </div>
-                </div>
-                
-                <div style="display: flex; flex-direction: column; gap: 0.4rem;">
-                    <span style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Squad Members</span>
-                    <div id="sidebar-squad-members-list" style="display: flex; flex-direction: column; gap: 0.4rem; max-height: 120px; overflow-y: auto;">
-                        <!-- Populated dynamically -->
-                    </div>
-                </div>
-                
-                <div style="display: flex; flex-direction: column; gap: 0.5rem; flex: 1; min-height: 250px;">
-                    <span style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">💬 Squad Discussion</span>
-                    <div id="sidebar-squad-chat-messages" style="flex: 1; min-height: 120px; max-height: 240px; background: rgba(0,0,0,0.1); border: 1px solid var(--border); border-radius: 12px; padding: 0.75rem; overflow-y: auto; display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.8rem;">
-                        <!-- Chat messages -->
-                    </div>
-                    <div style="display: flex; gap: 0.4rem; align-items: center; width: 100%; margin-top: 0.25rem;">
-                        <input type="text" id="sidebar-squad-chat-input" placeholder="Type a message..." style="flex: 1; padding: 0.55rem 0.75rem !important; border-radius: 8px !important; font-size: 0.8rem !important;">
-                        <button id="sidebar-btn-squad-chat-send" class="primary-btn" style="width: auto; padding: 0.55rem 1rem; border-radius: 8px; font-size: 0.8rem;">Send</button>
-                    </div>
-                    <div style="display: flex; gap: 0.4rem; flex-wrap: wrap; margin-top: 0.25rem;">
-                        <button id="sidebar-btn-squad-share-milestone" class="secondary-btn" style="flex: 1; padding: 0.35rem; font-size: 0.75rem; border-radius: 6px; margin: 0; border-color: var(--secondary); color: var(--secondary); background: transparent;">🗺️ Share Milestone</button>
-                        <button id="sidebar-btn-squad-share-quiz" class="secondary-btn" style="flex: 1; padding: 0.35rem; font-size: 0.75rem; border-radius: 6px; margin: 0; border-color: var(--primary); color: var(--primary); background: transparent;">🔗 Share Quiz Link</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 
-    <!-- Floating Chat Button (Only visible in UPSC CMS) -->
-    <div id="floating-chat-btn" class="floating-chat-btn" title="Open Squad Chat" style="display: none;">
-        <span>💬</span>
-    </div>
 
     <!-- Modal: Share Session -->
     <div id="share-session-modal" class="modal" style="display: none; align-items: center; justify-content: center; z-index: 1100;">
@@ -1528,6 +1464,69 @@
             box-shadow: 0 8px 20px rgba(16, 185, 129, 0.35);
         }
     </style>
+
+    <!-- Social Share Popup Modal (glassmorphism/overlay styled) -->
+    <div id="challenge-share-popup" class="modal-overlay" style="display: none;">
+        <div class="modal-content glass-card" style="max-width: 450px; width: 90%; padding: 2rem; position: relative; border-radius: 20px; border: 1px solid var(--border); box-shadow: 0 20px 50px rgba(0,0,0,0.3); text-align: center;">
+            <button id="close-challenge-share-popup" class="close-btn" style="position: absolute; top: 1rem; right: 1rem; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-muted); padding: 0;">✕</button>
+            <h3 style="font-size: 1.25rem; font-weight: 700; color: var(--text-main); margin-bottom: 1rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem;" id="challenge-share-title">
+                <span>🔗</span> Share Quiz
+            </h3>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.75rem;">Share this link:</p>
+            <input type="text" id="challenge-link-display" readonly style="width: 100%; padding: 0.6rem; border-radius: 8px; border: 1px solid var(--border); background: rgba(0,0,0,0.15); color: var(--text-main); font-size: 0.8rem; margin-bottom: 0.75rem; text-align: center;">
+            <div style="display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap;">
+                <button id="btn-copy-challenge" class="secondary-btn" style="width: auto; padding: 0.5rem 1rem; font-size: 0.85rem; border-radius: 8px; margin: 0;">📋 Copy Link</button>
+                <button id="btn-share-whatsapp" class="secondary-btn" style="width: auto; padding: 0.5rem 1rem; font-size: 0.85rem; border-radius: 8px; margin: 0; border-color: #25D366; color: #25D366;">WhatsApp</button>
+                <button id="btn-share-telegram" class="secondary-btn" style="width: auto; padding: 0.5rem 1rem; font-size: 0.85rem; border-radius: 8px; margin: 0; border-color: #0088cc; color: #0088cc;">Telegram</button>
+    <!-- Modal: Daily Mini Test Results & Leaderboard -->
+    <div id="mini-test-results-modal" class="modal-overlay" style="display: none; align-items: center; justify-content: center; z-index: 1200;">
+        <div class="modal-content glass-card" style="max-width: 500px; width: 95%; padding: 2rem; position: relative; border-radius: 20px; border: 1px solid var(--border); box-shadow: 0 20px 50px rgba(0,0,0,0.3); max-height: 90vh; overflow-y: auto;">
+            <button id="close-mini-test-results-modal" class="close-btn" style="position: absolute; top: 1rem; right: 1rem; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-muted); padding: 0;">✕</button>
+            
+            <h3 style="font-size: 1.25rem; font-weight: 700; color: var(--text-main); margin-bottom: 1.2rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem; text-align: center;">
+                <span>📊</span> Daily Mini Test Results
+            </h3>
+            
+            <!-- Date Select -->
+            <div style="display: flex; flex-direction: column; gap: 0.4rem; text-align: left; margin-bottom: 1.2rem;">
+                <label for="mini-test-date-select" style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Select Test Date</label>
+                <select id="mini-test-date-select" style="width: 100%; padding: 0.65rem; border-radius: 10px; border: 1px solid var(--border); background: var(--surface); color: var(--text-main); font-size: 0.85rem; font-weight: 600; cursor: pointer;"></select>
+            </div>
+
+            <!-- Leaderboard Section -->
+            <div style="text-align: left; margin-bottom: 1.2rem;">
+                <h4 style="font-size: 0.9rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.6rem; text-transform: uppercase; letter-spacing: 0.05em; display: flex; justify-content: space-between; align-items: center;">
+                    <span>🏆 Leaderboard &amp; Rankings</span>
+                    <span style="font-size: 0.72rem; color: var(--text-muted); font-weight: normal; text-transform: none;">Top 10 Students</span>
+                </h4>
+                <div style="border: 1px solid var(--border); border-radius: 12px; overflow: hidden; background: rgba(0,0,0,0.1);">
+                    <table style="width: 100%; border-collapse: collapse; font-size: 0.82rem; text-align: left;">
+                        <thead>
+                            <tr style="border-bottom: 1px solid var(--border); background: rgba(255,255,255,0.02);">
+                                <th style="padding: 0.6rem 0.8rem; font-weight: 700; color: var(--text-muted); width: 60px;">Rank</th>
+                                <th style="padding: 0.6rem 0.8rem; font-weight: 700; color: var(--text-muted);">Student Name</th>
+                                <th style="padding: 0.6rem 0.8rem; font-weight: 700; color: var(--text-muted); width: 80px; text-align: center;">Score</th>
+                                <th style="padding: 0.6rem 0.8rem; font-weight: 700; color: var(--text-muted); width: 80px; text-align: center;">Time</th>
+                            </tr>
+                        </thead>
+                        <tbody id="mini-test-leaderboard-body">
+                            <!-- Leaderboard rows populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- User Performance Summary -->
+            <div id="mini-test-user-performance" style="background: rgba(99, 102, 241, 0.03); border: 1px dashed var(--primary); padding: 1rem; border-radius: 12px; text-align: left; margin-bottom: 1.5rem; font-size: 0.85rem; display: flex; flex-direction: column; gap: 0.25rem;">
+                <!-- User result status populated dynamically -->
+            </div>
+
+            <!-- Action Buttons -->
+            <div style="display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap;">
+                <button id="btn-mini-test-review" class="primary-btn" style="width: 100%; padding: 0.75rem 1rem; font-size: 0.88rem; border-radius: 10px; margin: 0;">📖 Review Answers &amp; Explanations</button>
+            </div>
+        </div>
+    </div>
 
     <script src="app.js"></script>
 </body>

@@ -117,7 +117,7 @@ app.use((req, res, next) => {
 const SESSIONS_FILE = path.join(__dirname, 'sessions.json');
 
 app.post('/api/analytics/heartbeat', (req, res) => {
-    const { sessionId, view, isNew } = req.body;
+    const { sessionId, view, isNew, email, displayName } = req.body;
     const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
 
     fs.readFile(SESSIONS_FILE, 'utf8', (err, data) => {
@@ -135,11 +135,17 @@ app.post('/api/analytics/heartbeat', (req, res) => {
                 lastSeen: now,
                 ip,
                 ua: req.headers['user-agent'],
-                views: {}
+                views: {},
+                email: email || null,
+                displayName: displayName || null
             };
         }
 
         const s = sessions[sessionId];
+        // Update user identity if provided (may arrive later after auth resolves)
+        if (email && !s.email) s.email = email;
+        if (displayName && !s.displayName) s.displayName = displayName;
+
         if (view) {
             if (!s.views[view]) s.views[view] = 0;
             if (!isNew) {
@@ -148,10 +154,10 @@ app.post('/api/analytics/heartbeat', (req, res) => {
         }
         s.lastSeen = now;
 
-        // Cleanup: remove sessions older than 24h
-        const ONE_DAY = 24 * 60 * 60 * 1000;
+        // Cleanup: remove sessions older than 30 days (retain for week/month leaderboard)
+        const THIRTY_DAYS = 30 * 24 * 60 * 60 * 1000;
         Object.keys(sessions).forEach(id => {
-            if (now - sessions[id].lastSeen > ONE_DAY) delete sessions[id];
+            if (now - sessions[id].lastSeen > THIRTY_DAYS) delete sessions[id];
         });
 
         fs.writeFile(SESSIONS_FILE, JSON.stringify(sessions, null, 2), (writeErr) => {
@@ -440,7 +446,7 @@ app.get('/api/questions/:year', async (req, res) => {
     const { tags } = req.query;
     try {
         const questions = await getQuestions();
-        let filtered = questions.filter(q => q.year.toString() === req.params.year);
+        let filtered = questions.filter(q => q.year && q.year.toString() === req.params.year);
 
         if (tags) {
             const tagList = tags.split(',').map(t => t.trim().toLowerCase());
@@ -657,7 +663,7 @@ Hello Dr. Anuj! Let's build your active recall dashboard:
 // Analytics Endpoint
 app.get('/api/admin/stats', requireAuth, (req, res) => {
     try {
-        let stats = { totalVisits: 0, uniqueVisitors: 0, recentVisits: [], avgDuration: 0, topPages: [] };
+        let stats = { totalVisits: 0, uniqueVisitors: 0, recentVisits: [], avgDuration: 0, topPages: [], topUsers: [] };
 
         if (fs.existsSync(VISITS_FILE)) {
             const visits = JSON.parse(fs.readFileSync(VISITS_FILE, 'utf8'));
@@ -686,6 +692,36 @@ app.get('/api/admin/stats', requireAuth, (req, res) => {
             stats.topPages = Object.entries(pageTotals)
                 .map(([name, time]) => ({ name, time }))
                 .sort((a, b) => b.time - a.time);
+
+            // --- Top Users Leaderboard (day / week / month) ---
+            const now = Date.now();
+            const ONE_DAY = 24 * 60 * 60 * 1000;
+            const ONE_WEEK = 7 * ONE_DAY;
+            const ONE_MONTH = 30 * ONE_DAY;
+
+            const userMap = {}; // keyed by email
+            sessionValues.forEach(s => {
+                const key = s.email || s.ip || 'anonymous';
+                if (!userMap[key]) {
+                    userMap[key] = { email: s.email || key, displayName: s.displayName || 'Anonymous', dayTime: 0, weekTime: 0, monthTime: 0, viewsBreakdown: {} };
+                }
+                const u = userMap[key];
+                const sessionTotalTime = Object.values(s.views).reduce((a, b) => a + b, 0);
+                const age = now - (s.lastSeen || now);
+
+                // Accumulate per-view breakdown
+                Object.entries(s.views).forEach(([view, time]) => {
+                    u.viewsBreakdown[view] = (u.viewsBreakdown[view] || 0) + time;
+                });
+
+                if (age <= ONE_DAY) u.dayTime += sessionTotalTime;
+                if (age <= ONE_WEEK) u.weekTime += sessionTotalTime;
+                if (age <= ONE_MONTH) u.monthTime += sessionTotalTime;
+            });
+
+            stats.topUsers = Object.values(userMap)
+                .sort((a, b) => b.monthTime - a.monthTime)
+                .slice(0, 50); // Top 50 users
         }
 
         res.json(stats);

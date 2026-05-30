@@ -35,6 +35,7 @@ document.getElementById('btn-logout').onclick = () => {
 async function initStats() {
     loadUserStats();
     loadTrafficStats();
+    setupLeaderboardFilter();
 
     // Auto-refresh traffic stats every 30 seconds
     setInterval(() => {
@@ -48,22 +49,12 @@ async function loadUserStats() {
         const usersSnap = await db.collection('users').get();
         const totalUsers = usersSnap.size;
         let proUsers = 0;
-
-        const userTableBody = document.getElementById('user-table-body');
-        userTableBody.innerHTML = '';
+        const usersByEmail = {};
 
         usersSnap.forEach(doc => {
             const u = doc.data();
             if (u.isPro) proUsers++;
-
-            const row = `
-                <tr>
-                    <td>${u.displayName || 'N/A'}</td>
-                    <td>${u.email}</td>
-                    <td><span class="status-badge ${u.isPro ? 'badge-pro' : 'badge-free'}">${u.isPro ? 'PRO' : 'Free'}</span></td>
-                </tr>
-            `;
-            userTableBody.insertAdjacentHTML('beforeend', row);
+            if (u.email) usersByEmail[u.email] = u;
         });
 
         // Revenue calculation (Price is from pricing setting)
@@ -75,18 +66,92 @@ async function loadUserStats() {
         document.getElementById('val-pro-users').innerText = proUsers;
         document.getElementById('val-revenue').innerText = '₹' + revenue.toLocaleString();
 
+        // Store for later use by leaderboard filter
+        window._usersByEmail = usersByEmail;
+
     } catch (err) {
         console.error("Error loading user stats:", err);
         document.getElementById('val-total-users').innerText = "Error";
         document.getElementById('val-pro-users').innerText = "Error";
         document.getElementById('val-revenue').innerText = "Error";
-
-        const userTableBody = document.getElementById('user-table-body');
-        if (userTableBody) {
-            userTableBody.innerHTML = `<tr><td colspan="3" style="text-align: center; color: red;">Error loading users: ${err.message}</td></tr>`;
-        }
     }
 }
+
+// --- Leaderboard Filter Logic ---
+let currentLeaderboardPeriod = 'day';
+let cachedTopUsers = [];
+
+function setupLeaderboardFilter() {
+    const filterContainer = document.getElementById('leaderboard-filter');
+    if (!filterContainer) return;
+
+    filterContainer.querySelectorAll('button').forEach(btn => {
+        btn.addEventListener('click', () => {
+            filterContainer.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            currentLeaderboardPeriod = btn.getAttribute('data-period');
+            renderTopUsersTable(cachedTopUsers, currentLeaderboardPeriod);
+        });
+    });
+}
+
+function renderTopUsersTable(topUsers, period) {
+    const userTableBody = document.getElementById('user-table-body');
+    if (!userTableBody) return;
+    userTableBody.innerHTML = '';
+
+    const usersByEmail = window._usersByEmail || {};
+
+    // Sort by chosen period
+    const timeKey = period === 'day' ? 'dayTime' : period === 'week' ? 'weekTime' : 'monthTime';
+    const sorted = [...topUsers].sort((a, b) => b[timeKey] - a[timeKey]).filter(u => u[timeKey] > 0);
+
+    if (sorted.length === 0) {
+        userTableBody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted);">No user activity for this period.</td></tr>`;
+        return;
+    }
+
+    sorted.forEach((u, idx) => {
+        const firestoreUser = usersByEmail[u.email];
+        const isPro = firestoreUser ? firestoreUser.isPro : false;
+        const displayName = u.displayName || (firestoreUser ? firestoreUser.displayName : null) || 'Anonymous';
+        const tierBadge = isPro
+            ? '<span class="status-badge badge-pro">PRO</span>'
+            : '<span class="status-badge badge-free">Free</span>';
+
+        const timeSpent = formatTime(u[timeKey]);
+        const breakdownId = `breakdown-${idx}`;
+
+        const row = `
+            <tr style="cursor: pointer;" onclick="toggleBreakdown('${breakdownId}')">
+                <td>${displayName}</td>
+                <td>${u.email}</td>
+                <td style="font-weight: 600; color: var(--primary);">${timeSpent}</td>
+                <td>${tierBadge}</td>
+                <td style="color: var(--text-muted); font-size: 0.8rem;">▼ Details</td>
+            </tr>
+            <tr id="${breakdownId}" class="view-breakdown-row">
+                <td colspan="5" style="padding: 0.75rem 1rem;">
+                    <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.4rem;">Page Breakdown:</div>
+                    <div class="breakdown-list">
+                        ${Object.entries(u.viewsBreakdown || {})
+                            .sort((a, b) => b[1] - a[1])
+                            .map(([view, time]) => `<span class="breakdown-chip">${view}: ${formatTime(time)}</span>`)
+                            .join('')
+                        }
+                    </div>
+                </td>
+            </tr>
+        `;
+        userTableBody.insertAdjacentHTML('beforeend', row);
+    });
+}
+
+// Toggle collapsible breakdown row
+window.toggleBreakdown = function(id) {
+    const row = document.getElementById(id);
+    if (row) row.classList.toggle('show');
+};
 
 async function loadTrafficStats() {
     try {
@@ -159,6 +224,12 @@ async function loadTrafficStats() {
             } else {
                 pageStatsBody.innerHTML = '<tr><td colspan="2" style="text-align: center;">No engagement data yet. Users need to browse the site to generate data.</td></tr>';
             }
+        }
+
+        // --- Top Users Leaderboard ---
+        if (data.topUsers) {
+            cachedTopUsers = data.topUsers;
+            renderTopUsersTable(cachedTopUsers, currentLeaderboardPeriod);
         }
 
     } catch (err) {

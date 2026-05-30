@@ -115,6 +115,7 @@
                             <th>Name</th>
                             <th>Email</th>
                             <th>Status</th>
+                            <th>Referrals</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -301,7 +302,7 @@
             const usersToShow = filteredUsers.slice(startIndex, endIndex);
 
             if (usersToShow.length === 0) {
-                tableBody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 1rem; color: #888;">No users found.</td></tr>';
+                tableBody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 1rem; color: #888;">No users found.</td></tr>';
             } else {
                 usersToShow.forEach(u => {
                     const btnClass = u.isPro ? 'secondary-btn' : 'primary-btn';
@@ -312,13 +313,54 @@
                         <td style="padding: 0.75rem 0;">${u.email}</td>
                         <td style="padding: 0.75rem 0;">${u.isPro ? '💎 PRO' : 'Free'}</td>
                         <td style="padding: 0.75rem 0;">
-                            <button class="${btnClass}" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;" 
-                                    onclick="toggleProStatus('${u.uid}', ${u.isPro}, '${(u.displayName || u.email || '').replace(/'/g, "\\'")}')">
-                                ${btnText}
-                            </button>
+                            <span id="ref-cell-${u.uid}" style="font-weight: 600; color: var(--text-main);">—</span>
+                            <a href="#" onclick="event.preventDefault(); toggleDetailsRow('${u.uid}', 'referrals')" 
+                               style="margin-left: 0.4rem; font-size: 0.75rem; color: var(--primary); text-decoration: underline; cursor: pointer;">Details</a>
+                        </td>
+                        <td style="padding: 0.75rem 0;">
+                            <div style="display: flex; gap: 0.35rem; align-items: center;">
+                                <button class="${btnClass}" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;" 
+                                        onclick="toggleProStatus('${u.uid}', ${u.isPro}, '${(u.displayName || u.email || '').replace(/'/g, "\\'")}')">
+                                    ${btnText}
+                                </button>
+                                <button class="secondary-btn" style="padding: 0.25rem 0.5rem; font-size: 0.75rem; background: rgba(99,102,241,0.15); border-color: rgba(99,102,241,0.3); color: #818cf8;" 
+                                        onclick="toggleDetailsRow('${u.uid}', 'progress')">
+                                    📈 Progress
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr id="details-row-${u.uid}" style="display: none; background: rgba(0,0,0,0.15); border-bottom: 1px solid rgba(255,255,255,0.05);">
+                        <td colspan="5" style="padding: 1rem;">
+                            <div style="display: flex; flex-direction: column; gap: 1rem; text-align: left;">
+                                <div id="details-referrals-${u.uid}" style="display: none;">
+                                    <h4 style="margin: 0 0 0.5rem 0; font-size: 0.95rem; color: var(--secondary);">👥 Referrals List</h4>
+                                    <div id="details-referrals-list-${u.uid}" style="font-size: 0.85rem; color: #ccc;">
+                                        Loading referrals...
+                                    </div>
+                                </div>
+                                <div id="details-progress-${u.uid}" style="display: none;">
+                                    <h4 style="margin: 0 0 0.5rem 0; font-size: 0.95rem; color: var(--primary);">📈 Student Progress Stats</h4>
+                                    <div id="details-progress-content-${u.uid}" style="font-size: 0.85rem; color: #ccc;">
+                                        Loading progress...
+                                    </div>
+                                </div>
+                            </div>
                         </td>
                     </tr>`;
                     tableBody.insertAdjacentHTML('beforeend', row);
+
+                    // Fetch referral count asynchronously and display as text
+                    (async () => {
+                        try {
+                            const refSnap = await db.collection('users').doc(u.uid).collection('referrals').get();
+                            const cell = document.getElementById(`ref-cell-${u.uid}`);
+                            if (cell) cell.innerText = refSnap.size;
+                        } catch (err) {
+                            const cell = document.getElementById(`ref-cell-${u.uid}`);
+                            if (cell) cell.innerText = '⚠️';
+                        }
+                    })();
                 });
             }
 
@@ -326,6 +368,161 @@
             document.getElementById('page-info').innerText = `Page ${currentPage} of ${totalPages} (${filteredUsers.length} users)`;
             document.getElementById('prev-page').disabled = currentPage === 1;
             document.getElementById('next-page').disabled = currentPage >= totalPages;
+        }
+
+        async function toggleDetailsRow(uid, tab) {
+            const detailsRow = document.getElementById(`details-row-${uid}`);
+            const refSection = document.getElementById(`details-referrals-${uid}`);
+            const progSection = document.getElementById(`details-progress-${uid}`);
+            
+            if (!detailsRow) return;
+            
+            // If the row is currently open and we clicked the active tab, close it
+            const isCurrentlyOpen = detailsRow.style.display !== 'none';
+            const isRefActive = refSection.style.display !== 'none';
+            const isProgActive = progSection.style.display !== 'none';
+            
+            if (isCurrentlyOpen && ((tab === 'referrals' && isRefActive) || (tab === 'progress' && isProgActive))) {
+                detailsRow.style.display = 'none';
+                refSection.style.display = 'none';
+                progSection.style.display = 'none';
+                return;
+            }
+            
+            // Otherwise, show the correct tab
+            detailsRow.style.display = 'table-row';
+            if (tab === 'referrals') {
+                refSection.style.display = 'block';
+                progSection.style.display = 'none';
+                await loadReferralsDetails(uid);
+            } else {
+                refSection.style.display = 'none';
+                progSection.style.display = 'block';
+                await loadProgressDetails(uid);
+            }
+        }
+
+        async function loadReferralsDetails(uid) {
+            const listEl = document.getElementById(`details-referrals-list-${uid}`);
+            if (!listEl) return;
+            
+            // If already loaded, don't refetch
+            if (listEl.getAttribute('data-loaded') === 'true') return;
+            
+            listEl.innerText = "Loading referrals list...";
+            try {
+                const refSnap = await db.collection('users').doc(uid).collection('referrals').get();
+                if (refSnap.empty) {
+                    listEl.innerHTML = "<span style='color: #888; font-style: italic;'>No referrals found for this student.</span>";
+                    listEl.setAttribute('data-loaded', 'true');
+                    return;
+                }
+                
+                let html = '<ul style="margin: 0; padding-left: 1.2rem; display: flex; flex-direction: column; gap: 0.4rem;">';
+                refSnap.forEach(doc => {
+                    const r = doc.data();
+                    const date = r.timestamp ? (r.timestamp.toDate ? r.timestamp.toDate().toLocaleDateString() : new Date(r.timestamp).toLocaleDateString()) : 'N/A';
+                    html += `<li><strong>${r.displayName || r.email || doc.id}</strong> - ${r.email || ''} (Joined: ${date})</li>`;
+                });
+                html += '</ul>';
+                listEl.innerHTML = html;
+                listEl.setAttribute('data-loaded', 'true');
+            } catch (err) {
+                console.error("Failed to load referrals list:", err);
+                listEl.innerHTML = `<span style='color: #f87171;'>Failed to load: ${err.message}</span>`;
+            }
+        }
+
+        async function loadProgressDetails(uid) {
+            const contentEl = document.getElementById(`details-progress-content-${uid}`);
+            if (!contentEl) return;
+            
+            // If already loaded, don't refetch
+            if (contentEl.getAttribute('data-loaded') === 'true') return;
+            
+            contentEl.innerText = "Loading student progress...";
+            try {
+                // Fetch progress solve history from users/{uid}/progress/moproprep_solve_history
+                const doc = await db.collection('users').doc(uid).collection('progress').doc('moproprep_solve_history').get();
+                if (!doc.exists) {
+                    contentEl.innerHTML = "<span style='color: #888; font-style: italic;'>No progress history found. This user hasn't completed any quizzes yet.</span>";
+                    contentEl.setAttribute('data-loaded', 'true');
+                    return;
+                }
+                
+                const data = doc.data();
+                const history = data.history || [];
+                if (history.length === 0) {
+                    contentEl.innerHTML = "<span style='color: #888; font-style: italic;'>No progress history found in records.</span>";
+                    contentEl.setAttribute('data-loaded', 'true');
+                    return;
+                }
+                
+                // Calculate metrics
+                const totalAttempted = history.length;
+                const correctCount = history.filter(h => h.isCorrect).length;
+                const accuracy = totalAttempted > 0 ? Math.round((correctCount / totalAttempted) * 100) : 0;
+                
+                // Subject wise accuracy
+                const subjectStats = {};
+                history.forEach(h => {
+                    const sub = h.subject || 'General';
+                    if (!subjectStats[sub]) {
+                        subjectStats[sub] = { attempted: 0, correct: 0 };
+                    }
+                    subjectStats[sub].attempted++;
+                    if (h.isCorrect) subjectStats[sub].correct++;
+                });
+                
+                let subjectRows = '';
+                Object.entries(subjectStats).forEach(([sub, stats]) => {
+                    const subAcc = Math.round((stats.correct / stats.attempted) * 100);
+                    subjectRows += `
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.35rem 0.5rem; background: rgba(255,255,255,0.03); border-radius: 6px; font-size: 0.8rem;">
+                            <span>${sub}</span>
+                            <span style="font-weight: 600; color: ${subAcc >= 70 ? '#34d399' : subAcc >= 50 ? '#f59e0b' : '#f87171'};">
+                                ${stats.correct}/${stats.attempted} (${subAcc}%)
+                            </span>
+                        </div>
+                    `;
+                });
+                
+                // Recent activity: last 5 questions
+                const sortedHistory = [...history].sort((a,b) => (b.timestamp || 0) - (a.timestamp || 0));
+                const recent = sortedHistory.slice(0, 5);
+                let recentHtml = '<ul style="margin: 0.5rem 0 0 0; padding-left: 1.2rem; display: flex; flex-direction: column; gap: 0.25rem;">';
+                recent.forEach(h => {
+                    const status = h.isCorrect ? '✅ Correct' : '❌ Incorrect';
+                    const date = h.timestamp ? new Date(h.timestamp).toLocaleDateString() : '';
+                    recentHtml += `<li>QID: ${h.qId} - ${h.subject || 'General'} (${status}) <span style="font-size: 0.75rem; color: #888;">${date}</span></li>`;
+                });
+                recentHtml += '</ul>';
+                
+                const html = `
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                        <div class="glass-card" style="padding: 0.75rem; background: rgba(255,255,255,0.02);">
+                            <h5 style="margin: 0 0 0.5rem 0; font-size: 0.85rem; text-transform: uppercase; color: #888;">Summary Stats</h5>
+                            <p style="margin: 0; font-size: 1.15rem; font-weight: 700; color: var(--text-main);">${totalAttempted} Attempted</p>
+                            <p style="margin: 0.25rem 0 0 0; font-size: 0.9rem; font-weight: 600; color: var(--primary);">Overall Accuracy: ${accuracy}%</p>
+                        </div>
+                        
+                        <div class="glass-card" style="padding: 0.75rem; background: rgba(255,255,255,0.02); display: flex; flex-direction: column; gap: 0.35rem;">
+                            <h5 style="margin: 0 0 0.5rem 0; font-size: 0.85rem; text-transform: uppercase; color: #888;">Subject Performance</h5>
+                            ${subjectRows}
+                        </div>
+                        
+                        <div class="glass-card" style="padding: 0.75rem; background: rgba(255,255,255,0.02); grid-column: span 2;">
+                            <h5 style="margin: 0 0 0.25rem 0; font-size: 0.85rem; text-transform: uppercase; color: #888;">Recent Activity</h5>
+                            ${recentHtml}
+                        </div>
+                    </div>
+                `;
+                contentEl.innerHTML = html;
+                contentEl.setAttribute('data-loaded', 'true');
+            } catch (err) {
+                console.error("Failed to load progress:", err);
+                contentEl.innerHTML = `<span style='color: #f87171;'>Failed to load: ${err.message}</span>`;
+            }
         }
 
         // --- User Stats ---
